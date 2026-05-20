@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coroinhas da Paróquia</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #F0D98A;
+    --gold-pale: #FDF6E3;
+    --brown-dark: #2C1A0E;
+    --brown-mid: #5C3D1E;
+    --brown-light: #A0714F;
+    --cream: #FAF6EF;
+    --white: #FFFFFF;
+    --text: #2C1A0E;
+    --text-muted: #8B6B4A;
+    --border: #E8D9C0;
+    --success: #4A7C59;
+    --danger: #9B3A3A;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 4px 24px rgba(44,26,14,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--brown-dark);
+    padding: 24px 20px 20px;
+    text-align: center;
+    position: relative;
+  }
+  header::after {
+    content: '';
+    display: block;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin-top: 16px;
+  }
+  .header-cross {
+    font-size: 22px;
+    color: var(--gold);
+    margin-bottom: 6px;
+    letter-spacing: 6px;
+  }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    color: var(--gold-light);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  header p {
+    color: var(--brown-light);
+    font-size: 13px;
+    margin-top: 4px;
+    font-weight: 300;
+  }
+
+  .tabs {
+    display: flex;
+    background: var(--brown-dark);
+    padding: 0 16px 16px;
+    gap: 8px;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 8px;
+    border: 1.5px solid var(--brown-mid);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--brown-light);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .tab.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--brown-dark);
+    font-weight: 600;
+  }
+
+  .page { display: none; padding: 20px 16px; }
+  .page.active { display: block; }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: var(--brown-dark);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 18px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+    margin-top: 14px;
+  }
+  label:first-child { margin-top: 0; }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--cream);
+    transition: border-color 0.2s;
+    outline: none;
+    appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--gold);
+    background: var(--white);
+  }
+  textarea { resize: none; height: 72px; }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 18px;
+    letter-spacing: 0.3px;
+  }
+  .btn-primary {
+    background: var(--gold);
+    color: var(--brown-dark);
+  }
+  .btn-primary:active { transform: scale(0.98); background: var(--gold-light); }
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1.5px solid var(--danger);
+    margin-top: 10px;
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--brown-dark);
+    color: var(--gold-light);
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 999;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+    border: 1px solid var(--gold);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--danger); border-color: #c96060; }
+
+  .coroinha-item {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 2px 8px rgba(44,26,14,0.06);
+  }
+  .coroinha-item:active { transform: scale(0.99); }
+  .avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--gold-pale);
+    border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: var(--brown-mid);
+    flex-shrink: 0;
+  }
+  .coroinha-info { flex: 1; min-width: 0; }
+  .coroinha-nome { font-weight: 600; font-size: 15px; color: var(--text); }
+  .coroinha-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .chevron { color: var(--border); font-size: 18px; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--gold-pale);
+    color: var(--brown-mid);
+    border: 1px solid var(--gold);
+    letter-spacing: 0.3px;
+  }
+
+  .hist-item {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .hist-item:last-child { border-bottom: none; }
+  .hist-funcao { font-weight: 600; font-size: 14px; }
+  .hist-data { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .hist-obs { font-size: 12px; color: var(--text-muted); margin-top: 3px; font-style: italic; }
+
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; color: var(--border); }
+  .empty p { font-size: 14px; }
+
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--gold);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 16px;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  .detail-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .detail-avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--gold-pale);
+    border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    color: var(--brown-mid);
+    flex-shrink: 0;
+  }
+  .detail-nome { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; }
+  .detail-sub { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+  .loading {
+    text-align: center;
+    padding: 30px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .spinner {
+    width: 28px; height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .select-wrapper { position: relative; }
+  .select-wrapper::after {
+    content: '▾';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-cross">✝</div>
+  <h1>Coroinhas da Paróquia Santa Edwiges</h1>
+  <p>Organização geral</p>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('historico')">Histórico</button>
+  <button class="tab" onclick="showTab('cadastrar')">Cadastrar</button>
+  <button class="tab" onclick="showTab('funcao')">Registrar Função</button>
+</div>
+
+<!-- PÁGINA: HISTÓRICO -->
+<div id="page-historico" class="page active">
+  <div id="detalhe-coroinha" style="display:none;">
+    <button class="back-btn" onclick="fecharDetalhe()">← Voltar</button>
+    <div id="detalhe-header"></div>
+    <div class="section-title">Histórico</div>
+    <div class="card" id="detalhe-historico"></div>
+  </div>
+
+  <div id="lista-coroinhas">
+    <div class="section-title">Coroinhas</div>
+    <div id="lista-container">
+      <div class="loading"><div class="spinner"></div>Carregando...</div>
+    </div>
+  </div>
+</div>
+
+<!-- PÁGINA: CADASTRAR COROINHA -->
+<div id="page-cadastrar" class="page">
+  <div class="section-title">Novo Coroinha</div>
+  <div class="card">
+    <label>Nome completo</label>
+    <input type="text" id="cad-nome" placeholder="Ex: João Pedro Silva">
+
+    <label>Idade</label>
+    <input type="number" id="cad-idade" placeholder="Ex: 14" min="1" max="99">
+
+    <label>Data de nascimento</label>
+    <input type="date" id="cad-nasc">
+
+    <button class="btn btn-primary" onclick="cadastrarCoroinha()">Salvar coroinha</button>
+  </div>
+</div>
+
+<!-- PÁGINA: REGISTRAR FUNÇÃO -->
+<div id="page-funcao" class="page">
+  <div class="section-title">Registrar Função</div>
+  <div class="card">
+    <label>Coroinha</label>
+    <div class="select-wrapper">
+      <select id="func-coroinha">
+        <option value="">Selecione...</option>
+      </select>
+    </div>
+
+    <label>Função na missa</label>
+    <div class="select-wrapper">
+      <select id="func-funcao">
+        <option value="">Selecione...</option>
+        <option>Ambão</option>
+        <option>Carrilhão</option>
+        <option>Cerimoniario</option>
+        <option>Cruz</option>
+        <option>Ofertório</option>
+        <option>Pasta</option>
+        <option>Patena</option>
+        <option>Purificação</option>
+        <option>Sino de trás</option>
+        <option>Turibulo</option>
+        <option>Vela</option>
+      </select>
+    </div>
+
+    <label>Data da missa</label>
+    <input type="date" id="func-data">
+
+    <label>Observação (opcional)</label>
+    <textarea id="func-obs" placeholder="Ex: Missa de domingo, festa de Nossa Senhora..."></textarea>
+
+    <button class="btn btn-primary" onclick="registrarFuncao()">Registrar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const URL = 'https://gehccrknzobcurclbnpt.supabase.co/rest/v1';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlaGNjcmtuem9iY3VyY2xibnB0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTA1ODksImV4cCI6MjA5NDg2NjU4OX0.7cb1EbKn_XtOTM6PkxxoktQV7qGtYQ7kd_okJ9jhUVA';
+const HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers: HEADERS };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(URL + path, opts);
+  if (!r.ok) throw new Error(await r.text());
+  if (r.status === 204) return null;
+  return r.json();
+}
+
+function toast(msg, err=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (err ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+function iniciais(nome) {
+  return nome.trim().split(' ').slice(0,2).map(n=>n[0].toUpperCase()).join('');
+}
+
+function formatarData(d) {
+  if (!d) return '';
+  const [y,m,dia] = d.split('-');
+  return `${dia}/${m}/${y}`;
+}
+
+let coroinhas = [];
+
+async function carregarCoroinhas() {
+  try {
+    coroinhas = await api('/coroinhas?order=nome');
+    renderLista();
+    popularSelect();
+  } catch(e) {
+    document.getElementById('lista-container').innerHTML = '<div class="empty"><div class="empty-icon">⚠</div><p>Erro ao carregar. Verifique sua conexão.</p></div>';
+  }
+}
+
+function renderLista() {
+  const el = document.getElementById('lista-container');
+  if (!coroinhas.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">✝</div><p>Nenhum coroinha cadastrado ainda.</p></div>';
+    return;
+  }
+  el.innerHTML = coroinhas.map(c => `
+    <div class="coroinha-item" onclick="abrirDetalhe('${c.id}','${c.nome.replace(/'/g,"\\'")}',${c.idade||'null'})">
+      <div class="avatar">${iniciais(c.nome)}</div>
+      <div class="coroinha-info">
+        <div class="coroinha-nome">${c.nome}</div>
+        <div class="coroinha-sub">${c.idade ? c.idade + ' anos' : ''}</div>
+      </div>
+      <span class="chevron">›</span>
+    </div>
+  `).join('');
+}
+
+function popularSelect() {
+  const sel = document.getElementById('func-coroinha');
+  sel.innerHTML = '<option value="">Selecione...</option>' +
+    coroinhas.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+}
+
+async function abrirDetalhe(id, nome, idade) {
+  document.getElementById('lista-coroinhas').style.display = 'none';
+  document.getElementById('detalhe-coroinha').style.display = 'block';
+
+  document.getElementById('detalhe-header').innerHTML = `
+    <div class="detail-header">
+      <div class="detail-avatar">${iniciais(nome)}</div>
+      <div>
+        <div class="detail-nome">${nome}</div>
+        <div class="detail-sub">${idade ? idade + ' anos' : 'Idade não informada'}</div>
+      </div>
+    </div>`;
+
+  const el = document.getElementById('detalhe-historico');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>';
+
+  try {
+    const hist = await api(`/historico_funcoes?coroinha_id=eq.${id}&order=data_missa.desc`);
+    if (!hist.length) {
+      el.innerHTML = '<div class="empty"><p>Nenhuma função registrada ainda.</p></div>';
+      return;
+    }
+    el.innerHTML = hist.map(h => `
+      <div class="hist-item">
+        <div>
+          <div class="hist-funcao"><span class="badge">${h.funcao}</span></div>
+          <div class="hist-data">${formatarData(h.data_missa)}</div>
+          ${h.observacao ? `<div class="hist-obs">${h.observacao}</div>` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty"><p>Erro ao carregar histórico.</p></div>';
+  }
+}
+
+function fecharDetalhe() {
+  document.getElementById('detalhe-coroinha').style.display = 'none';
+  document.getElementById('lista-coroinhas').style.display = 'block';
+}
+
+async function cadastrarCoroinha() {
+  const nome = document.getElementById('cad-nome').value.trim();
+  const idade = document.getElementById('cad-idade').value;
+  const nasc = document.getElementById('cad-nasc').value;
+  if (!nome) { toast('Informe o nome do coroinha', true); return; }
+  try {
+    await api('/coroinhas', 'POST', { nome, idade: idade ? parseInt(idade) : null, data_nascimento: nasc || null });
+    toast('✓ Coroinha cadastrado!');
+    document.getElementById('cad-nome').value = '';
+    document.getElementById('cad-idade').value = '';
+    document.getElementById('cad-nasc').value = '';
+    carregarCoroinhas();
+  } catch(e) { toast('Erro ao salvar. Tente novamente.', true); }
+}
+
+async function registrarFuncao() {
+  const coroinha_id = document.getElementById('func-coroinha').value;
+  const funcao = document.getElementById('func-funcao').value;
+  const data_missa = document.getElementById('func-data').value;
+  const observacao = document.getElementById('func-obs').value.trim();
+  if (!coroinha_id) { toast('Selecione o coroinha', true); return; }
+  if (!funcao) { toast('Selecione a função', true); return; }
+  if (!data_missa) { toast('Informe a data da missa', true); return; }
+  try {
+    await api('/historico_funcoes', 'POST', { coroinha_id, funcao, data_missa, observacao: observacao || null });
+    toast('✓ Função registrada!');
+    document.getElementById('func-coroinha').value = '';
+    document.getElementById('func-funcao').value = '';
+    document.getElementById('func-data').value = '';
+    document.getElementById('func-obs').value = '';
+  } catch(e) { toast('Erro ao registrar. Tente novamente.', true); }
+}
+
+function showTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  event.target.classList.add('active');
+  if (tab === 'historico') fecharDetalhe();
+}
+
+// Hoje como padrão na data da missa
+const hoje = new Date().toISOString().split('T')[0];
+document.getElementById('func-data').value = hoje;
+
+carregarCoroinhas();
+</script>
+</body>
+</html>
