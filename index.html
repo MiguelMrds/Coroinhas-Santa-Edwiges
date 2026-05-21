@@ -73,11 +73,14 @@
 
   /* Chips de funções */
   .funcoes-chips { display: flex; flex-wrap: wrap; gap: 8px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--cream); padding: 12px; }
-  .funcao-chip { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 50px; border: 1.5px solid var(--border); background: var(--white); cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text); user-select: none; transition: all 0.15s; }
+  .funcao-chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 50px; border: 1.5px solid var(--border); background: var(--white); cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text); user-select: none; transition: all 0.15s; text-transform: none !important; letter-spacing: 0 !important; margin-top: 0 !important; white-space: nowrap; }
   .funcao-chip.selecionada { background: var(--gold-pale); border-color: var(--gold); color: var(--brown-mid); }
-  .funcao-chip input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--gold); cursor: pointer; padding: 0; margin: 0; flex-shrink: 0; }
+  .funcao-chip input[type=checkbox] { width: 13px; height: 13px; accent-color: var(--gold); cursor: pointer; padding: 0; margin: 0; flex-shrink: 0; }
+  .funcao-chip span { text-transform: none; letter-spacing: 0; font-size: 13px; }
 
   .contador { display: inline-block; font-size: 11px; font-weight: 600; background: var(--gold-pale); color: var(--brown-mid); border: 1px solid var(--gold); border-radius: 50px; padding: 2px 8px; margin-left: 6px; vertical-align: middle; }
+  .btn-ordem { flex:1; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--white); color: var(--text-muted); font-family: "DM Sans", sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+  .btn-ordem.active { background: var(--gold-pale); border-color: var(--gold); color: var(--brown-mid); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -104,6 +107,11 @@
   </div>
   <div id="lista-coroinhas">
     <div class="section-title">Coroinhas</div>
+    <input type="text" id="busca-historico" placeholder="Buscar coroinha..." oninput="filtrarLista()" style="margin-bottom:10px;">
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button id="btn-ordem-nome" class="btn-ordem active" onclick="setOrdem('nome')">A–Z Nome</button>
+      <button id="btn-ordem-idade" class="btn-ordem" onclick="setOrdem('idade')">↑ Mais novo</button>
+    </div>
     <div id="lista-container">
       <div class="loading"><div class="spinner"></div>Carregando...</div>
     </div>
@@ -115,10 +123,8 @@
   <div class="section-title">Novo Coroinha</div>
   <div class="card">
     <label>Nome completo</label>
-    <input type="text" id="cad-nome" placeholder="Nome">
-    <label>Idade</label>
-    <input type="number" id="cad-idade" placeholder="Idade" min="1" max="99">
-    <label>Data de nascimento</label>
+    <input type="text" id="cad-nome" placeholder="Ex: João Pedro Silva">
+    <label>Data de nascimento <span style="font-size:11px;color:var(--text-muted);text-transform:none">(a idade é calculada automaticamente)</span></label>
     <input type="date" id="cad-nasc">
     <button class="btn btn-primary" onclick="cadastrarCoroinha()">Salvar coroinha</button>
   </div>
@@ -130,30 +136,31 @@
   <div class="card">
 
     <label>Coroinhas <span id="cnt-coroinhas" class="contador" style="display:none"></span></label>
+    <input type="text" id="busca-funcao" placeholder="Buscar coroinha..." oninput="filtrarCheckCoroinhas()" style="margin-bottom:8px;">
     <div class="check-lista" id="lista-check-coroinhas">
       <div class="loading"><div class="spinner"></div>Carregando...</div>
     </div>
 
     <label>Funções na missa <span id="cnt-funcoes" class="contador" style="display:none"></span></label>
     <div class="funcoes-chips">
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Ambão"> Ambão</label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Carrilhão"> Carrilhão</label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Cerimonário"> Cerimonário</label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Cruz"> Cruz</label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Ofertório"> Ofertório</label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Pasta"> Pasta</label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Patena"> Patena</label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Purificação"> Purificação</label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Sino de trás"> Sino de trás</label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Turíbulo"> Turíbulo</label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Vela"> Vela</label>
+      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Ambão"><span>Ambão</span></label>
+      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Carrilhão"><span>Carrilhão</span></label>
+      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Cerimonário"><span>Cerimonário</span></label>
+      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Cruz"><span>Cruz</span></label>
+      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Ofertório"><span>Ofertório</span></label>
+      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Pasta"><span>Pasta</span></label>
+      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Patena"><span>Patena</span></label>
+      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Purificação"><span>Purificação</span></label>
+      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Sino de trás"><span>Sino de trás</span></label>
+      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Turíbulo"><span>Turíbulo</span></label>
+      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Vela"><span>Vela</span></label>
     </div>
 
     <label>Data da missa</label>
     <input type="date" id="func-data">
 
     <label>Observação (opcional)</label>
-    <textarea id="func-obs" placeholder="Ex: Missa de domingo, ou ocorrido durante a missa"></textarea>
+    <textarea id="func-obs" placeholder="Ex: Missa de domingo, festa de Nossa Senhora..."></textarea>
 
     <button class="btn btn-primary" onclick="registrarFuncao()">Registrar</button>
   </div>
@@ -204,36 +211,85 @@ async function carregarCoroinhas() {
   }
 }
 
-function renderLista() {
+let ordemAtual = "nome";
+let ordemNomeAsc = true;
+let ordemIdadeAsc = true;
+
+function setOrdem(ordem) {
+  if (ordemAtual === ordem) {
+    if (ordem === "nome") ordemNomeAsc = !ordemNomeAsc;
+    else ordemIdadeAsc = !ordemIdadeAsc;
+  } else {
+    ordemAtual = ordem;
+  }
+  document.querySelectorAll(".btn-ordem").forEach(b => b.classList.remove("active"));
+  document.getElementById("btn-ordem-" + ordem).classList.add("active");
+  document.getElementById("btn-ordem-nome").textContent = ordemNomeAsc ? "A–Z Nome" : "Z–A Nome";
+  document.getElementById("btn-ordem-idade").textContent = ordemIdadeAsc ? "↑ Mais novo" : "↓ Mais velho";
+  filtrarLista();
+}
+
+function calcularIdade(dataNasc) {
+  if (!dataNasc) return null;
+  const hoje = new Date();
+  const nasc = new Date(dataNasc);
+  let idade = hoje.getFullYear() - nasc.getFullYear();
+  const m = hoje.getMonth() - nasc.getMonth();
+  if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
+  return idade;
+}
+
+function renderLista(filtro='') {
   const el = document.getElementById('lista-container');
-  if (!coroinhas.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">✝</div><p>Nenhum coroinha cadastrado ainda.</p></div>';
+  let lista = filtro ? coroinhas.filter(c => c.nome.toLowerCase().includes(filtro.toLowerCase())) : [...coroinhas];
+  if (ordemAtual === 'nome') {
+    lista.sort((a, b) => ordemNomeAsc ? a.nome.localeCompare(b.nome) : b.nome.localeCompare(a.nome));
+  } else {
+    lista.sort((a, b) => {
+      const ia = a.idade || calcularIdade(a.data_nascimento) || 999;
+      const ib = b.idade || calcularIdade(b.data_nascimento) || 999;
+      return ordemIdadeAsc ? ia - ib : ib - ia;
+    });
+  }
+  if (!lista.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">✝</div><p>' + (filtro ? 'Nenhum resultado encontrado.' : 'Nenhum coroinha cadastrado ainda.') + '</p></div>';
     return;
   }
-  el.innerHTML = coroinhas.map(c => `
-    <div class="coroinha-item" onclick="abrirDetalhe('${c.id}','${c.nome.replace(/'/g,"\\'")}',${c.idade||'null'})">
+  el.innerHTML = lista.map(c => {
+    const idade = c.idade || calcularIdade(c.data_nascimento);
+    return `
+    <div class="coroinha-item" onclick="abrirDetalhe('${c.id}','${c.nome.replace(/'/g,"\\'")}',${idade||'null'})">
       <div class="avatar">${iniciais(c.nome)}</div>
       <div class="coroinha-info">
         <div class="coroinha-nome">${c.nome}</div>
-        <div class="coroinha-sub">${c.idade ? c.idade + ' anos' : ''}</div>
+        <div class="coroinha-sub">${idade ? idade + ' anos' : ''}</div>
       </div>
       <span class="chevron">›</span>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
-function renderCheckCoroinhas() {
+function filtrarLista() {
+  renderLista(document.getElementById('busca-historico').value);
+}
+
+function renderCheckCoroinhas(filtro='') {
   const el = document.getElementById('lista-check-coroinhas');
-  if (!coroinhas.length) {
-    el.innerHTML = '<div class="empty"><p>Nenhum coroinha cadastrado.</p></div>';
+  const lista = filtro ? coroinhas.filter(c => c.nome.toLowerCase().includes(filtro.toLowerCase())) : coroinhas;
+  if (!lista.length) {
+    el.innerHTML = '<div class="empty"><p>' + (filtro ? 'Nenhum resultado.' : 'Nenhum coroinha cadastrado.') + '</p></div>';
     return;
   }
-  el.innerHTML = coroinhas.map(c => `
+  el.innerHTML = lista.map(c => `
     <label class="check-item" onclick="atualizarCheckCoroinha(this)">
       <input type="checkbox" value="${c.id}">
       <span class="check-nome">${c.nome}</span>
     </label>
   `).join('');
+}
+
+function filtrarCheckCoroinhas() {
+  renderCheckCoroinhas(document.getElementById('busca-funcao').value);
 }
 
 function atualizarCheckCoroinha(el) {
@@ -291,14 +347,13 @@ function fecharDetalhe() {
 
 async function cadastrarCoroinha() {
   const nome = document.getElementById('cad-nome').value.trim();
-  const idade = document.getElementById('cad-idade').value;
   const nasc = document.getElementById('cad-nasc').value;
   if (!nome) { toast('Informe o nome do coroinha', true); return; }
+  const idade = calcularIdade(nasc);
   try {
-    await api('/coroinhas', 'POST', { nome, idade: idade ? parseInt(idade) : null, data_nascimento: nasc || null });
+    await api('/coroinhas', 'POST', { nome, idade: idade || null, data_nascimento: nasc || null });
     toast('Coroinha cadastrado!');
     document.getElementById('cad-nome').value = '';
-    document.getElementById('cad-idade').value = '';
     document.getElementById('cad-nasc').value = '';
     carregarCoroinhas();
   } catch(e) { toast('Erro ao salvar. Tente novamente.', true); }
