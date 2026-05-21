@@ -204,15 +204,7 @@
     <button class="btn-ordem" id="stat-tudo-btn" onclick="setMes(-1)">Tudo</button>
   </div>
 
-  <div class="card" style="margin-bottom:12px;">
-    <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Missas por horário</div>
-    <div id="stat-horarios"></div>
-  </div>
-
-  <div class="card" style="margin-bottom:12px;">
-    <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Funções mais usadas</div>
-    <div id="stat-funcoes"></div>
-  </div>
+  <div id="stat-horarios-container"></div>
 
   <div class="card">
     <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Coroinhas que mais serviram</div>
@@ -569,26 +561,39 @@ async function carregarStats() {
   try {
     const hist = await api('/historico_funcoes?select=coroinha_id,funcao,horario,data_missa' + filtro);
 
-    // Horários
-    const hCount = {};
-    hist.forEach(h => { const k = h.horario || 'Não informado'; hCount[k] = (hCount[k]||0) + 1; });
-    const hMax = Math.max(...Object.values(hCount), 1);
-    const hOrdem = ['Sábado 17h','Domingo 7h','Domingo 9h','Domingo 17h','Missa Especial','Não informado'];
-    const hSorted = hOrdem.filter(k => hCount[k]).concat(Object.keys(hCount).filter(k => !hOrdem.includes(k)));
-    document.getElementById('stat-horarios').innerHTML = hSorted.length ? hSorted.map(k =>
-      `<div class="stat-row"><span class="stat-label">${k}</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round(hCount[k]/hMax*100)}%"></div></div><span class="stat-count">${hCount[k]}</span></div>`
-    ).join('') : '<div class="stat-empty">Sem registros no período.</div>';
+    // Horários fixos (sem missas especiais)
+    const horariosFixos = ['Sábado 17h','Domingo 7h','Domingo 9h','Domingo 17h'];
 
-    // Funções
-    const fCount = {};
-    hist.forEach(h => { h.funcao.split(',').forEach(f => { const k=f.trim(); fCount[k]=(fCount[k]||0)+1; }); });
-    const fSorted = Object.entries(fCount).sort((a,b) => b[1]-a[1]);
-    const fMax = fSorted[0]?.[1] || 1;
-    document.getElementById('stat-funcoes').innerHTML = fSorted.length ? fSorted.map(([k,v]) =>
-      `<div class="stat-row"><span class="stat-label">${k}</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round(v/fMax*100)}%"></div></div><span class="stat-count">${v}</span></div>`
-    ).join('') : '<div class="stat-empty">Sem registros no período.</div>';
+    // Para cada horário, montar ranking de coroinhas
+    const container = document.getElementById('stat-horarios-container');
+    const blocos = horariosFixos.map(horario => {
+      const missasHorario = hist.filter(h => h.horario === horario);
+      if (!missasHorario.length) return '';
 
-    // Coroinhas
+      const cCount = {};
+      missasHorario.forEach(h => { cCount[h.coroinha_id] = (cCount[h.coroinha_id]||0)+1; });
+      const ranking = Object.entries(cCount).sort((a,b) => b[1]-a[1]).slice(0,5);
+      const maxVal = ranking[0]?.[1] || 1;
+
+      const linhas = ranking.map(([id,v]) => {
+        const c = coroinhas.find(x => x.id === id);
+        const nome = c ? c.nome : 'Desconhecido';
+        return `<div class="stat-row">
+          <span class="stat-label">${nome}</span>
+          <div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round(v/maxVal*100)}%"></div></div>
+          <span class="stat-count">${v}</span>
+        </div>`;
+      }).join('');
+
+      return `<div class="card" style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">${horario}</div>
+        ${linhas}
+      </div>`;
+    }).join('');
+
+    container.innerHTML = blocos || '<div class="card" style="margin-bottom:12px;"><div class="stat-empty">Sem registros no período.</div></div>';
+
+    // Coroinhas que mais serviram (geral)
     const cCount = {};
     hist.forEach(h => { cCount[h.coroinha_id]=(cCount[h.coroinha_id]||0)+1; });
     const cSorted = Object.entries(cCount).sort((a,b) => b[1]-a[1]).slice(0,5);
@@ -600,9 +605,8 @@ async function carregarStats() {
     }).join('') : '<div class="stat-empty">Sem registros no período.</div>';
 
   } catch(e) {
-    ['stat-horarios','stat-funcoes','stat-coroinhas'].forEach(id => {
-      document.getElementById(id).innerHTML = '<div class="stat-empty">Erro ao carregar.</div>';
-    });
+    document.getElementById('stat-horarios-container').innerHTML = '<div class="card" style="margin-bottom:12px;"><div class="stat-empty">Erro ao carregar.</div></div>';
+    document.getElementById('stat-coroinhas').innerHTML = '<div class="stat-empty">Erro ao carregar.</div>';
   }
 }
 
