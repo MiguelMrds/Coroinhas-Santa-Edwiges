@@ -373,10 +373,15 @@ let detalheMesSel = '';
 
 function renderDetalheStats(mesKey) {
   detalheMesSel = mesKey;
-  const hist = mesKey === 'tudo' ? detalheHistAll : detalheHistAll.filter(h => h.data_missa && h.data_missa.slice(0,7) === mesKey);
+  const hoje = new Date();
+  const mesAtual = hoje.toISOString().slice(0,7);
+  // 'mes' = este mês, 'anteriores' = tudo exceto este mês
+  const hist = mesKey === 'mes'
+    ? detalheHistAll.filter(h => h.data_missa && h.data_missa.slice(0,7) === mesAtual)
+    : detalheHistAll.filter(h => h.data_missa && h.data_missa.slice(0,7) !== mesAtual);
+
   const elStats = document.getElementById('detalhe-stats');
 
-  // Atualizar botões de mês ativos
   document.querySelectorAll('.btn-detalhe-mes').forEach(b => {
     b.classList.toggle('active', b.dataset.mes === mesKey);
   });
@@ -399,6 +404,8 @@ function renderDetalheStats(mesKey) {
   const fSorted = Object.entries(fCount).sort((a,b) => b[1]-a[1]);
   const fMax = fSorted[0]?.[1] || 1;
 
+  const totalMes = detalheHistAll.filter(h => h.data_missa && h.data_missa.slice(0,7) === mesAtual).length;
+
   elStats.querySelector('#detalhe-stats-body').innerHTML = `
     <div style="display:flex;gap:12px;margin-bottom:16px;">
       <div style="flex:1;background:var(--gold-pale);border:1px solid var(--gold);border-radius:12px;padding:14px;text-align:center;">
@@ -406,8 +413,8 @@ function renderDetalheStats(mesKey) {
         <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px;">Total geral</div>
       </div>
       <div style="flex:1;background:var(--gold-pale);border:1px solid var(--gold);border-radius:12px;padding:14px;text-align:center;">
-        <div style="font-size:28px;font-weight:700;color:var(--brown-mid);font-family:'Playfair Display',serif;">${hist.length}</div>
-        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px;">No período</div>
+        <div style="font-size:28px;font-weight:700;color:var(--brown-mid);font-family:'Playfair Display',serif;">${totalMes}</div>
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px;">Neste mês</div>
       </div>
     </div>
     <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Missas por horário</div>
@@ -452,33 +459,15 @@ async function abrirDetalhe(id, nome, idade) {
       return;
     }
 
-    // Montar lista de meses disponíveis
-    const meses = {};
-    detalheHistAll.forEach(h => { if (h.data_missa) meses[h.data_missa.slice(0,7)] = true; });
-    const mesesOrdenados = Object.keys(meses).sort().reverse();
-    const hoje = new Date();
-    const mesAtual = hoje.toISOString().slice(0,7);
-
-    const nomeMes = key => {
-      const [y, m] = key.split('-');
-      return new Date(y, m-1).toLocaleString('pt-BR', {month:'long', year:'numeric'});
-    };
-
-    // Montar botões de mês
-    const btnsMeses = mesesOrdenados.map(k =>
-      `<button class="btn-ordem btn-detalhe-mes" data-mes="${k}" onclick="renderDetalheStats('${k}')">${nomeMes(k)}</button>`
-    ).join('');
-
     elStats.innerHTML = `
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
-        <button class="btn-ordem btn-detalhe-mes" data-mes="tudo" onclick="renderDetalheStats('tudo')">Tudo</button>
-        ${btnsMeses}
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button class="btn-ordem btn-detalhe-mes active" data-mes="mes" onclick="renderDetalheStats('mes')">Este mês</button>
+        <button class="btn-ordem btn-detalhe-mes" data-mes="anteriores" onclick="renderDetalheStats('anteriores')">Meses anteriores</button>
       </div>
       <div id="detalhe-stats-body"></div>
     `;
 
-    // Mostrar mês atual por padrão (ou tudo se não houver)
-    renderDetalheStats(mesesOrdenados.includes(mesAtual) ? mesAtual : mesesOrdenados[0] || 'tudo');
+    renderDetalheStats('mes');
 
     // Histórico completo
     el.innerHTML = detalheHistAll.map(h => `
@@ -602,7 +591,7 @@ async function carregarStats() {
     // Coroinhas
     const cCount = {};
     hist.forEach(h => { cCount[h.coroinha_id]=(cCount[h.coroinha_id]||0)+1; });
-    const cSorted = Object.entries(cCount).sort((a,b) => b[1]-a[1]).slice(0,10);
+    const cSorted = Object.entries(cCount).sort((a,b) => b[1]-a[1]).slice(0,5);
     const cMax = cSorted[0]?.[1] || 1;
     document.getElementById('stat-coroinhas').innerHTML = cSorted.length ? cSorted.map(([id,v]) => {
       const c = coroinhas.find(x => x.id === id);
