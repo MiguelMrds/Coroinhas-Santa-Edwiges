@@ -78,6 +78,15 @@
   .funcao-chip input[type=checkbox] { width: 13px; height: 13px; accent-color: var(--gold); cursor: pointer; padding: 0; margin: 0; flex-shrink: 0; }
   .funcao-chip span { text-transform: none; letter-spacing: 0; font-size: 13px; }
 
+  .stat-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .stat-label { font-size:13px; font-weight:500; color:var(--text); min-width:120px; flex-shrink:0; }
+  .stat-bar-wrap { flex:1; background:var(--border); border-radius:50px; height:8px; overflow:hidden; }
+  .stat-bar { height:8px; background:var(--gold); border-radius:50px; transition:width 0.4s ease; }
+  .stat-count { font-size:13px; font-weight:600; color:var(--brown-mid); min-width:28px; text-align:right; }
+  .stat-empty { font-size:13px; color:var(--text-muted); text-align:center; padding:16px 0; }
+  .select-wrapper-native { position:relative; }
+  .select-wrapper-native::after { content:"▾"; position:absolute; right:14px; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none; }
+
   .contador { display: inline-block; font-size: 11px; font-weight: 600; background: var(--gold-pale); color: var(--brown-mid); border: 1px solid var(--gold); border-radius: 50px; padding: 2px 8px; margin-left: 6px; vertical-align: middle; }
   .btn-ordem { flex:1; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--white); color: var(--text-muted); font-family: "DM Sans", sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
   .btn-ordem.active { background: var(--gold-pale); border-color: var(--gold); color: var(--brown-mid); font-weight: 600; }
@@ -95,6 +104,7 @@
   <button class="tab active" onclick="showTab('historico', this)">Histórico</button>
   <button class="tab" onclick="showTab('cadastrar', this)">Cadastrar</button>
   <button class="tab" onclick="showTab('funcao', this)">Registrar Função</button>
+  <button class="tab" onclick="showTab('stats', this)">Estatísticas</button>
 </div>
 
 <!-- HISTÓRICO -->
@@ -102,6 +112,8 @@
   <div id="detalhe-coroinha" style="display:none;">
     <button class="back-btn" onclick="fecharDetalhe()">← Voltar</button>
     <div id="detalhe-header"></div>
+    <div class="section-title">Estatísticas</div>
+    <div class="card" id="detalhe-stats" style="margin-bottom:14px;"></div>
     <div class="section-title">Histórico</div>
     <div class="card" id="detalhe-historico"></div>
   </div>
@@ -124,7 +136,7 @@
   <div class="card">
     <label>Nome completo</label>
     <input type="text" id="cad-nome" placeholder="Nome">
-    <label>Data de nascimento </label>
+    <label>Data de nascimento <span style="font-size:11px;color:var(--text-muted);text-transform:none">(a idade é calculada automaticamente)</span></label>
     <input type="date" id="cad-nasc">
     <button class="btn btn-primary" onclick="cadastrarCoroinha()">Salvar coroinha</button>
   </div>
@@ -156,6 +168,22 @@
       <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Vela"><span>Vela</span></label>
     </div>
 
+    <label>Horário da missa</label>
+    <div class="select-wrapper" style="position:relative;">
+      <select id="func-horario" onchange="toggleMissaEspecial()" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
+        <option value="">Selecione...</option>
+        <option value="Sábado 17h">Sábado 17h</option>
+        <option value="Domingo 7h">Domingo 7h</option>
+        <option value="Domingo 9h">Domingo 9h</option>
+        <option value="Domingo 17h">Domingo 17h</option>
+        <option value="Missa Especial">Missa Especial</option>
+      </select>
+      <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+    </div>
+    <div id="campo-missa-especial" style="display:none;margin-top:8px;">
+      <input type="text" id="func-missa-especial" placeholder="Ex: Casamento, Funeral, Festa do Padroeiro...">
+    </div>
+
     <label>Data da missa</label>
     <input type="date" id="func-data">
 
@@ -163,6 +191,32 @@
     <textarea id="func-obs" placeholder="Ex: Missa de domingo, festa de Nossa Senhora..."></textarea>
 
     <button class="btn btn-primary" onclick="registrarFuncao()">Registrar</button>
+  </div>
+</div>
+
+<!-- ESTATÍSTICAS -->
+<div id="page-stats" class="page">
+  <div class="section-title">Estatísticas</div>
+
+  <div style="display:flex;gap:8px;margin-bottom:16px;">
+    <button class="btn-ordem active" id="stat-mes-btn" onclick="setMes(0)">Este mês</button>
+    <button class="btn-ordem" id="stat-mes-ant-btn" onclick="setMes(1)">Mês anterior</button>
+    <button class="btn-ordem" id="stat-tudo-btn" onclick="setMes(-1)">Tudo</button>
+  </div>
+
+  <div class="card" style="margin-bottom:12px;">
+    <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Missas por horário</div>
+    <div id="stat-horarios"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px;">
+    <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Funções mais usadas</div>
+    <div id="stat-funcoes"></div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Coroinhas que mais serviram</div>
+    <div id="stat-coroinhas"></div>
   </div>
 </div>
 
@@ -314,6 +368,65 @@ function atualizarChip(el) {
   }, 0);
 }
 
+let detalheHistAll = [];
+let detalheMesSel = '';
+
+function renderDetalheStats(mesKey) {
+  detalheMesSel = mesKey;
+  const hist = mesKey === 'tudo' ? detalheHistAll : detalheHistAll.filter(h => h.data_missa && h.data_missa.slice(0,7) === mesKey);
+  const elStats = document.getElementById('detalhe-stats');
+
+  // Atualizar botões de mês ativos
+  document.querySelectorAll('.btn-detalhe-mes').forEach(b => {
+    b.classList.toggle('active', b.dataset.mes === mesKey);
+  });
+
+  if (!hist.length) {
+    elStats.querySelector('#detalhe-stats-body').innerHTML = '<div class="stat-empty">Sem registros neste período.</div>';
+    return;
+  }
+
+  // Horários
+  const hCount = {};
+  hist.forEach(h => { const k = h.horario || 'Não informado'; hCount[k] = (hCount[k]||0)+1; });
+  const hMax = Math.max(...Object.values(hCount), 1);
+  const hOrdem = ['Sábado 17h','Domingo 7h','Domingo 9h','Domingo 17h'];
+  const hSorted = hOrdem.filter(k => hCount[k]).concat(Object.keys(hCount).filter(k => !hOrdem.includes(k)));
+
+  // Funções
+  const fCount = {};
+  hist.forEach(h => h.funcao.split(',').forEach(f => { const k=f.trim(); fCount[k]=(fCount[k]||0)+1; }));
+  const fSorted = Object.entries(fCount).sort((a,b) => b[1]-a[1]);
+  const fMax = fSorted[0]?.[1] || 1;
+
+  elStats.querySelector('#detalhe-stats-body').innerHTML = `
+    <div style="display:flex;gap:12px;margin-bottom:16px;">
+      <div style="flex:1;background:var(--gold-pale);border:1px solid var(--gold);border-radius:12px;padding:14px;text-align:center;">
+        <div style="font-size:28px;font-weight:700;color:var(--brown-mid);font-family:'Playfair Display',serif;">${detalheHistAll.length}</div>
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px;">Total geral</div>
+      </div>
+      <div style="flex:1;background:var(--gold-pale);border:1px solid var(--gold);border-radius:12px;padding:14px;text-align:center;">
+        <div style="font-size:28px;font-weight:700;color:var(--brown-mid);font-family:'Playfair Display',serif;">${hist.length}</div>
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px;">No período</div>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Missas por horário</div>
+    ${hSorted.map(k => `
+      <div class="stat-row">
+        <span class="stat-label">${k}</span>
+        <div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round(hCount[k]/hMax*100)}%"></div></div>
+        <span class="stat-count">${hCount[k]}</span>
+      </div>`).join('')}
+    <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin:14px 0 10px;">Funções mais exercidas</div>
+    ${fSorted.map(([k,v]) => `
+      <div class="stat-row">
+        <span class="stat-label">${k}</span>
+        <div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round(v/fMax*100)}%"></div></div>
+        <span class="stat-count">${v}</span>
+      </div>`).join('')}
+  `;
+}
+
 async function abrirDetalhe(id, nome, idade) {
   document.getElementById('lista-coroinhas').style.display = 'none';
   document.getElementById('detalhe-coroinha').style.display = 'block';
@@ -326,18 +439,60 @@ async function abrirDetalhe(id, nome, idade) {
       </div>
     </div>`;
   const el = document.getElementById('detalhe-historico');
+  const elStats = document.getElementById('detalhe-stats');
   el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>';
+  elStats.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>';
+
   try {
-    const hist = await api('/historico_funcoes?coroinha_id=eq.'+id+'&order=data_missa.desc');
-    if (!hist.length) { el.innerHTML = '<div class="empty"><p>Nenhuma função registrada ainda.</p></div>'; return; }
-    el.innerHTML = hist.map(h => `
+    detalheHistAll = await api('/historico_funcoes?coroinha_id=eq.'+id+'&order=data_missa.desc');
+
+    if (!detalheHistAll.length) {
+      elStats.innerHTML = '<div class="empty"><p>Nenhuma estatística ainda.</p></div>';
+      el.innerHTML = '<div class="empty"><p>Nenhuma função registrada ainda.</p></div>';
+      return;
+    }
+
+    // Montar lista de meses disponíveis
+    const meses = {};
+    detalheHistAll.forEach(h => { if (h.data_missa) meses[h.data_missa.slice(0,7)] = true; });
+    const mesesOrdenados = Object.keys(meses).sort().reverse();
+    const hoje = new Date();
+    const mesAtual = hoje.toISOString().slice(0,7);
+
+    const nomeMes = key => {
+      const [y, m] = key.split('-');
+      return new Date(y, m-1).toLocaleString('pt-BR', {month:'long', year:'numeric'});
+    };
+
+    // Montar botões de mês
+    const btnsMeses = mesesOrdenados.map(k =>
+      `<button class="btn-ordem btn-detalhe-mes" data-mes="${k}" onclick="renderDetalheStats('${k}')">${nomeMes(k)}</button>`
+    ).join('');
+
+    elStats.innerHTML = `
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
+        <button class="btn-ordem btn-detalhe-mes" data-mes="tudo" onclick="renderDetalheStats('tudo')">Tudo</button>
+        ${btnsMeses}
+      </div>
+      <div id="detalhe-stats-body"></div>
+    `;
+
+    // Mostrar mês atual por padrão (ou tudo se não houver)
+    renderDetalheStats(mesesOrdenados.includes(mesAtual) ? mesAtual : mesesOrdenados[0] || 'tudo');
+
+    // Histórico completo
+    el.innerHTML = detalheHistAll.map(h => `
       <div class="hist-item">
         <div class="hist-funcoes">${h.funcao.split(',').map(f => '<span class="badge">'+f.trim()+'</span>').join('')}</div>
-        <div class="hist-data">${formatarData(h.data_missa)}</div>
+        <div class="hist-data">${formatarData(h.data_missa)}${h.horario ? ' · ' + h.horario : ''}</div>
         ${h.observacao ? '<div class="hist-obs">'+h.observacao+'</div>' : ''}
       </div>
     `).join('');
-  } catch(e) { el.innerHTML = '<div class="empty"><p>Erro ao carregar histórico.</p></div>'; }
+
+  } catch(e) {
+    el.innerHTML = '<div class="empty"><p>Erro ao carregar histórico.</p></div>';
+    elStats.innerHTML = '<div class="empty"><p>Erro ao carregar.</p></div>';
+  }
 }
 
 function fecharDetalhe() {
@@ -364,14 +519,20 @@ async function registrarFuncao() {
   const funcoesSel = [...document.querySelectorAll('.funcao-chip input:checked')].map(cb => cb.value);
   const data_missa = document.getElementById('func-data').value;
   const observacao = document.getElementById('func-obs').value.trim();
+  let horario = document.getElementById('func-horario').value;
+  if (horario === 'Missa Especial') {
+    const esp = document.getElementById('func-missa-especial').value.trim();
+    horario = esp ? 'Especial: ' + esp : 'Missa Especial';
+  }
 
   if (!coroinhasSel.length) { toast('Selecione ao menos um coroinha', true); return; }
   if (!funcoesSel.length) { toast('Selecione ao menos uma função', true); return; }
+  if (!horario) { toast('Selecione o horário da missa', true); return; }
   if (!data_missa) { toast('Informe a data da missa', true); return; }
 
   const funcao = funcoesSel.join(', ');
   try {
-    const registros = coroinhasSel.map(coroinha_id => ({ coroinha_id, funcao, data_missa, observacao: observacao || null }));
+    const registros = coroinhasSel.map(coroinha_id => ({ coroinha_id, funcao, horario, data_missa, observacao: observacao || null }));
     await api('/historico_funcoes', 'POST', registros);
     const nc = coroinhasSel.length, nf = funcoesSel.length;
     toast('✓ ' + nf + ' função' + (nf>1?'ões':'') + ' para ' + nc + ' coroinha' + (nc>1?'s':'') + '!');
@@ -382,7 +543,78 @@ async function registrarFuncao() {
     document.getElementById('cnt-coroinhas').style.display = 'none';
     document.getElementById('cnt-funcoes').style.display = 'none';
     document.getElementById('func-obs').value = '';
+    document.getElementById('func-horario').value = '';
+    document.getElementById('campo-missa-especial').style.display = 'none';
+    document.getElementById('func-missa-especial').value = '';
   } catch(e) { toast('Erro ao registrar. Tente novamente.', true); }
+}
+
+function toggleMissaEspecial() {
+  const val = document.getElementById('func-horario').value;
+  document.getElementById('campo-missa-especial').style.display = val === 'Missa Especial' ? 'block' : 'none';
+}
+
+let statMesOffset = 0; // 0=este mês, 1=anterior, -1=tudo
+
+function setMes(offset) {
+  statMesOffset = offset;
+  ['mes','mes-ant','tudo'].forEach((id,i) => {
+    document.getElementById('stat-' + id + '-btn').classList.toggle('active', [0,1,-1][i] === offset);
+  });
+  carregarStats();
+}
+
+async function carregarStats() {
+  const hoje = new Date();
+  let filtro = '';
+  if (statMesOffset >= 0) {
+    const ano = hoje.getFullYear();
+    const mes = hoje.getMonth() - statMesOffset;
+    const d = new Date(ano, mes, 1);
+    const fim = new Date(ano, mes + 1, 0);
+    const pad = n => String(n).padStart(2,'0');
+    filtro = '&data_missa=gte.' + d.getFullYear() + '-' + pad(d.getMonth()+1) + '-01'
+           + '&data_missa=lte.' + fim.getFullYear() + '-' + pad(fim.getMonth()+1) + '-' + pad(fim.getDate());
+  }
+
+  try {
+    const hist = await api('/historico_funcoes?select=coroinha_id,funcao,horario,data_missa' + filtro);
+
+    // Horários
+    const hCount = {};
+    hist.forEach(h => { const k = h.horario || 'Não informado'; hCount[k] = (hCount[k]||0) + 1; });
+    const hMax = Math.max(...Object.values(hCount), 1);
+    const hOrdem = ['Sábado 17h','Domingo 7h','Domingo 9h','Domingo 17h','Missa Especial','Não informado'];
+    const hSorted = hOrdem.filter(k => hCount[k]).concat(Object.keys(hCount).filter(k => !hOrdem.includes(k)));
+    document.getElementById('stat-horarios').innerHTML = hSorted.length ? hSorted.map(k =>
+      `<div class="stat-row"><span class="stat-label">${k}</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round(hCount[k]/hMax*100)}%"></div></div><span class="stat-count">${hCount[k]}</span></div>`
+    ).join('') : '<div class="stat-empty">Sem registros no período.</div>';
+
+    // Funções
+    const fCount = {};
+    hist.forEach(h => { h.funcao.split(',').forEach(f => { const k=f.trim(); fCount[k]=(fCount[k]||0)+1; }); });
+    const fSorted = Object.entries(fCount).sort((a,b) => b[1]-a[1]);
+    const fMax = fSorted[0]?.[1] || 1;
+    document.getElementById('stat-funcoes').innerHTML = fSorted.length ? fSorted.map(([k,v]) =>
+      `<div class="stat-row"><span class="stat-label">${k}</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round(v/fMax*100)}%"></div></div><span class="stat-count">${v}</span></div>`
+    ).join('') : '<div class="stat-empty">Sem registros no período.</div>';
+
+    // Coroinhas
+    const cCount = {};
+    hist.forEach(h => { cCount[h.coroinha_id]=(cCount[h.coroinha_id]||0)+1; });
+    const cSorted = Object.entries(cCount).sort((a,b) => b[1]-a[1]).slice(0,10);
+    const cMax = cSorted[0]?.[1] || 1;
+    document.getElementById('stat-coroinhas').innerHTML = cSorted.length ? cSorted.map(([id,v]) => {
+      const c = coroinhas.find(x => x.id === id);
+      const nome = c ? c.nome : 'Desconhecido';
+      return `<div class="stat-row"><span class="stat-label">${nome}</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round(v/cMax*100)}%"></div></div><span class="stat-count">${v}</span></div>`;
+    }).join('') : '<div class="stat-empty">Sem registros no período.</div>';
+
+  } catch(e) {
+    ['stat-horarios','stat-funcoes','stat-coroinhas'].forEach(id => {
+      document.getElementById(id).innerHTML = '<div class="stat-empty">Erro ao carregar.</div>';
+    });
+  }
 }
 
 function showTab(tab, btn) {
@@ -391,6 +623,7 @@ function showTab(tab, btn) {
   document.getElementById('page-' + tab).classList.add('active');
   btn.classList.add('active');
   if (tab === 'historico') fecharDetalhe();
+  if (tab === 'stats') carregarStats();
 }
 
 document.getElementById('func-data').value = new Date().toISOString().split('T')[0];
