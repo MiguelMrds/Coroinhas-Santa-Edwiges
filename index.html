@@ -90,6 +90,66 @@
   .contador { display: inline-block; font-size: 11px; font-weight: 600; background: var(--gold-pale); color: var(--brown-mid); border: 1px solid var(--gold); border-radius: 50px; padding: 2px 8px; margin-left: 6px; vertical-align: middle; }
   .btn-ordem { flex:1; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--white); color: var(--text-muted); font-family: "DM Sans", sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
   .btn-ordem.active { background: var(--gold-pale); border-color: var(--gold); color: var(--brown-mid); font-weight: 600; }
+
+
+  /* Escala */
+  .escala-horario { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:14px; box-shadow:var(--shadow); overflow:hidden; }
+  .escala-horario-header { background:var(--gold-pale); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; }
+  .escala-horario-titulo { font-family:'Playfair Display',serif; font-size:15px; font-weight:700; color:var(--brown-dark); }
+  .escala-horario-data { font-size:12px; color:var(--text-muted); }
+  .escala-inscrito { display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid var(--border); }
+  .escala-inscrito:last-child { border-bottom:none; }
+  .escala-inscrito-nome { flex:1; font-size:14px; font-weight:500; }
+  .escala-vazio { padding:14px 16px; font-size:13px; color:var(--text-muted); font-style:italic; }
+  .escala-footer { padding:12px 16px; border-top:1px solid var(--border); background:var(--cream); }
+  .semana-badge { display:inline-block; background:var(--brown-dark); color:var(--gold-light); font-size:11px; font-weight:600; padding:3px 10px; border-radius:50px; margin-bottom:12px; }
+  .inativos-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+  .inativos-item:last-child { border-bottom:none; }
+  .inativos-dias { font-size:12px; font-weight:600; color:var(--danger); min-width:60px; text-align:right; }
+
+  /* Admin sub-tabs */
+  .admin-subtabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; background:var(--gold-pale); border:1px solid var(--border); border-radius:var(--radius); padding:10px; }
+  .admin-subtab { flex:1; min-width:80px; padding:9px 10px; border:1.5px solid var(--border); border-radius:var(--radius-sm); background:var(--white); color:var(--text-muted); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; text-align:center; }
+  .admin-subtab.active { background:var(--gold); border-color:var(--gold); color:var(--brown-dark); font-weight:600; }
+  .admin-subpage { display:none; }
+  .admin-subpage.active { display:block; }
+
+  /* Admin */
+  .btn-danger { background: var(--danger); color: #fff; border: none; border-radius: var(--radius-sm); padding: 10px 16px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-danger:active { transform: scale(0.97); opacity: 0.9; }
+  .btn-outline { background: transparent; color: var(--gold); border: 1.5px solid var(--gold); border-radius: var(--radius-sm); padding: 10px 16px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-outline:active { background: var(--gold-pale); }
+  .btn-sm { padding: 7px 12px; font-size: 13px; }
+  .admin-coroinha-item { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(44,26,14,0.06); }
+  .admin-coroinha-header { display:flex; align-items:center; gap:14px; }
+  .admin-actions { display:flex; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); flex-wrap:wrap; }
+  .admin-edit-form { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); display:none; }
+  .admin-edit-form.open { display:block; }
+  .admin-edit-form input { margin-bottom:8px; }
+  .admin-edit-btns { display:flex; gap:8px; margin-top:8px; }
+  .hist-item-admin { padding: 12px 0; border-bottom: 1px solid var(--border); display:flex; align-items:flex-start; gap:10px; }
+  .hist-item-admin:last-child { border-bottom: none; }
+  .hist-item-admin-info { flex:1; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(44,26,14,0.55); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .modal-box { background:var(--white); border-radius:var(--radius); padding:24px 20px; max-width:340px; width:100%; box-shadow:0 8px 40px rgba(44,26,14,0.2); border:1px solid var(--border); }
+  .modal-title { font-family:'Playfair Display',serif; font-size:17px; color:var(--brown-dark); margin-bottom:8px; }
+  .modal-msg { font-size:14px; color:var(--text-muted); margin-bottom:20px; line-height:1.5; }
+  .modal-btns { display:flex; gap:10px; }
+  .modal-btns button { flex:1; }
+  .pin-dots { display:flex; gap:10px; justify-content:center; margin:16px 0; }
+  .pin-dot { width:14px; height:14px; border-radius:50%; background:var(--border); transition:background 0.15s; }
+  .pin-dot.filled { background:var(--gold); }
+  .pin-pad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:8px; }
+  .pin-btn { padding:14px; font-size:18px; font-weight:600; background:var(--cream); border:1.5px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; font-family:'DM Sans',sans-serif; color:var(--text); transition:all 0.15s; }
+  .pin-btn:active { background:var(--gold-pale); border-color:var(--gold); }
+  .admin-locked { text-align:center; padding:40px 20px; }
+  .escala-admin-coroinha { display:flex; align-items:flex-start; gap:10px; padding:10px 16px; border-bottom:1px solid var(--border); }
+  .escala-admin-coroinha:last-child { border-bottom:none; }
+  .escala-admin-nome { font-size:14px; font-weight:600; min-width:120px; flex-shrink:0; padding-top:2px; }
+  .escala-admin-funcoes { display:flex; flex-wrap:wrap; gap:4px; flex:1; }
+  .escala-admin-sem-funcao { font-size:12px; color:var(--text-muted); font-style:italic; padding-top:3px; }
+  .funcao-tag { display:inline-block; padding:3px 9px; border-radius:50px; font-size:11px; font-weight:600; background:var(--gold-pale); color:var(--brown-mid); border:1px solid var(--gold); }
+
 </style>
 </head>
 <body>
@@ -100,11 +160,10 @@
   <p>Organização geral</p>
 </header>
 
-<div class="tabs">
-  <button class="tab active" onclick="showTab('historico', this)">Histórico</button>
-  <button class="tab" onclick="showTab('cadastrar', this)">Cadastrar</button>
-  <button class="tab" onclick="showTab('funcao', this)">Registrar Função</button>
-  <button class="tab" onclick="showTab('stats', this)">Estatísticas</button>
+<div class="tabs" style="flex-wrap:wrap;">
+  <button class="tab active" onclick="showTab('historico', this)">Coroinhas</button>
+  <button class="tab" onclick="showTab('escala', this)">Escala</button>
+  <button class="tab tab-admin" onclick="showTab('admin', this)">Equipe</button>
 </div>
 
 <!-- HISTÓRICO -->
@@ -130,85 +189,269 @@
   </div>
 </div>
 
-<!-- CADASTRAR -->
-<div id="page-cadastrar" class="page">
-  <div class="section-title">Novo Coroinha</div>
-  <div class="card">
-    <label>Nome completo</label>
-    <input type="text" id="cad-nome" placeholder="Nome">
-    <label>Data de nascimento <span style="font-size:11px;color:var(--text-muted);text-transform:none">(a idade é calculada automaticamente)</span></label>
-    <input type="date" id="cad-nasc">
-    <button class="btn btn-primary" onclick="cadastrarCoroinha()">Salvar coroinha</button>
+
+<!-- ESCALA -->
+<div id="page-escala" class="page">
+  <div id="escala-semana-atual">
+    <div class="loading"><div class="spinner"></div>Carregando escala...</div>
   </div>
+
 </div>
 
-<!-- REGISTRAR FUNÇÃO -->
-<div id="page-funcao" class="page">
-  <div class="section-title">Registrar Função</div>
-  <div class="card">
-
-    <label>Coroinhas <span id="cnt-coroinhas" class="contador" style="display:none"></span></label>
-    <input type="text" id="busca-funcao" placeholder="Buscar coroinha..." oninput="filtrarCheckCoroinhas()" style="margin-bottom:8px;">
-    <div class="check-lista" id="lista-check-coroinhas">
-      <div class="loading"><div class="spinner"></div>Carregando...</div>
-    </div>
-
-    <label>Funções na missa <span id="cnt-funcoes" class="contador" style="display:none"></span></label>
-    <div class="funcoes-chips">
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Ambão"><span>Ambão</span></label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Carrilhão"><span>Carrilhão</span></label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Cerimonário"><span>Cerimonário</span></label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Cruz"><span>Cruz</span></label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Ofertório"><span>Ofertório</span></label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Pasta"><span>Pasta</span></label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Patena"><span>Patena</span></label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Purificação"><span>Purificação</span></label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Sino de trás"><span>Sino de trás</span></label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Turíbulo"><span>Turíbulo</span></label>
-      <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Vela"><span>Vela</span></label>
-    </div>
-
-    <label>Horário da missa</label>
-    <div class="select-wrapper" style="position:relative;">
-      <select id="func-horario" onchange="toggleMissaEspecial()" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
-        <option value="">Selecione...</option>
-        <option value="Sábado 17h">Sábado 17h</option>
-        <option value="Domingo 7h">Domingo 7h</option>
-        <option value="Domingo 9h">Domingo 9h</option>
-        <option value="Domingo 17h">Domingo 17h</option>
-        <option value="Missa Especial">Missa Especial</option>
+<!-- MODAL INSCREVER ESCALA -->
+<div class="modal-overlay" id="modal-escala" style="display:none;">
+  <div class="modal-box" style="max-width:360px;">
+    <div class="modal-title" id="modal-escala-titulo"></div>
+    <p style="font-size:13px;color:var(--text-muted);margin:6px 0 14px;">Selecione seu nome para se inscrever nesta missa.</p>
+    <div class="select-wrapper-native" style="position:relative;margin-bottom:16px;">
+      <select id="modal-escala-nome" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
+        <option value="">Selecione seu nome...</option>
       </select>
       <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
     </div>
-    <div id="campo-missa-especial" style="display:none;margin-top:8px;">
-      <input type="text" id="func-missa-especial" placeholder="Ex: Casamento, Funeral, Festa do Padroeiro...">
+    <div class="modal-btns">
+      <button class="btn-outline btn-sm" onclick="fecharModalEscala()">Cancelar</button>
+      <button class="btn-primary btn-sm" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;" onclick="confirmarInscricaoEscala()">✓ Confirmar</button>
     </div>
-
-    <label>Data da missa</label>
-    <input type="date" id="func-data">
-
-    <label>Observação (opcional)</label>
-    <textarea id="func-obs" placeholder="Ex: Missa de domingo, festa de Nossa Senhora..."></textarea>
-
-    <button class="btn btn-primary" onclick="registrarFuncao()">Registrar</button>
   </div>
 </div>
 
-<!-- ESTATÍSTICAS -->
-<div id="page-stats" class="page">
-  <div class="section-title">Estatísticas</div>
 
-  <div style="display:flex;gap:8px;margin-bottom:16px;">
-    <button class="btn-ordem active" id="stat-mes-btn" onclick="setMes(0)">Este mês</button>
-    <button class="btn-ordem" id="stat-mes-ant-btn" onclick="setMes(1)">Mês anterior</button>
-    <button class="btn-ordem" id="stat-tudo-btn" onclick="setMes(-1)">Tudo</button>
+
+
+<!-- ADMIN -->
+<div id="page-admin" class="page">
+  <!-- Tela de PIN -->
+  <div id="admin-pin-screen">
+    <div class="admin-locked">
+      <div class="section-title" style="justify-content:center;">Equipe</div>
+      <p style="font-size:14px;color:var(--text-muted);margin-bottom:4px;">Digite o PIN para continuar</p>
+      <div class="pin-dots">
+        <div class="pin-dot" id="pd0"></div>
+        <div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div>
+        <div class="pin-dot" id="pd3"></div>
+      </div>
+      <p id="pin-erro" style="color:var(--danger);font-size:13px;min-height:18px;margin-bottom:8px;"></p>
+      <div class="pin-pad">
+        <button class="pin-btn" onclick="pinDigit('1')">1</button>
+        <button class="pin-btn" onclick="pinDigit('2')">2</button>
+        <button class="pin-btn" onclick="pinDigit('3')">3</button>
+        <button class="pin-btn" onclick="pinDigit('4')">4</button>
+        <button class="pin-btn" onclick="pinDigit('5')">5</button>
+        <button class="pin-btn" onclick="pinDigit('6')">6</button>
+        <button class="pin-btn" onclick="pinDigit('7')">7</button>
+        <button class="pin-btn" onclick="pinDigit('8')">8</button>
+        <button class="pin-btn" onclick="pinDigit('9')">9</button>
+        <button class="pin-btn" onclick="pinClear()" style="font-size:14px;">✕</button>
+        <button class="pin-btn" onclick="pinDigit('0')">0</button>
+        <button class="pin-btn" onclick="pinBack()" style="font-size:14px;">⌫</button>
+      </div>
+    </div>
   </div>
 
-  <div id="stat-horarios-container"></div>
+  <!-- Painel Admin (após PIN correto) -->
+  <div id="admin-painel" style="display:none;">
 
-  <div class="card">
-    <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Coroinhas que mais serviram</div>
-    <div id="stat-coroinhas"></div>
+    <!-- Sub-abas do painel admin -->
+    <div class="admin-subtabs" id="admin-subtabs-bar">
+      <button class="admin-subtab active" onclick="showAdminTab('gerenciar', this)">Gerenciar</button>
+      <button class="admin-subtab" onclick="showAdminTab('cadastrar', this)">Cadastrar</button>
+      <button class="admin-subtab" onclick="showAdminTab('funcao', this)">Função</button>
+      <button class="admin-subtab" onclick="showAdminTab('escala-admin', this)">Escala</button>
+      <button class="admin-subtab" onclick="showAdminTab('stats', this)">Estatísticas</button>
+    </div>
+
+    <!-- Sub-aba: Gerenciar coroinhas -->
+    <div id="admin-sub-gerenciar" class="admin-subpage active">
+      <!-- Detalhe de edição de coroinha -->
+      <div id="admin-detalhe" style="display:none;">
+        <button class="back-btn" onclick="fecharAdminDetalhe()">← Voltar</button>
+        <div id="admin-detalhe-conteudo"></div>
+      </div>
+      <!-- Lista de coroinhas -->
+      <div id="admin-lista">
+        <div class="section-title">Gerenciar Coroinhas</div>
+        <input type="text" id="busca-admin" placeholder="Buscar coroinha..." oninput="filtrarAdmin()" style="margin-bottom:12px;">
+        <div id="admin-lista-container">
+          <div class="loading"><div class="spinner"></div>Carregando...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub-aba: Cadastrar coroinha -->
+    <div id="admin-sub-cadastrar" class="admin-subpage" style="display:none;">
+      <div class="section-title">Novo Coroinha</div>
+      <div class="card">
+        <label>Nome completo</label>
+        <input type="text" id="cad-nome" placeholder="Nome">
+        <label>Data de nascimento</label>
+        <input type="date" id="cad-nasc">
+        <label>Cargo <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-muted);">(opcional)</span></label>
+        <div class="select-wrapper-native" style="position:relative;">
+          <select id="cad-cargo" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
+            <option value="">Sem cargo</option>
+            <option value="Equipe - Cerimonário">Equipe - Cerimonário</option>
+            <option value="Equipe">Equipe</option>
+            <option value="Cerimonário">Cerimonário</option>
+            <option value="Coordenador">Coordenador</option>
+            <option value="Vice-Coordenador">Vice-Coordenador</option>
+          </select>
+          <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+        </div>
+        <div id="cad-cargo-custom-wrap" style="display:none;margin-top:8px;">
+          <input type="text" id="cad-cargo-custom" placeholder="Digite o cargo...">
+        </div>
+        <button class="btn btn-primary" onclick="cadastrarCoroinha()">Salvar coroinha</button>
+      </div>
+    </div>
+
+    <!-- Sub-aba: Registrar Função (conteúdo movido para cá) -->
+    <div id="admin-sub-funcao" class="admin-subpage" style="display:none;">
+      <div class="section-title">Registrar Função</div>
+      <div class="card">
+        <label>Selecione a missa da escala</label>
+        <div class="select-wrapper" style="position:relative;">
+          <select id="func-escala-select" onchange="carregarCoroinhasEscala()" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
+            <option value="">Selecione a missa...</option>
+          </select>
+          <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+        </div>
+        <label>Coroinhas da escala <span id="cnt-coroinhas" class="contador" style="display:none"></span></label>
+        <div id="escala-funcao-status" style="font-size:13px;color:var(--text-muted);padding:10px 0;display:none;"></div>
+        <div class="check-lista" id="lista-check-coroinhas" style="display:none;"></div>
+        <label>Funções na missa <span id="cnt-funcoes" class="contador" style="display:none"></span></label>
+        <div class="funcoes-chips">
+          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Ambão"><span>Ambão</span></label>
+          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Carrilhão"><span>Carrilhão</span></label>
+          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Cerimonário"><span>Cerimonário</span></label>
+          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Cruz"><span>Cruz</span></label>
+          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Ofertório"><span>Ofertório</span></label>
+          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Pasta"><span>Pasta</span></label>
+          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Patena"><span>Patena</span></label>
+          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Purificação"><span>Purificação</span></label>
+          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Sino de trás"><span>Sino de trás</span></label>
+          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Turíbulo"><span>Turíbulo</span></label>
+          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Vela"><span>Vela</span></label>
+          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Sem-função"><span>Sem-função</span></label>
+        </div>
+        <input type="hidden" id="func-horario">
+        <div id="campo-missa-especial" style="display:none;"></div>
+        <input type="hidden" id="func-data">
+        <label>Observação (opcional)</label>
+        <textarea id="func-obs" placeholder=""></textarea>
+        <button class="btn btn-primary" onclick="registrarFuncao()">Registrar</button>
+      </div>
+    </div>
+
+    <!-- Sub-aba: Escala (visão da equipe) -->
+    <div id="admin-sub-escala-admin" class="admin-subpage" style="display:none;">
+      <div class="section-title">Escala da Semana</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        <button class="btn-ordem active" id="escala-admin-semana-btn" onclick="setEscalaAdminSemana(0)">Esta semana</button>
+        <button class="btn-ordem" id="escala-admin-ant-btn" onclick="setEscalaAdminSemana(1)">Semana anterior</button>
+      </div>
+      <div id="escala-admin-container">
+        <div class="loading"><div class="spinner"></div>Carregando...</div>
+      </div>
+    </div>
+
+    <!-- Modal adicionar membro equipe na escala -->
+    <div class="modal-overlay" id="modal-equipe-escala" style="display:none;">
+      <div class="modal-box" style="max-width:360px;">
+        <div class="modal-title" id="modal-equipe-titulo"></div>
+        <p style="font-size:13px;color:var(--text-muted);margin:6px 0 14px;">Selecione o membro da equipe para esta missa.</p>
+        <div class="select-wrapper-native" style="position:relative;margin-bottom:16px;">
+          <select id="modal-equipe-nome" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
+            <option value="">Selecione...</option>
+          </select>
+          <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+        </div>
+        <div class="modal-btns">
+          <button class="btn-outline btn-sm" onclick="fecharModalEquipeEscala()">Cancelar</button>
+          <button class="btn-primary btn-sm" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;" onclick="confirmarEquipeEscala()">✓ Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal forçar coroinha na escala -->
+    <div class="modal-overlay" id="modal-forcar-escala" style="display:none;">
+      <div class="modal-box" style="max-width:360px;">
+        <div class="modal-title" id="modal-forcar-titulo"></div>
+        <p style="font-size:13px;color:var(--text-muted);margin:6px 0 14px;">Inscrever coroinha nesta missa (ignora o período de inscrições).</p>
+        <div class="select-wrapper-native" style="position:relative;margin-bottom:16px;">
+          <select id="modal-forcar-nome" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
+            <option value="">Selecione...</option>
+          </select>
+          <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+        </div>
+        <div class="modal-btns">
+          <button class="btn-outline btn-sm" onclick="fecharModalForcarEscala()">Cancelar</button>
+          <button class="btn-primary btn-sm" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;" onclick="confirmarForcarEscala()">✓ Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub-aba: Estatísticas -->
+    <div id="admin-sub-stats" class="admin-subpage" style="display:none;">
+      <div class="section-title">Estatísticas</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button class="btn-ordem active" id="stat-mes-btn" onclick="setMes(0)">Este mês</button>
+        <button class="btn-ordem" id="stat-mes-ant-btn" onclick="setMes(1)">Mês anterior</button>
+        <button class="btn-ordem" id="stat-tudo-btn" onclick="setMes(-1)">Tudo</button>
+      </div>
+      <div id="stat-horarios-container"></div>
+      <div class="card">
+        <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Coroinhas que mais serviram</div>
+        <div id="stat-coroinhas"></div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Tempo sem servir</div>
+        <div id="stat-inativos"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal de editar registro de função -->
+<div class="modal-overlay" id="modal-edit-registro" style="display:none;">
+  <div class="modal-box" style="max-width:380px;">
+    <div class="modal-title">✏ Editar registro</div>
+    <div style="margin-top:12px;">
+      <label>Funções</label>
+      <div class="funcoes-chips" id="edit-reg-funcoes" style="margin-bottom:0;"></div>
+      <label>Horário da missa</label>
+      <div class="select-wrapper-native" style="position:relative;">
+        <select id="edit-reg-horario" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
+          <option value="">Selecione...</option>
+          <option value="Sábado 17h">Sábado 17h</option>
+          <option value="Domingo 7h">Domingo 7h</option>
+          <option value="Domingo 9h">Domingo 9h</option>
+          <option value="Domingo 17h">Domingo 17h</option>
+          <option value="Missa Especial">Missa Especial</option>
+        </select>
+        <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+      </div>
+      <label>Data da missa</label>
+      <input type="date" id="edit-reg-data">
+      <label>Observação (opcional)</label>
+      <textarea id="edit-reg-obs" placeholder="Observação..." style="margin-bottom:0;"></textarea>
+    </div>
+    <div class="modal-btns" style="margin-top:16px;">
+      <button class="btn-outline btn-sm" onclick="fecharModalEditRegistro()">Cancelar</button>
+      <button class="btn-primary btn-sm" id="edit-reg-save-btn" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;">✓ Salvar</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-msg" id="modal-msg"></div>
+    <div class="modal-btns">
+      <button class="btn-outline btn-sm" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-danger btn-sm" id="modal-confirm-btn">Confirmar</button>
+    </div>
   </div>
 </div>
 
@@ -218,14 +461,30 @@
 const SUPA_URL = 'https://gehccrknzobcurclbnpt.supabase.co/rest/v1';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlaGNjcmtuem9iY3VyY2xibnB0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTA1ODksImV4cCI6MjA5NDg2NjU4OX0.7cb1EbKn_XtOTM6PkxxoktQV7qGtYQ7kd_okJ9jhUVA';
 const HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+const HEADERS_DELETE = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
 
 async function api(path, method='GET', body=null) {
-  const opts = { method, headers: HEADERS };
+  const headers = (method === 'DELETE') ? HEADERS_DELETE : HEADERS;
+  const opts = { method, headers };
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch(SUPA_URL + path, opts);
-  if (!r.ok) throw new Error(await r.text());
-  if (r.status === 204) return null;
+  if (!r.ok) {
+    const errText = await r.text();
+    console.error('Supabase error:', method, path, r.status, errText);
+    throw new Error(errText);
+  }
+  if (r.status === 204 || method === 'DELETE') return null;
   return r.json();
+}
+
+// Função de diagnóstico — chame testarDelete() no console do navegador para ver o erro real
+async function testarDelete() {
+  const url = SUPA_URL + '/historico_funcoes?id=eq.00000000-0000-0000-0000-000000000000';
+  const r = await fetch(url, { method: 'DELETE', headers: HEADERS_DELETE });
+  console.log('Status DELETE:', r.status, r.statusText);
+  const body = await r.text();
+  console.log('Resposta:', body);
+  alert('Status: ' + r.status + '\n' + body);
 }
 
 function toast(msg, err=false) {
@@ -246,12 +505,13 @@ function formatarData(d) {
 }
 
 let coroinhas = [];
+let adminDesbloqueado = false;
+let pinAtual = '';
 
 async function carregarCoroinhas() {
   try {
     coroinhas = await api('/coroinhas?order=nome');
     renderLista();
-    renderCheckCoroinhas();
   } catch(e) {
     document.getElementById('lista-container').innerHTML = '<div class="empty"><div class="empty-icon">⚠</div><p>Erro ao carregar. Verifique sua conexão.</p></div>';
   }
@@ -292,8 +552,8 @@ function renderLista(filtro='') {
     lista.sort((a, b) => ordemNomeAsc ? a.nome.localeCompare(b.nome) : b.nome.localeCompare(a.nome));
   } else {
     lista.sort((a, b) => {
-      const ia = a.idade || calcularIdade(a.data_nascimento) || 999;
-      const ib = b.idade || calcularIdade(b.data_nascimento) || 999;
+      const ia = calcularIdade(a.data_nascimento) || 999;
+      const ib = calcularIdade(b.data_nascimento) || 999;
       return ordemIdadeAsc ? ia - ib : ib - ia;
     });
   }
@@ -302,12 +562,13 @@ function renderLista(filtro='') {
     return;
   }
   el.innerHTML = lista.map(c => {
-    const idade = c.idade || calcularIdade(c.data_nascimento);
+    const idade = calcularIdade(c.data_nascimento);
+    const cargoBadge = c.cargo ? `<span class="badge" style="margin-left:6px;font-size:10px;">${c.cargo}</span>` : '';
     return `
     <div class="coroinha-item" onclick="abrirDetalhe('${c.id}','${c.nome.replace(/'/g,"\\'")}',${idade||'null'})">
       <div class="avatar">${iniciais(c.nome)}</div>
       <div class="coroinha-info">
-        <div class="coroinha-nome">${c.nome}</div>
+        <div class="coroinha-nome" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">${c.nome}${cargoBadge}</div>
         <div class="coroinha-sub">${idade ? idade + ' anos' : ''}</div>
       </div>
       <span class="chevron">›</span>
@@ -484,32 +745,37 @@ function fecharDetalhe() {
 async function cadastrarCoroinha() {
   const nome = document.getElementById('cad-nome').value.trim();
   const nasc = document.getElementById('cad-nasc').value;
+  const cargoSel = document.getElementById('cad-cargo').value;
+  const cargo = cargoSel === '__custom__'
+    ? document.getElementById('cad-cargo-custom').value.trim()
+    : cargoSel;
   if (!nome) { toast('Informe o nome do coroinha', true); return; }
-  const idade = calcularIdade(nasc);
   try {
-    await api('/coroinhas', 'POST', { nome, idade: idade || null, data_nascimento: nasc || null });
+    await api('/coroinhas', 'POST', { nome, data_nascimento: nasc || null, cargo: cargo || null });
     toast('Coroinha cadastrado!');
     document.getElementById('cad-nome').value = '';
     document.getElementById('cad-nasc').value = '';
+    document.getElementById('cad-cargo').value = '';
+    document.getElementById('cad-cargo-custom').value = '';
+    document.getElementById('cad-cargo-custom-wrap').style.display = 'none';
     carregarCoroinhas();
   } catch(e) { toast('Erro ao salvar. Tente novamente.', true); }
 }
+
+document.getElementById('cad-cargo').addEventListener('change', function() {
+  document.getElementById('cad-cargo-custom-wrap').style.display = this.value === '__custom__' ? 'block' : 'none';
+});
 
 async function registrarFuncao() {
   const coroinhasSel = [...document.querySelectorAll('#lista-check-coroinhas input:checked')].map(cb => cb.value);
   const funcoesSel = [...document.querySelectorAll('.funcao-chip input:checked')].map(cb => cb.value);
   const data_missa = document.getElementById('func-data').value;
   const observacao = document.getElementById('func-obs').value.trim();
-  let horario = document.getElementById('func-horario').value;
-  if (horario === 'Missa Especial') {
-    const esp = document.getElementById('func-missa-especial').value.trim();
-    horario = esp ? 'Especial: ' + esp : 'Missa Especial';
-  }
+  const horario = document.getElementById('func-horario').value;
 
   if (!coroinhasSel.length) { toast('Selecione ao menos um coroinha', true); return; }
   if (!funcoesSel.length) { toast('Selecione ao menos uma função', true); return; }
-  if (!horario) { toast('Selecione o horário da missa', true); return; }
-  if (!data_missa) { toast('Informe a data da missa', true); return; }
+  if (!horario) { toast('Selecione a missa da escala primeiro', true); return; }
 
   const funcao = funcoesSel.join(', ');
   try {
@@ -524,11 +790,124 @@ async function registrarFuncao() {
     document.getElementById('cnt-coroinhas').style.display = 'none';
     document.getElementById('cnt-funcoes').style.display = 'none';
     document.getElementById('func-obs').value = '';
-    document.getElementById('func-horario').value = '';
-    document.getElementById('campo-missa-especial').style.display = 'none';
-    document.getElementById('func-missa-especial').value = '';
+
   } catch(e) { toast('Erro ao registrar. Tente novamente.', true); }
 }
+
+// ===================== REGISTRAR FUNÇÃO — COROINHAS DA ESCALA =====================
+
+async function popularSelectEscala() {
+  const sel = document.getElementById('func-escala-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Selecione a missa...</option>';
+
+  try {
+    // Pega semanas recentes (últimas 4)
+    const semanas = [];
+    const agora = new Date();
+    for (let i = 0; i < 4; i++) {
+      const d = new Date(agora);
+      d.setDate(agora.getDate() - i * 7);
+      const key = getSemanaKey(d);
+      if (!semanas.includes(key)) semanas.push(key);
+    }
+
+    const dados = await api('/escala_inscricoes?semana_key=in.(' + semanas.join(',') + ')&order=semana_key.desc,created_at.asc');
+
+    // Agrupa por semana+horario
+    const opcoes = {};
+    dados.forEach(r => {
+      const chave = r.semana_key + '|' + r.horario;
+      if (!opcoes[chave]) opcoes[chave] = { semana_key: r.semana_key, horario: r.horario, ids: [] };
+      opcoes[chave].ids.push(r.coroinha_id);
+    });
+
+    if (!Object.keys(opcoes).length) {
+      sel.innerHTML = '<option value="">Nenhuma escala disponível</option>';
+      return;
+    }
+
+    // Ordena por semana desc, depois por ordem das missas
+    const ordemMissas = { 'Sábado 17h': 0, 'Domingo 7h': 1, 'Domingo 9h': 2, 'Domingo 17h': 3 };
+    const lista = Object.values(opcoes).sort((a, b) => {
+      if (b.semana_key !== a.semana_key) return b.semana_key.localeCompare(a.semana_key);
+      return (ordemMissas[a.horario] ?? 99) - (ordemMissas[b.horario] ?? 99);
+    });
+
+    // Monta datas legíveis
+    lista.forEach(op => {
+      const datas = datasSemanaMissa(op.semana_key);
+      const dataLegivel = datas[op.horario] || op.semana_key;
+      const label = op.horario + ' — ' + dataLegivel + ' (' + op.ids.length + ' inscrito' + (op.ids.length !== 1 ? 's' : '') + ')';
+      const opt = document.createElement('option');
+      opt.value = JSON.stringify({ semana_key: op.semana_key, horario: op.horario, ids: op.ids });
+      opt.textContent = label;
+      sel.appendChild(opt);
+    });
+
+  } catch(e) {
+    sel.innerHTML = '<option value="">Erro ao carregar escalas</option>';
+    console.error(e);
+  }
+}
+
+function carregarCoroinhasEscala() {
+  const sel = document.getElementById('func-escala-select');
+  const statusEl = document.getElementById('escala-funcao-status');
+  const listaEl = document.getElementById('lista-check-coroinhas');
+  const cntEl = document.getElementById('cnt-coroinhas');
+
+  // Reseta seleção anterior
+  listaEl.style.display = 'none';
+  statusEl.style.display = 'none';
+  listaEl.innerHTML = '';
+  cntEl.style.display = 'none';
+  cntEl.textContent = '';
+
+  if (!sel.value) return;
+
+  let opcao;
+  try { opcao = JSON.parse(sel.value); } catch(e) { return; }
+
+  const { horario, ids, semana_key } = opcao;
+
+  // Preenche o horário automaticamente
+  const horSel = document.getElementById('func-horario');
+  const horariosFixos = ['Sábado 17h','Domingo 7h','Domingo 9h','Domingo 17h'];
+  if (horariosFixos.includes(horario)) {
+    horSel.value = horario;
+    document.getElementById('campo-missa-especial').style.display = 'none';
+  }
+
+  // Preenche a data automaticamente
+  const datas = datasSemanaMissa(semana_key);
+  const dataStr = datas[horario]; // formato DD/MM/YYYY
+  if (dataStr) {
+    const [dia, mes, ano] = dataStr.split('/');
+    document.getElementById('func-data').value = `${ano}-${mes}-${dia}`;
+  }
+
+  const coroinhasDaMissa = coroinhas.filter(c => ids.includes(c.id));
+
+  if (!coroinhasDaMissa.length) {
+    statusEl.textContent = 'Nenhum coroinha inscrito nesta missa.';
+    statusEl.style.display = 'block';
+    return;
+  }
+
+  listaEl.innerHTML = coroinhasDaMissa
+    .sort((a, b) => a.nome.localeCompare(b.nome))
+    .map(c => `
+      <label class="check-item" onclick="atualizarCheckCoroinha(this)">
+        <input type="checkbox" value="${c.id}">
+        <span class="check-nome">${c.nome}</span>
+      </label>
+    `).join('');
+
+  listaEl.style.display = 'block';
+}
+
+// ===================== FIM REGISTRAR FUNÇÃO ESCALA =====================
 
 function toggleMissaEspecial() {
   const val = document.getElementById('func-horario').value;
@@ -604,10 +983,94 @@ async function carregarStats() {
       return `<div class="stat-row"><span class="stat-label">${nome}</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round(v/cMax*100)}%"></div></div><span class="stat-count">${v}</span></div>`;
     }).join('') : '<div class="stat-empty">Sem registros no período.</div>';
 
+    // Tempo sem servir — só exibe no modo "Tudo"
+    document.getElementById('stat-inativos').parentElement.style.display = statMesOffset === -1 ? 'block' : 'none';
+    if (statMesOffset === -1) try {
+      const histTudo = await api('/historico_funcoes?select=coroinha_id,data_missa&order=data_missa.desc');
+      const ultimaData = {};
+      histTudo.forEach(h => {
+        if (!ultimaData[h.coroinha_id]) ultimaData[h.coroinha_id] = h.data_missa;
+      });
+
+      const hoje = new Date();
+      const CARGOS_EQUIPE = ['equipe', 'coordenador', 'vice-coordenador', 'vice coordenador', 'cerimonário', 'cerimonario'];
+      const ehEquipe = c => c.cargo && CARGOS_EQUIPE.some(k => c.cargo.toLowerCase().includes(k));
+
+      const lista = coroinhas
+        .filter(c => !ehEquipe(c))
+        .map(c => {
+          const ultima = ultimaData[c.id];
+          const dias = ultima
+            ? Math.floor((hoje - new Date(ultima + 'T12:00:00')) / 86400000)
+            : null;
+          return { nome: c.nome, dias, ultima };
+        })
+        .filter(x => x.dias === null || x.dias >= 11)
+        .sort((a, b) => {
+          // Quem nunca serviu vai para o final
+          if (a.dias === null && b.dias === null) return a.nome.localeCompare(b.nome);
+          if (a.dias === null) return 1;
+          if (b.dias === null) return -1;
+          return b.dias - a.dias;
+        });
+
+      const maxDias = Math.max(...lista.map(x => x.dias || 0), 1);
+
+      const cor = dias => {
+        if (dias === null) return '#ccc';
+        if (dias <= 14) return '#5aac7a';   // verde — serviu recentemente
+        if (dias <= 30) return '#C9A84C';   // dourado — um mês
+        if (dias <= 60) return '#d4813a';   // laranja — dois meses
+        return '#9B3A3A';                   // vermelho — mais de dois meses
+      };
+
+      const label = dias => {
+        if (dias === null) return 'nunca serviu';
+        const sem = Math.floor(dias / 7);
+        if (sem === 0) return 'esta semana';
+        if (sem === 1) return '1 semana';
+        return sem + ' semanas';
+      };
+
+      // ordenar por semanas
+      lista.forEach(x => { x.semanas = x.dias !== null ? Math.floor(x.dias / 7) : null; });
+      lista.sort((a, b) => {
+        if (a.semanas === null && b.semanas === null) return a.nome.localeCompare(b.nome);
+        if (a.semanas === null) return 1;
+        if (b.semanas === null) return -1;
+        return b.semanas - a.semanas;
+      });
+      const maxSem = Math.max(...lista.map(x => x.semanas || 0), 1);
+
+      document.getElementById('stat-inativos').innerHTML = lista.length ? lista.map(x => `
+        <div class="stat-row" style="margin-bottom:12px;">
+          <span class="stat-label" style="min-width:130px;">${x.nome}</span>
+          <div class="stat-bar-wrap">
+            <div class="stat-bar" style="width:${x.semanas !== null ? Math.round(x.semanas/maxSem*100) : 100}%;"></div>
+          </div>
+          <span class="stat-count" style="min-width:72px;text-align:right;">${label(x.dias)}</span>
+        </div>`).join('')
+        : '<div class="stat-empty">Nenhum coroinha cadastrado.</div>';
+    } catch(e) {
+      document.getElementById('stat-inativos').innerHTML = '<div class="stat-empty">Erro ao carregar.</div>';
+    }
+
   } catch(e) {
     document.getElementById('stat-horarios-container').innerHTML = '<div class="card" style="margin-bottom:12px;"><div class="stat-empty">Erro ao carregar.</div></div>';
     document.getElementById('stat-coroinhas').innerHTML = '<div class="stat-empty">Erro ao carregar.</div>';
   }
+}
+
+function showAdminTab(tab, btn) {
+  document.querySelectorAll('.admin-subpage').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
+  document.querySelectorAll('.admin-subtab').forEach(t => t.classList.remove('active'));
+  const el = document.getElementById('admin-sub-' + tab);
+  if (el) { el.style.display = 'block'; el.classList.add('active'); }
+  if (btn) btn.classList.add('active');
+  if (tab === 'gerenciar') renderAdminLista();
+  if (tab === 'stats') carregarStats();
+  if (tab === 'funcao') popularSelectEscala();
+  if (tab === 'escala-admin') carregarEscalaAdmin();
 }
 
 function showTab(tab, btn) {
@@ -616,11 +1079,1069 @@ function showTab(tab, btn) {
   document.getElementById('page-' + tab).classList.add('active');
   btn.classList.add('active');
   if (tab === 'historico') fecharDetalhe();
-  if (tab === 'stats') carregarStats();
+  if (tab === 'escala') carregarEscala();
+  if (tab === 'admin') {
+    if (!adminDesbloqueado) {
+      document.getElementById('admin-pin-screen').style.display = 'block';
+      document.getElementById('admin-painel').style.display = 'none';
+      pinAtual = '';
+      atualizarDots();
+      document.getElementById('pin-erro').textContent = '';
+    } else {
+      document.getElementById('admin-pin-screen').style.display = 'none';
+      document.getElementById('admin-painel').style.display = 'block';
+    }
+  }
 }
 
-document.getElementById('func-data').value = new Date().toISOString().split('T')[0];
 carregarCoroinhas();
+
+// ===================== LIMPEZA AUTOMÁTICA =====================
+// Apaga registros de historico_funcoes com mais de 3 meses ao iniciar
+async function limparHistoricoAntigo() {
+  try {
+    const hoje = new Date();
+    const limite = new Date(hoje);
+    limite.setMonth(hoje.getMonth() - 3);
+    const pad = n => String(n).padStart(2,'0');
+    const dataLimite = `${limite.getFullYear()}-${pad(limite.getMonth()+1)}-${pad(limite.getDate())}`;
+    await api('/historico_funcoes?data_missa=lt.' + dataLimite, 'DELETE');
+  } catch(e) { /* silencioso — não interfere no uso */ }
+}
+limparHistoricoAntigo();
+// ===================== FIM LIMPEZA =====================
+
+// ===================== ESCALA =====================
+// Regras:
+// - Semana começa sexta-feira às 15h e termina sábado às 15h (inscrições abertas nesse período)
+// - Reinicia toda sexta-feira às 15h
+// - Cada pessoa só pode se inscrever uma vez por semana (em qualquer missa)
+// - Limite de 7 pessoas por missa
+// - Após inscrição, não pode ser alterada
+
+const MISSAS = ['Sábado 17h', 'Domingo 7h', 'Domingo 9h', 'Domingo 17h'];
+const LIMITE_MISSA = 7;
+
+// Retorna a hora atual no fuso de Brasília (UTC-3) como objeto com dow, h, min
+function agoraBrasilia() {
+  const agora = new Date();
+  // UTC-3: subtrai 3 horas
+  const brasilia = new Date(agora.getTime() - 3 * 60 * 60 * 1000);
+  return {
+    dow: brasilia.getUTCDay(),
+    h: brasilia.getUTCHours(),
+    min: brasilia.getUTCMinutes(),
+    date: brasilia
+  };
+}
+
+// Retorna a chave da semana atual (sexta 15h → próxima sexta 14h59) — baseado em Brasília (UTC-3)
+function getSemanaKey(date) {
+  let br;
+  if (date) {
+    const d = new Date(date);
+    const brasilia = new Date(d.getTime() - 3 * 60 * 60 * 1000);
+    br = { dow: brasilia.getUTCDay(), h: brasilia.getUTCHours(), date: brasilia };
+  } else {
+    br = agoraBrasilia();
+  }
+  const dow = br.dow;
+  let diffParaSexta = (dow - 5 + 7) % 7;
+  if (dow === 5 && br.h < 15) diffParaSexta = 7; // sexta antes das 15h ainda é semana anterior
+  const sexta = new Date(br.date);
+  sexta.setUTCDate(br.date.getUTCDate() - diffParaSexta);
+  const y = sexta.getUTCFullYear();
+  const m = String(sexta.getUTCMonth()+1).padStart(2,'0');
+  const day = String(sexta.getUTCDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+// Verifica se inscrições estão abertas (sexta 15h até sábado 15h) — horário de Brasília (UTC-3)
+function inscricoesAbertas() {
+  const { dow, h, min } = agoraBrasilia();
+  const totalMin = h * 60 + min;
+  if (dow === 5 && totalMin >= 15*60) return true;  // sexta >= 15h Brasília
+  if (dow === 6 && totalMin < 15*60) return true;   // sábado < 15h Brasília
+  return false;
+}
+
+// Datas das missas da semana (a partir da sexta)
+function datasSemanaMissa(semanaKey) {
+  // semanaKey é a sexta-feira no formato YYYY-MM-DD
+  const sexta = new Date(semanaKey + 'T12:00:00');
+  const sabado = new Date(sexta); sabado.setDate(sexta.getDate() + 1);
+  const domingo = new Date(sexta); domingo.setDate(sexta.getDate() + 2);
+  const pad = n => String(n).padStart(2,'0');
+  const fmt = d => `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+  return {
+    'Sábado 17h':  fmt(sabado),
+    'Domingo 7h':  fmt(domingo),
+    'Domingo 9h':  fmt(domingo),
+    'Domingo 17h': fmt(domingo),
+  };
+}
+
+let escalaModalHorario = null;
+let escalaModalSemana = null;
+let escalaCache = {}; // semanaKey → { horario → [inscricoes] }
+
+function msgEscalaFechada() {
+  const { dow, h: hBr, min: minBr } = agoraBrasilia();
+  let msg = '', detalhe = '';
+  if (dow === 6 && hBr >= 15) {
+    msg = 'Inscrições encerradas';
+    detalhe = 'As inscrições para esta semana foram encerradas. Voltam na próxima sexta às 15h.';
+  } else if (dow === 5 && hBr < 15) {
+    const minRestantes = 15*60 - (hBr*60 + minBr);
+    const h = Math.floor(minRestantes/60), m = minRestantes % 60;
+    msg = 'Escala ainda não aberta';
+    detalhe = `As inscrições abrem hoje às 15h (faltam ${h > 0 ? h+'h' : ''}${m > 0 ? m+'min' : ''}).`;
+  } else {
+    msg = 'Escala fechada';
+    detalhe = 'As inscrições ficam abertas toda sexta-feira às 15h até sábado às 15h (horário de Brasília).';
+  }
+  return `<div style="text-align:center;padding:32px 20px;">
+    
+    <div style="font-family:'Playfair Display',serif;font-size:17px;color:var(--brown-dark);margin-bottom:8px;">${msg}</div>
+    <div style="font-size:13px;color:var(--text-muted);line-height:1.6;">${detalhe}</div>
+  </div>`;
+}
+
+async function carregarEscala() {
+  // Fora do horário: mostra mensagem sem carregar o banco
+  if (!inscricoesAbertas()) {
+    document.getElementById('escala-semana-atual').innerHTML = msgEscalaFechada();
+    return;
+  }
+
+  try {
+    // Carrega semana atual e últimas 4 semanas
+    const semanas = [];
+    const agora = new Date();
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(agora);
+      d.setDate(agora.getDate() - i * 7);
+      const key = getSemanaKey(d);
+      if (!semanas.includes(key)) semanas.push(key);
+    }
+
+    // Busca todas as inscrições dessas semanas
+    const semanaAtual = getSemanaKey();
+    const dadosEscala = await api('/escala_inscricoes?semana_key=in.(' + semanas.join(',') + ')&order=created_at.asc');
+
+    // Agrupa por semana e horário
+    escalaCache = {};
+    dadosEscala.forEach(row => {
+      if (!escalaCache[row.semana_key]) escalaCache[row.semana_key] = {};
+      if (!escalaCache[row.semana_key][row.horario]) escalaCache[row.semana_key][row.horario] = [];
+      escalaCache[row.semana_key][row.horario].push(row);
+    });
+
+    renderEscalaSemana(semanaAtual, true);
+  } catch(e) {
+    document.getElementById('escala-semana-atual').innerHTML =
+      '<div class="empty"><div class="empty-icon">⚠</div><p>Erro ao carregar escala. Verifique sua conexão.</p></div>';
+    console.error(e);
+  }
+}
+
+function renderEscalaSemana(semanaKey, isAtual) {
+  const datas = datasSemanaMissa(semanaKey);
+  const aberta = isAtual && inscricoesAbertas();
+  const dados = escalaCache[semanaKey] || {};
+
+  const sexta = new Date(semanaKey + 'T12:00:00');
+  const sabado = new Date(sexta); sabado.setDate(sexta.getDate() + 1);
+  const domingo = new Date(sexta); domingo.setDate(sexta.getDate() + 2);
+  const pad = n => String(n).padStart(2,'0');
+  const fmtFull = d => `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+
+  let statusHtml = '';
+  if (isAtual) {
+    if (aberta) {
+      statusHtml = `<div style="background:#d4edda;border:1px solid #a3d9a5;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#276130;font-weight:500;">
+        Inscrições abertas — até sábado às 15h
+      </div>`;
+    } else {
+      const { dow, h: hBr, min: minBr } = agoraBrasilia();
+      let msg = '';
+      if (dow === 6 && hBr >= 15) msg = 'Inscrições encerradas para esta semana.';
+      else if (dow === 0 || (dow >= 1 && dow <= 4)) msg = 'Inscrições abrem na próxima sexta às 15h.';
+      else if (dow === 5 && hBr < 15) {
+        const minRestantes = 15*60 - (hBr*60 + minBr);
+        const h = Math.floor(minRestantes/60), m = minRestantes % 60;
+        msg = `Inscrições abrem em ${h}h${m > 0 ? m+'min' : ''}.`;
+      }
+      statusHtml = `<div style="background:var(--gold-pale);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--text-muted);">
+        🔒 ${msg}
+      </div>`;
+    }
+  }
+
+  const blocos = MISSAS.map(horario => {
+    const todos = dados[horario] || [];
+    const inscritos = todos.filter(r => !r.is_equipe);   // coroinhas normais
+    const equipe   = todos.filter(r => r.is_equipe);     // membros da equipe (não contam no limite)
+    const cheio = inscritos.length >= LIMITE_MISSA;
+    const podeInscrever = aberta && !cheio;
+
+    const renderLinha = (r, isEquipeMembro) => {
+      const c = coroinhas.find(x => x.id === r.coroinha_id);
+      const badge = isEquipeMembro
+        ? `<span style="font-size:10px;font-weight:600;background:var(--brown-dark);color:var(--gold-light);padding:2px 7px;border-radius:50px;margin-left:6px;">equipe</span>`
+        : '';
+      return `<div class="escala-inscrito">
+        <div class="avatar" style="width:32px;height:32px;font-size:13px;">${iniciais(c ? c.nome : '?')}</div>
+        <span class="escala-inscrito-nome">${c ? c.nome : 'Desconhecido'}${badge}</span>
+      </div>`;
+    };
+
+    const listaNomes = (inscritos.length || equipe.length)
+      ? [...inscritos.map(r => renderLinha(r, false)), ...equipe.map(r => renderLinha(r, true))].join('')
+      : `<div class="escala-vazio">Nenhum inscrito ainda.</div>`;
+
+    const rodape = podeInscrever
+      ? `<div class="escala-footer">
+           <button class="btn btn-primary" style="margin-top:0;padding:10px;" onclick="abrirModalEscala('${horario}','${semanaKey}')">
+             + Inscrever-se (${inscritos.length}/${LIMITE_MISSA})
+           </button>
+         </div>`
+      : `<div class="escala-footer" style="display:flex;align-items:center;justify-content:space-between;">
+           <span style="font-size:12px;color:var(--text-muted);">${inscritos.length}/${LIMITE_MISSA} inscritos</span>
+           ${cheio ? '<span style="font-size:12px;font-weight:600;color:var(--danger);">✕ Lotado</span>' : ''}
+         </div>`;
+
+    return `<div class="escala-horario">
+      <div class="escala-horario-header">
+        <span class="escala-horario-titulo">${horario}</span>
+        <span class="escala-horario-data">${datas[horario]}</span>
+      </div>
+      ${listaNomes}
+      ${rodape}
+    </div>`;
+  }).join('');
+
+  if (isAtual) {
+    document.getElementById('escala-semana-atual').innerHTML =
+      `<div class="semana-badge">Semana atual · ${fmtFull(sabado)} – ${fmtFull(domingo)}</div>` +
+      statusHtml + blocos;
+  }
+  return blocos;
+}
+
+function renderEscalaAnteriores(semanas) {
+  const el = document.getElementById('escala-anteriores');
+  const comDados = semanas.filter(s => escalaCache[s] && Object.keys(escalaCache[s]).length > 0);
+  if (!comDados.length) {
+    el.innerHTML = '<div class="empty" style="padding:20px 0;"><p style="font-size:13px;">Nenhuma semana anterior registrada.</p></div>';
+    return;
+  }
+  el.innerHTML = comDados.map(semanaKey => {
+    const sexta = new Date(semanaKey + 'T12:00:00');
+    const sabado = new Date(sexta); sabado.setDate(sexta.getDate() + 1);
+    const domingo = new Date(sexta); domingo.setDate(sexta.getDate() + 2);
+    const pad = n => String(n).padStart(2,'0');
+    const fmtFull = d => `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+    const datas = datasSemanaMissa(semanaKey);
+    const dados = escalaCache[semanaKey] || {};
+
+    const blocos = MISSAS.map(horario => {
+      const inscritos = dados[horario] || [];
+      if (!inscritos.length) return '';
+      const nomes = inscritos.map(r => {
+        const c = coroinhas.find(x => x.id === r.coroinha_id);
+        return `<div class="escala-inscrito">
+          <div class="avatar" style="width:32px;height:32px;font-size:13px;">${iniciais(c ? c.nome : '?')}</div>
+          <span class="escala-inscrito-nome">${c ? c.nome : 'Desconhecido'}</span>
+        </div>`;
+      }).join('');
+      return `<div class="escala-horario" style="opacity:0.85;">
+        <div class="escala-horario-header">
+          <span class="escala-horario-titulo">${horario}</span>
+          <span class="escala-horario-data">${datas[horario]}</span>
+        </div>
+        ${nomes}
+        <div class="escala-footer"><span style="font-size:12px;color:var(--text-muted);">${inscritos.length} inscrito(s)</span></div>
+      </div>`;
+    }).filter(Boolean).join('');
+
+    return `<div style="margin-bottom:20px;">
+      <div class="semana-badge" style="background:var(--brown-mid);">${fmtFull(sabado)} – ${fmtFull(domingo)}</div>
+      ${blocos || '<div class="empty" style="padding:10px 0;"><p style="font-size:13px;">Sem inscrições.</p></div>'}
+    </div>`;
+  }).join('');
+}
+
+async function abrirModalEscala(horario, semanaKey) {
+  if (!inscricoesAbertas()) { toast('Inscrições encerradas.', true); return; }
+  const dados = escalaCache[semanaKey] || {};
+  const todos = dados[horario] || [];
+  const inscritos = todos.filter(r => !r.is_equipe);
+  if (inscritos.length >= LIMITE_MISSA) { toast('Esta missa já está lotada!', true); return; }
+
+  const jaInscritos = new Set(todos.map(r => r.coroinha_id));
+
+  // Busca quem serviu no mesmo horário na semana anterior (via historico_funcoes)
+  const serviramSemPassada = new Set();
+  try {
+    const sexta = new Date(semanaKey + 'T12:00:00');
+    const sextaAnt = new Date(sexta); sextaAnt.setDate(sexta.getDate() - 7);
+    const datasAnt = datasSemanaMissa(sextaAnt.toISOString().split('T')[0]);
+    const dataHorarioAnt = datasAnt[horario];
+    if (dataHorarioAnt) {
+      const [dia, mes, ano] = dataHorarioAnt.split('/');
+      const dataISO = `${ano}-${mes}-${dia}`;
+      const hist = await api('/historico_funcoes?data_missa=eq.' + dataISO + '&horario=eq.' + encodeURIComponent(horario));
+      hist.forEach(h => serviramSemPassada.add(h.coroinha_id));
+    }
+  } catch(e) { /* se falhar, não bloqueia ninguém */ }
+
+  escalaModalHorario = horario;
+  escalaModalSemana = semanaKey;
+
+  document.getElementById('modal-escala-titulo').textContent = horario;
+  const sel = document.getElementById('modal-escala-nome');
+  const CARGOS_EQUIPE = ['equipe', 'coordenador', 'vice-coordenador', 'vice coordenador', 'cerimonário', 'cerimonario'];
+  const ehEquipe = c => c.cargo && CARGOS_EQUIPE.some(k => c.cargo.toLowerCase().includes(k));
+
+  sel.innerHTML = '<option value="">Selecione seu nome...</option>' +
+    coroinhas
+      .filter(c => !jaInscritos.has(c.id) && !ehEquipe(c))
+      .sort((a,b) => a.nome.localeCompare(b.nome))
+      .map(c => {
+        const bloqueado = serviramSemPassada.has(c.id);
+        return `<option value="${c.id}" ${bloqueado ? 'disabled' : ''}>${c.nome}${bloqueado ? ' — serviu semana passada' : ''}</option>`;
+      })
+      .join('');
+
+  if (sel.querySelectorAll('option:not([disabled])').length <= 1) {
+    toast('Todos os coroinhas disponíveis já estão inscritos nesta missa.', true);
+    return;
+  }
+
+  document.getElementById('modal-escala').style.display = 'flex';
+}
+
+function fecharModalEscala() {
+  document.getElementById('modal-escala').style.display = 'none';
+  escalaModalHorario = null;
+  escalaModalSemana = null;
+}
+
+async function confirmarInscricaoEscala() {
+  const coroinhaId = document.getElementById('modal-escala-nome').value;
+  if (!coroinhaId) { toast('Selecione um nome.', true); return; }
+  if (!inscricoesAbertas()) { toast('Inscrições encerradas.', true); fecharModalEscala(); return; }
+
+  const semanaKey = escalaModalSemana;
+  const horario = escalaModalHorario;
+  const dados = escalaCache[semanaKey] || {};
+  const todos = dados[horario] || [];
+  const inscritos = todos.filter(r => !r.is_equipe);
+
+  if (inscritos.length >= LIMITE_MISSA) { toast('Esta missa já está lotada!', true); fecharModalEscala(); return; }
+
+  // Verifica se já está inscrito NESTA missa específica
+  const jaInscrito = todos.some(r => r.coroinha_id === coroinhaId);
+  if (jaInscrito) {
+    const c = coroinhas.find(x => x.id === coroinhaId);
+    toast((c ? c.nome : 'Este coroinha') + ' já está inscrito nesta missa.', true);
+    fecharModalEscala();
+    return;
+  }
+
+  // Verifica se serviu no mesmo horário na semana anterior
+  try {
+    const sexta = new Date(semanaKey + 'T12:00:00');
+    const sextaAnt = new Date(sexta); sextaAnt.setDate(sexta.getDate() - 7);
+    const datasAnt = datasSemanaMissa(sextaAnt.toISOString().split('T')[0]);
+    const dataHorarioAnt = datasAnt[horario];
+    if (dataHorarioAnt) {
+      const [dia, mes, ano] = dataHorarioAnt.split('/');
+      const dataISO = `${ano}-${mes}-${dia}`;
+      const hist = await api('/historico_funcoes?data_missa=eq.' + dataISO + '&horario=eq.' + encodeURIComponent(horario) + '&coroinha_id=eq.' + coroinhaId);
+      if (hist && hist.length > 0) {
+        const c = coroinhas.find(x => x.id === coroinhaId);
+        toast((c ? c.nome : 'Este coroinha') + ' serviu nesta missa na semana passada.', true);
+        fecharModalEscala();
+        return;
+      }
+    }
+  } catch(e) { /* se falhar, permite a inscrição */ }
+
+  try {
+    const resultado = await api('/escala_inscricoes', 'POST', {
+      semana_key: semanaKey,
+      horario,
+      coroinha_id: coroinhaId
+    });
+
+    // Atualiza cache local
+    if (!escalaCache[semanaKey]) escalaCache[semanaKey] = {};
+    if (!escalaCache[semanaKey][horario]) escalaCache[semanaKey][horario] = [];
+    escalaCache[semanaKey][horario].push(resultado[0] || { semana_key: semanaKey, horario, coroinha_id: coroinhaId });
+
+    fecharModalEscala();
+    const c = coroinhas.find(x => x.id === coroinhaId);
+    toast('✓ ' + (c ? c.nome : 'Coroinha') + ' inscrito(a) em ' + horario + '!');
+    renderEscalaSemana(semanaKey, true);
+  } catch(e) {
+    toast('Erro ao inscrever. Tente novamente.', true);
+    console.error(e);
+  }
+}
+
+document.getElementById('modal-escala').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalEscala();
+});
+
+// ===================== ESCALA ADMIN =====================
+
+let escalaAdminSemanaOffset = 0;
+let escalaAdminCache = {}; // semanaKey → { horario → [rows] }
+let equipeModalHorario = null;
+let equipeModalSemana = null;
+
+function setEscalaAdminSemana(offset) {
+  escalaAdminSemanaOffset = offset;
+  document.getElementById('escala-admin-semana-btn').classList.toggle('active', offset === 0);
+  document.getElementById('escala-admin-ant-btn').classList.toggle('active', offset === 1);
+  carregarEscalaAdmin();
+}
+
+async function carregarEscalaAdmin() {
+  const el = document.getElementById('escala-admin-container');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>';
+
+  try {
+    const agora = new Date();
+    const ref = new Date(agora);
+    ref.setDate(agora.getDate() - escalaAdminSemanaOffset * 7);
+    const semanaKey = getSemanaKey(ref);
+
+    const inscricoes = await api('/escala_inscricoes?semana_key=eq.' + semanaKey + '&order=created_at.asc');
+
+    // Agrupa por horário
+    escalaAdminCache[semanaKey] = {};
+    inscricoes.forEach(r => {
+      if (!escalaAdminCache[semanaKey][r.horario]) escalaAdminCache[semanaKey][r.horario] = [];
+      escalaAdminCache[semanaKey][r.horario].push(r);
+    });
+
+    // Busca funções registradas da semana
+    const datas = datasSemanaMissa(semanaKey);
+    const datasISO = [...new Set(Object.values(datas))].map(d => {
+      const [dia, mes, ano] = d.split('/'); return `${ano}-${mes}-${dia}`;
+    });
+    let historico = [];
+    try { historico = await api('/historico_funcoes?data_missa=in.(' + datasISO.join(',') + ')'); } catch(e) {}
+
+    renderEscalaAdmin(semanaKey, datas, historico);
+  } catch(e) {
+    document.getElementById('escala-admin-container').innerHTML =
+      '<div class="empty"><div class="empty-icon">⚠</div><p>Erro ao carregar.</p></div>';
+    console.error(e);
+  }
+}
+
+function renderEscalaAdmin(semanaKey, datas, historico) {
+  const el = document.getElementById('escala-admin-container');
+  const dados = escalaAdminCache[semanaKey] || {};
+
+  const sexta = new Date(semanaKey + 'T12:00:00');
+  const sabado = new Date(sexta); sabado.setDate(sexta.getDate() + 1);
+  const domingo = new Date(sexta); domingo.setDate(sexta.getDate() + 2);
+  const pad = n => String(n).padStart(2,'0');
+  const fmtFull = d => `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+
+  let html = `<div class="semana-badge" style="${escalaAdminSemanaOffset > 0 ? 'background:var(--brown-mid);' : ''}">${fmtFull(sabado)} – ${fmtFull(domingo)}</div>`;
+
+  MISSAS.forEach(horario => {
+    const todos = dados[horario] || [];
+    const normais = todos.filter(r => !r.is_equipe);
+    const equipe  = todos.filter(r => r.is_equipe);
+    const dataHorario = datas[horario];
+    const [dia, mes, ano] = dataHorario.split('/');
+    const dataISO = `${ano}-${mes}-${dia}`;
+
+    const linhaCoroinha = (r, isEquipeMembro) => {
+      const c = coroinhas.find(x => x.id === r.coroinha_id);
+      const nome = c ? c.nome : 'Desconhecido';
+      const funcoesReg = historico.filter(h =>
+        h.coroinha_id === r.coroinha_id && h.data_missa === dataISO && h.horario === horario
+      );
+      const funcoesTags = funcoesReg.length
+        ? funcoesReg.map(h => {
+            const fs = h.funcao.split(',').map(f => f.trim()).filter(Boolean);
+            return fs.map(f => `<span class="funcao-tag" style="display:inline-flex;align-items:center;gap:4px;">${f}<button onclick="removerFuncaoEscala('${h.id}','${f.replace(/'/g,"\\'")}')" style="background:none;border:none;color:var(--danger);font-size:13px;font-weight:700;cursor:pointer;padding:0 0 0 2px;line-height:1;flex-shrink:0;" title="Remover função">×</button></span>`).join('');
+          }).join('')
+        : `<span class="escala-admin-sem-funcao">sem função</span>`;
+
+      const badge = isEquipeMembro
+        ? `<span style="font-size:10px;font-weight:600;background:var(--brown-dark);color:var(--gold-light);padding:2px 7px;border-radius:50px;margin-left:4px;">equipe</span>`
+        : '';
+
+      const btnRemover = `<button onclick="removerInscricaoAdmin('${r.id}','${semanaKey}','${horario}')" style="background:none;border:none;color:var(--danger);font-size:20px;cursor:pointer;padding:0 0 0 8px;line-height:1;flex-shrink:0;" title="Remover da escala">×</button>`;
+
+      return `<div class="escala-admin-coroinha">
+        <div class="avatar" style="width:32px;height:32px;font-size:12px;flex-shrink:0;">${iniciais(nome)}</div>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;">
+            <span class="escala-admin-nome">${nome}</span>${badge}
+          </div>
+          <div class="escala-admin-funcoes" style="margin-top:4px;">${funcoesTags}</div>
+        </div>
+        ${btnRemover}
+      </div>`;
+    };
+
+    const linhas = [
+      ...normais.map(r => linhaCoroinha(r, false)),
+      ...equipe.map(r => linhaCoroinha(r, true))
+    ].join('') || `<div class="escala-vazio">Nenhum inscrito ainda.</div>`;
+
+    html += `<div class="escala-horario" style="margin-bottom:14px;">
+      <div class="escala-horario-header">
+        <span class="escala-horario-titulo">${horario}</span>
+        <span class="escala-horario-data">${dataHorario}</span>
+      </div>
+      ${linhas}
+      <div class="escala-footer" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:12px;color:var(--text-muted);">${normais.length}/${LIMITE_MISSA} coroinhas · ${equipe.length} equipe</span>
+        <div style="display:flex;gap:6px;">
+          <button onclick="abrirModalForcarEscala('${horario}','${semanaKey}')" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;">+ Coroinha</button>
+          <button onclick="abrirModalEquipeEscala('${horario}','${semanaKey}')" style="background:var(--brown-dark);color:var(--gold-light);border:none;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;">+ Equipe</button>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+function abrirModalEquipeEscala(horario, semanaKey) {
+  equipeModalHorario = horario;
+  equipeModalSemana = semanaKey;
+
+  const dados = escalaAdminCache[semanaKey] || {};
+  const jaInscritos = new Set((dados[horario] || []).map(r => r.coroinha_id));
+
+  document.getElementById('modal-equipe-titulo').textContent = horario;
+  const sel = document.getElementById('modal-equipe-nome');
+
+  const CARGOS_EQUIPE = ['equipe', 'coordenador', 'vice-coordenador', 'vice coordenador', 'cerimonário', 'cerimonario'];
+  const ehMembroEquipe = c => {
+    if (!c.cargo) return false;
+    const cargo = c.cargo.toLowerCase();
+    return CARGOS_EQUIPE.some(k => cargo.includes(k));
+  };
+
+  sel.innerHTML = '<option value="">Selecione...</option>' +
+    coroinhas
+      .filter(c => !jaInscritos.has(c.id) && ehMembroEquipe(c))
+      .sort((a, b) => a.nome.localeCompare(b.nome))
+      .map(c => `<option value="${c.id}">${c.nome}${c.cargo ? ' — ' + c.cargo : ''}</option>`)
+      .join('');
+
+  document.getElementById('modal-equipe-escala').style.display = 'flex';
+}
+
+function fecharModalEquipeEscala() {
+  document.getElementById('modal-equipe-escala').style.display = 'none';
+  equipeModalHorario = null;
+  equipeModalSemana = null;
+}
+
+async function confirmarEquipeEscala() {
+  const coroinhaId = document.getElementById('modal-equipe-nome').value;
+  if (!coroinhaId) { toast('Selecione um nome.', true); return; }
+
+  const semanaKey = equipeModalSemana;
+  const horario = equipeModalHorario;
+
+  try {
+    const resultado = await api('/escala_inscricoes', 'POST', {
+      semana_key: semanaKey,
+      horario,
+      coroinha_id: coroinhaId,
+      is_equipe: true
+    });
+
+    if (!escalaAdminCache[semanaKey]) escalaAdminCache[semanaKey] = {};
+    if (!escalaAdminCache[semanaKey][horario]) escalaAdminCache[semanaKey][horario] = [];
+    escalaAdminCache[semanaKey][horario].push(resultado[0] || { id: null, semana_key: semanaKey, horario, coroinha_id: coroinhaId, is_equipe: true });
+
+    // Atualiza também o escalaCache público (aba Escala)
+    if (!escalaCache[semanaKey]) escalaCache[semanaKey] = {};
+    if (!escalaCache[semanaKey][horario]) escalaCache[semanaKey][horario] = [];
+    escalaCache[semanaKey][horario].push(resultado[0] || { semana_key: semanaKey, horario, coroinha_id: coroinhaId, is_equipe: true });
+
+    fecharModalEquipeEscala();
+    const c = coroinhas.find(x => x.id === coroinhaId);
+    toast('✓ ' + (c ? c.nome : 'Membro') + ' adicionado em ' + horario + '!');
+    carregarEscalaAdmin(); // recarrega para pegar histórico atualizado
+  } catch(e) {
+    toast('Erro ao adicionar. Tente novamente.', true);
+    console.error(e);
+  }
+}
+
+async function removerInscricaoAdmin(inscricaoId, semanaKey, horario) {
+  if (!inscricaoId || inscricaoId === 'null') { toast('Erro: ID não encontrado.', true); return; }
+  try {
+    await api('/escala_inscricoes?id=eq.' + inscricaoId, 'DELETE');
+    if (escalaAdminCache[semanaKey]?.[horario])
+      escalaAdminCache[semanaKey][horario] = escalaAdminCache[semanaKey][horario].filter(r => r.id !== inscricaoId);
+    if (escalaCache[semanaKey]?.[horario])
+      escalaCache[semanaKey][horario] = escalaCache[semanaKey][horario].filter(r => r.id !== inscricaoId);
+    toast('✓ Removido da escala.');
+    carregarEscalaAdmin();
+  } catch(e) { toast('Erro ao remover.', true); console.error(e); }
+}
+
+// manter compatibilidade com chamadas antigas
+const removerEquipeEscala = removerInscricaoAdmin;
+
+async function removerFuncaoEscala(histId, funcaoNome) {
+  try {
+    const registros = await api('/historico_funcoes?id=eq.' + histId);
+    if (!registros || !registros.length) { toast('Registro não encontrado.', true); return; }
+    const reg = registros[0];
+    const funcoes = reg.funcao.split(',').map(f => f.trim()).filter(f => f && f !== funcaoNome);
+    if (funcoes.length === 0) {
+      await api('/historico_funcoes?id=eq.' + histId, 'DELETE');
+    } else {
+      await api('/historico_funcoes?id=eq.' + histId, 'PATCH', { funcao: funcoes.join(', ') });
+    }
+    toast('✓ Função "' + funcaoNome + '" removida.');
+    carregarEscalaAdmin();
+  } catch(e) { toast('Erro ao remover função.', true); console.error(e); }
+}
+
+let forcarModalHorario = null;
+let forcarModalSemana = null;
+
+function abrirModalForcarEscala(horario, semanaKey) {
+  forcarModalHorario = horario;
+  forcarModalSemana = semanaKey;
+
+  const dados = escalaAdminCache[semanaKey] || {};
+  const jaInscritos = new Set((dados[horario] || []).map(r => r.coroinha_id));
+
+  document.getElementById('modal-forcar-titulo').textContent = horario;
+  const sel = document.getElementById('modal-forcar-nome');
+  const CARGOS_EQUIPE = ['equipe', 'coordenador', 'vice-coordenador', 'vice coordenador', 'cerimonário', 'cerimonario'];
+  const ehEquipe = c => c.cargo && CARGOS_EQUIPE.some(k => c.cargo.toLowerCase().includes(k));
+
+  sel.innerHTML = '<option value="">Selecione...</option>' +
+    coroinhas
+      .filter(c => !jaInscritos.has(c.id) && !ehEquipe(c))
+      .sort((a, b) => a.nome.localeCompare(b.nome))
+      .map(c => {
+        const cargo = c.cargo ? ` — ${c.cargo}` : '';
+        return `<option value="${c.id}">${c.nome}${cargo}</option>`;
+      }).join('');
+
+  document.getElementById('modal-forcar-escala').style.display = 'flex';
+}
+
+function fecharModalForcarEscala() {
+  document.getElementById('modal-forcar-escala').style.display = 'none';
+  forcarModalHorario = null;
+  forcarModalSemana = null;
+}
+
+async function confirmarForcarEscala() {
+  const coroinhaId = document.getElementById('modal-forcar-nome').value;
+  if (!coroinhaId) { toast('Selecione um nome.', true); return; }
+
+  const semanaKey = forcarModalSemana;
+  const horario = forcarModalHorario;
+
+  try {
+    const resultado = await api('/escala_inscricoes', 'POST', {
+      semana_key: semanaKey, horario, coroinha_id: coroinhaId, is_equipe: false
+    });
+    const nova = resultado?.[0] || { id: null, semana_key: semanaKey, horario, coroinha_id: coroinhaId, is_equipe: false };
+
+    if (!escalaAdminCache[semanaKey]) escalaAdminCache[semanaKey] = {};
+    if (!escalaAdminCache[semanaKey][horario]) escalaAdminCache[semanaKey][horario] = [];
+    escalaAdminCache[semanaKey][horario].push(nova);
+
+    if (!escalaCache[semanaKey]) escalaCache[semanaKey] = {};
+    if (!escalaCache[semanaKey][horario]) escalaCache[semanaKey][horario] = [];
+    escalaCache[semanaKey][horario].push(nova);
+
+    fecharModalForcarEscala();
+    const c = coroinhas.find(x => x.id === coroinhaId);
+    toast('✓ ' + (c ? c.nome : 'Coroinha') + ' adicionado em ' + horario + '!');
+    carregarEscalaAdmin();
+  } catch(e) { toast('Erro ao adicionar. Tente novamente.', true); console.error(e); }
+}
+
+document.getElementById('modal-forcar-escala').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalForcarEscala();
+});
+
+document.getElementById('modal-equipe-escala').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalEquipeEscala();
+});
+
+// ===================== FIM ESCALA ADMIN =====================
+
+// ===================== FIM ESCALA =====================
+
+
+const ADMIN_PIN = '2026'; 
+
+function pinDigit(d) {
+  if (pinAtual.length >= 4) return;
+  pinAtual += d;
+  atualizarDots();
+  if (pinAtual.length === 4) {
+    setTimeout(() => verificarPin(), 120);
+  }
+}
+
+function pinBack() {
+  pinAtual = pinAtual.slice(0, -1);
+  atualizarDots();
+}
+
+function pinClear() {
+  pinAtual = '';
+  atualizarDots();
+  document.getElementById('pin-erro').textContent = '';
+}
+
+function atualizarDots() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('pd' + i).classList.toggle('filled', i < pinAtual.length);
+  }
+}
+
+function verificarPin() {
+  if (pinAtual === ADMIN_PIN) {
+    adminDesbloqueado = true;
+    document.getElementById('admin-pin-screen').style.display = 'none';
+    document.getElementById('admin-painel').style.display = 'block';
+    // Activate default sub-tab
+    showAdminTab('gerenciar', document.querySelector('.admin-subtab'));
+  } else {
+    document.getElementById('pin-erro').textContent = 'PIN incorreto. Tente novamente.';
+    pinAtual = '';
+    atualizarDots();
+  }
+}
+
+function renderAdminLista(filtro = '') {
+  const el = document.getElementById('admin-lista-container');
+  let lista = filtro ? coroinhas.filter(c => c.nome.toLowerCase().includes(filtro.toLowerCase())) : [...coroinhas];
+  lista.sort((a, b) => a.nome.localeCompare(b.nome));
+  if (!lista.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">✝</div><p>' + (filtro ? 'Nenhum resultado.' : 'Nenhum coroinha cadastrado.') + '</p></div>';
+    return;
+  }
+  el.innerHTML = lista.map(c => {
+    const idade = calcularIdade(c.data_nascimento);
+    const cargoBadge = c.cargo ? `<span class="badge" style="margin-left:4px;">${c.cargo}</span>` : '';
+    return `
+    <div class="admin-coroinha-item" id="admin-item-${c.id}">
+      <div class="admin-coroinha-header">
+        <div class="avatar">${iniciais(c.nome)}</div>
+        <div class="coroinha-info" style="flex:1;">
+          <div class="coroinha-nome">${c.nome}${cargoBadge}</div>
+          <div class="coroinha-sub">${idade ? idade + ' anos' : 'Idade não informada'}</div>
+        </div>
+      </div>
+      <div class="admin-actions">
+        <button class="btn-outline btn-sm" onclick="abrirAdminDetalhe('${c.id}')">✏ Editar & Histórico</button>
+        <button class="btn-danger btn-sm" onclick="confirmarApagarCoroinha('${c.id}', '${c.nome.replace(/'/g,"\'")}')">🗑 Apagar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filtrarAdmin() {
+  renderAdminLista(document.getElementById('busca-admin').value);
+}
+
+async function abrirAdminDetalhe(id) {
+  document.getElementById('admin-lista').style.display = 'none';
+  document.getElementById('admin-detalhe').style.display = 'block';
+
+  const c = coroinhas.find(x => x.id === id);
+  if (!c) return;
+
+  const el = document.getElementById('admin-detalhe-conteudo');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>';
+
+  let hist = [];
+  try {
+    hist = await api('/historico_funcoes?coroinha_id=eq.' + id + '&order=data_missa.desc');
+  } catch(e) {}
+
+  const histHTML = hist.length ? hist.map(h => `
+    <div class="hist-item-admin" id="hitem-${h.id}">
+      <div class="hist-item-admin-info">
+        <div class="hist-funcoes">${h.funcao.split(',').map(f => '<span class="badge">'+f.trim()+'</span>').join('')}</div>
+        <div class="hist-data">${formatarData(h.data_missa)}${h.horario ? ' · ' + h.horario : ''}</div>
+        ${h.observacao ? '<div class="hist-obs">'+h.observacao+'</div>' : ''}
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button class="btn-outline btn-sm" onclick="abrirEditRegistro(${JSON.stringify(h).replace(/"/g,'&quot;')})">✏</button>
+        <button class="btn-danger btn-sm" onclick="confirmarApagarRegistro('${h.id}')">🗑</button>
+      </div>
+    </div>`).join('') : '<div class="stat-empty">Nenhuma função registrada.</div>';
+
+  el.innerHTML = `
+    <div class="card" style="margin-bottom:14px;">
+      <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Editar dados</div>
+      <label>Nome completo</label>
+      <input type="text" id="edit-nome" value="${c.nome}" style="margin-bottom:8px;">
+      <label>Data de nascimento</label>
+      <input type="date" id="edit-nasc" value="${c.data_nascimento || ''}">
+      <label>Cargo <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-muted);">(opcional)</span></label>
+      <div class="select-wrapper-native" style="position:relative;">
+        <select id="edit-cargo" onchange="toggleEditCargoCustom()" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
+          <option value="">Sem cargo</option>
+          <option value="Equipe - Cerimonário">Equipe - Cerimonário</option>
+          <option value="Equipe">Equipe</option>
+          <option value="Cerimonário">Cerimonário</option>
+          <option value="Coordenador">Coordenador</option>
+          <option value="Vice-Coordenador">Vice-Coordenador</option>
+        </select>
+        <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+      </div>
+      <div id="edit-cargo-custom-wrap" style="display:none;margin-top:8px;">
+        <input type="text" id="edit-cargo-custom" placeholder="Digite o cargo...">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn-outline btn-sm" style="flex:1;" onclick="salvarEdicaoCoroinha('${c.id}')">✓ Salvar alterações</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">
+          Histórico de funções <span class="contador" style="display:inline;">${hist.length}</span>
+        </div>
+        ${hist.length ? `<button class="btn-danger btn-sm" onclick="confirmarApagarHistoricoTudo('${c.id}', '${c.nome.replace(/'/g,"\'")}')">🗑 Apagar tudo</button>` : ''}
+      </div>
+      <div id="hist-admin-list">${histHTML}</div>
+    </div>`;
+
+  // Salva o id atual para uso nas funções
+  document.getElementById('admin-detalhe').dataset.coroinhaId = id;
+
+  // Preenche o cargo no select
+  const cargoAtual = c.cargo || '';
+  const editCargoSel = document.getElementById('edit-cargo');
+  const opcoesPadrao = [...editCargoSel.options].map(o => o.value).filter(v => v !== '__custom__');
+  if (opcoesPadrao.includes(cargoAtual)) {
+    editCargoSel.value = cargoAtual;
+  } else if (cargoAtual) {
+    editCargoSel.value = '__custom__';
+    document.getElementById('edit-cargo-custom-wrap').style.display = 'block';
+    document.getElementById('edit-cargo-custom').value = cargoAtual;
+  } else {
+    editCargoSel.value = '';
+  }
+}
+
+function fecharAdminDetalhe() {
+  document.getElementById('admin-detalhe').style.display = 'none';
+  document.getElementById('admin-lista').style.display = 'block';
+}
+
+async function salvarEdicaoCoroinha(id) {
+  const nome = document.getElementById('edit-nome').value.trim();
+  const nasc = document.getElementById('edit-nasc').value;
+  const cargoSel = document.getElementById('edit-cargo').value;
+  const cargo = cargoSel === '__custom__'
+    ? document.getElementById('edit-cargo-custom').value.trim()
+    : cargoSel;
+  if (!nome) { toast('O nome não pode estar vazio.', true); return; }
+  try {
+    await api('/coroinhas?id=eq.' + id, 'PATCH', { nome, data_nascimento: nasc || null, cargo: cargo || null });
+    toast('✓ Dados atualizados!');
+    const idx = coroinhas.findIndex(x => x.id === id);
+    if (idx !== -1) { coroinhas[idx].nome = nome; coroinhas[idx].data_nascimento = nasc || null; coroinhas[idx].cargo = cargo || null; }
+    renderAdminLista(document.getElementById('busca-admin').value);
+  } catch(e) { toast('Erro ao salvar. Tente novamente.', true); }
+}
+
+function toggleEditCargoCustom() {
+  const sel = document.getElementById('edit-cargo');
+  document.getElementById('edit-cargo-custom-wrap').style.display = sel.value === '__custom__' ? 'block' : 'none';
+}
+
+// Modal genérico
+let modalCallback = null;
+
+function abrirModal(titulo, msg, callback, btnTxt = 'Confirmar') {
+  document.getElementById('modal-title').textContent = titulo;
+  document.getElementById('modal-msg').textContent = msg;
+  document.getElementById('modal-confirm-btn').textContent = btnTxt;
+  modalCallback = callback;
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function fecharModal() {
+  document.getElementById('modal').style.display = 'none';
+  modalCallback = null;
+}
+
+document.getElementById('modal-confirm-btn').onclick = async function() {
+  const cb = modalCallback;
+  fecharModal();
+  if (cb) await cb();
+};
+
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) fecharModal();
+});
+
+function confirmarApagarCoroinha(id, nome) {
+  abrirModal(
+    'Apagar coroinha',
+    'Tem certeza que deseja apagar "' + nome + '"? O histórico de funções também será apagado. Esta ação não pode ser desfeita.',
+    async () => {
+      try {
+        await api('/historico_funcoes?coroinha_id=eq.' + id, 'DELETE');
+        await api('/coroinhas?id=eq.' + id, 'DELETE');
+        coroinhas = coroinhas.filter(x => x.id !== id);
+        fecharAdminDetalhe();
+        renderAdminLista(document.getElementById('busca-admin').value);
+        renderLista();
+        renderCheckCoroinhas();
+        toast('✓ Coroinha apagado.');
+      } catch(e) { toast('Erro: ' + (e.message||e), true); console.error(e); }
+    },
+    '🗑 Apagar tudo'
+  );
+}
+
+function confirmarApagarHistoricoTudo(id, nome) {
+  abrirModal(
+    'Apagar histórico completo',
+    'Apagar todo o histórico de funções de "' + nome + '"? Os dados do coroinha serão mantidos. Esta ação não pode ser desfeita.',
+    async () => {
+      try {
+        await api('/historico_funcoes?coroinha_id=eq.' + id, 'DELETE');
+        toast('✓ Histórico apagado.');
+        abrirAdminDetalhe(id);
+      } catch(e) { toast('Erro: ' + (e.message||e), true); console.error(e); }
+    },
+    '🗑 Apagar histórico'
+  );
+}
+
+function confirmarApagarRegistro(histId) {
+  abrirModal(
+    'Apagar registro',
+    'Apagar este registro de função? Esta ação não pode ser desfeita.',
+    async () => {
+      try {
+        await api('/historico_funcoes?id=eq.' + histId, 'DELETE');
+        const el = document.getElementById('hitem-' + histId);
+        if (el) el.remove();
+        // Atualiza contador
+        const coroinhaId = document.getElementById('admin-detalhe').dataset.coroinhaId;
+        const remaining = document.querySelectorAll('[id^="hitem-"]').length;
+        const cnt = document.querySelector('#admin-detalhe-conteudo .contador');
+        if (cnt) cnt.textContent = remaining;
+        if (remaining === 0) {
+          document.getElementById('hist-admin-list').innerHTML = '<div class="stat-empty">Nenhuma função registrada.</div>';
+        }
+        toast('✓ Registro apagado.');
+      } catch(e) { toast('Erro: ' + (e.message||e), true); console.error(e); }
+    },
+    '🗑 Apagar'
+  );
+}
+
+// ===================== EDITAR REGISTRO =====================
+
+const FUNCOES_LISTA = ['Ambão','Carrilhão','Cerimonário','Cruz','Ofertório','Pasta','Patena','Purificação','Sino de trás','Turíbulo','Vela','Sem-função'];
+let editRegistroId = null;
+
+function abrirEditRegistro(h) {
+  editRegistroId = h.id;
+  const funcoesSelecionadas = h.funcao ? h.funcao.split(',').map(f => f.trim()) : [];
+
+  // Renderiza chips de funções
+  const chipsEl = document.getElementById('edit-reg-funcoes');
+  chipsEl.innerHTML = FUNCOES_LISTA.map(f => {
+    const sel = funcoesSelecionadas.includes(f);
+    return `<label class="funcao-chip${sel ? ' selecionada' : ''}" onclick="atualizarChipEdit(this)">
+      <input type="checkbox" value="${f}"${sel ? ' checked' : ''}><span>${f}</span>
+    </label>`;
+  }).join('');
+
+  // Horário
+  const horSel = document.getElementById('edit-reg-horario');
+  const horarios = ['Sábado 17h','Domingo 7h','Domingo 9h','Domingo 17h'];
+  if (h.horario && horarios.includes(h.horario)) {
+    horSel.value = h.horario;
+  } else if (h.horario) {
+    horSel.value = 'Missa Especial';
+  } else {
+    horSel.value = '';
+  }
+
+  document.getElementById('edit-reg-data').value = h.data_missa || '';
+  document.getElementById('edit-reg-obs').value = h.observacao || '';
+
+  document.getElementById('edit-reg-save-btn').onclick = () => salvarEditRegistro();
+  document.getElementById('modal-edit-registro').style.display = 'flex';
+}
+
+function atualizarChipEdit(el) {
+  setTimeout(() => {
+    const cb = el.querySelector('input');
+    el.classList.toggle('selecionada', cb.checked);
+  }, 0);
+}
+
+function fecharModalEditRegistro() {
+  document.getElementById('modal-edit-registro').style.display = 'none';
+  editRegistroId = null;
+}
+
+async function salvarEditRegistro() {
+  const funcoesSel = [...document.querySelectorAll('#edit-reg-funcoes input:checked')].map(cb => cb.value);
+  const horario = document.getElementById('edit-reg-horario').value;
+  const data_missa = document.getElementById('edit-reg-data').value;
+  const observacao = document.getElementById('edit-reg-obs').value.trim();
+
+  if (!funcoesSel.length) { toast('Selecione ao menos uma função.', true); return; }
+  if (!horario) { toast('Selecione o horário.', true); return; }
+  if (!data_missa) { toast('Informe a data da missa.', true); return; }
+
+  try {
+    await api('/historico_funcoes?id=eq.' + editRegistroId, 'PATCH', {
+      funcao: funcoesSel.join(', '),
+      horario,
+      data_missa,
+      observacao: observacao || null
+    });
+    toast('✓ Registro atualizado!');
+    fecharModalEditRegistro();
+    // Recarrega o detalhe do coroinha atual
+    const coroinhaId = document.getElementById('admin-detalhe').dataset.coroinhaId;
+    if (coroinhaId) abrirAdminDetalhe(coroinhaId);
+  } catch(e) { toast('Erro ao salvar. Tente novamente.', true); }
+}
+
+document.getElementById('modal-edit-registro').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalEditRegistro();
+});
+
+// ===================== FIM EDITAR REGISTRO =====================
+
+// ===================== FIM ADMIN =====================
+
 </script>
 </body>
 </html>
