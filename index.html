@@ -151,6 +151,8 @@
   .funcao-tag { display:inline-block; padding:3px 9px; border-radius:50px; font-size:11px; font-weight:600; background:var(--gold-pale); color:var(--brown-mid); border:1px solid var(--gold); }
 
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
@@ -287,6 +289,10 @@
         <input type="text" id="cad-nome" placeholder="Nome">
         <label>Data de nascimento</label>
         <input type="date" id="cad-nasc">
+        <label>Telefone do coroinha</label>
+        <input type="tel" id="cad-telefone" placeholder="(00) 00000-0000" oninput="mascaraTelefone(this)">
+        <label>Telefone do responsável <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-muted);">(opcional)</span></label>
+        <input type="tel" id="cad-telefone-resp" placeholder="(00) 00000-0000" oninput="mascaraTelefone(this)">
         <label>Cargo <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-muted);">(opcional)</span></label>
         <div class="select-wrapper-native" style="position:relative;">
           <select id="cad-cargo" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
@@ -395,10 +401,11 @@
     <!-- Sub-aba: Estatísticas -->
     <div id="admin-sub-stats" class="admin-subpage" style="display:none;">
       <div class="section-title">Estatísticas</div>
-      <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
         <button class="btn-ordem active" id="stat-mes-btn" onclick="setMes(0)">Este mês</button>
         <button class="btn-ordem" id="stat-mes-ant-btn" onclick="setMes(1)">Mês anterior</button>
         <button class="btn-ordem" id="stat-tudo-btn" onclick="setMes(-1)">Tudo</button>
+        <button class="btn-ordem" onclick="exportarEstatisticasPDF()" style="background:var(--gold-pale);border-color:var(--gold);color:var(--brown-mid);font-weight:600;">⬇ Exportar PDF</button>
       </div>
       <div id="stat-horarios-container"></div>
       <div class="card">
@@ -528,7 +535,7 @@ function setOrdem(ordem) {
   } else {
     ordemAtual = ordem;
   }
-  document.querySelectorAll(".btn-ordem").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll("#lista-coroinhas .btn-ordem").forEach(b => b.classList.remove("active"));
   document.getElementById("btn-ordem-" + ordem).classList.add("active");
   document.getElementById("btn-ordem-nome").textContent = ordemNomeAsc ? "A–Z Nome" : "Z–A Nome";
   document.getElementById("btn-ordem-idade").textContent = ordemIdadeAsc ? "↑ Mais novo" : "↓ Mais velho";
@@ -565,7 +572,7 @@ function renderLista(filtro='') {
     const idade = calcularIdade(c.data_nascimento);
     const cargoBadge = c.cargo ? `<span class="badge" style="margin-left:6px;font-size:10px;">${c.cargo}</span>` : '';
     return `
-    <div class="coroinha-item" onclick="abrirDetalhe('${c.id}','${c.nome.replace(/'/g,"\\'")}',${idade||'null'})">
+    <div class="coroinha-item" onclick="abrirDetalhePorId('${c.id}')">
       <div class="avatar">${iniciais(c.nome)}</div>
       <div class="coroinha-info">
         <div class="coroinha-nome" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">${c.nome}${cargoBadge}</div>
@@ -687,15 +694,31 @@ function renderDetalheStats(mesKey) {
   `;
 }
 
+function abrirDetalhePorId(id) {
+  const c = coroinhas.find(x => x.id === id);
+  if (!c) return;
+  const idade = calcularIdade(c.data_nascimento);
+  abrirDetalhe(id, c.nome, idade);
+}
+
 async function abrirDetalhe(id, nome, idade) {
   document.getElementById('lista-coroinhas').style.display = 'none';
   document.getElementById('detalhe-coroinha').style.display = 'block';
+  const coroinhaObj = coroinhas.find(x => x.id === id) || {};
+  const telCoroinha = coroinhaObj.telefone || '';
+  const telResp = coroinhaObj.telefone_responsavel || '';
+  const telHTML = (telCoroinha || telResp) ? `
+    <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;">
+      ${telCoroinha ? `<div style="font-size:13px;color:var(--text-muted);">Telefone: ${telCoroinha}</div>` : ''}
+      ${telResp ? `<div style="font-size:13px;color:var(--text-muted);">Responsável: ${telResp}</div>` : ''}
+    </div>` : '';
   document.getElementById('detalhe-header').innerHTML = `
     <div class="detail-header">
       <div class="detail-avatar">${iniciais(nome)}</div>
       <div>
         <div class="detail-nome">${nome}</div>
         <div class="detail-sub">${idade ? idade + ' anos' : 'Idade não informada'}</div>
+        ${telHTML}
       </div>
     </div>`;
   const el = document.getElementById('detalhe-historico');
@@ -749,15 +772,19 @@ async function cadastrarCoroinha() {
   const cargo = cargoSel === '__custom__'
     ? document.getElementById('cad-cargo-custom').value.trim()
     : cargoSel;
+  const telefone = document.getElementById('cad-telefone').value.trim();
+  const telefone_responsavel = document.getElementById('cad-telefone-resp').value.trim();
   if (!nome) { toast('Informe o nome do coroinha', true); return; }
   try {
-    await api('/coroinhas', 'POST', { nome, data_nascimento: nasc || null, cargo: cargo || null });
+    await api('/coroinhas', 'POST', { nome, data_nascimento: nasc || null, cargo: cargo || null, telefone: telefone || null, telefone_responsavel: telefone_responsavel || null });
     toast('Coroinha cadastrado!');
     document.getElementById('cad-nome').value = '';
     document.getElementById('cad-nasc').value = '';
     document.getElementById('cad-cargo').value = '';
     document.getElementById('cad-cargo-custom').value = '';
     document.getElementById('cad-cargo-custom-wrap').style.display = 'none';
+    document.getElementById('cad-telefone').value = '';
+    document.getElementById('cad-telefone-resp').value = '';
     carregarCoroinhas();
   } catch(e) { toast('Erro ao salvar. Tente novamente.', true); }
 }
@@ -928,10 +955,9 @@ async function carregarStats() {
   const hoje = new Date();
   let filtro = '';
   if (statMesOffset >= 0) {
-    const ano = hoje.getFullYear();
-    const mes = hoje.getMonth() - statMesOffset;
-    const d = new Date(ano, mes, 1);
-    const fim = new Date(ano, mes + 1, 0);
+    // Use Date arithmetic to safely handle January (month 0 - 1 = -1 wraps to December)
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - statMesOffset, 1);
+    const fim = new Date(d.getFullYear(), d.getMonth() + 1, 0);
     const pad = n => String(n).padStart(2,'0');
     filtro = '&data_missa=gte.' + d.getFullYear() + '-' + pad(d.getMonth()+1) + '-01'
            + '&data_missa=lte.' + fim.getFullYear() + '-' + pad(fim.getMonth()+1) + '-' + pad(fim.getDate());
@@ -1096,20 +1122,8 @@ function showTab(tab, btn) {
 
 carregarCoroinhas();
 
-// ===================== LIMPEZA AUTOMÁTICA =====================
-// Apaga registros de historico_funcoes com mais de 3 meses ao iniciar
-async function limparHistoricoAntigo() {
-  try {
-    const hoje = new Date();
-    const limite = new Date(hoje);
-    limite.setMonth(hoje.getMonth() - 3);
-    const pad = n => String(n).padStart(2,'0');
-    const dataLimite = `${limite.getFullYear()}-${pad(limite.getMonth()+1)}-${pad(limite.getDate())}`;
-    await api('/historico_funcoes?data_missa=lt.' + dataLimite, 'DELETE');
-  } catch(e) { /* silencioso — não interfere no uso */ }
-}
-limparHistoricoAntigo();
-// ===================== FIM LIMPEZA =====================
+// ===================== LIMPEZA AUTOMÁTICA REMOVIDA =====================
+// A limpeza automática foi desativada para preservar o histórico completo.
 
 // ===================== ESCALA =====================
 // Regras:
@@ -1287,8 +1301,12 @@ function renderEscalaSemana(semanaKey, isAtual) {
 
     const renderLinha = (r, isEquipeMembro) => {
       const c = coroinhas.find(x => x.id === r.coroinha_id);
+      const CARGOS_EQUIPE_R = ['equipe', 'coordenador', 'vice-coordenador', 'vice coordenador', 'cerimonário', 'cerimonario'];
+      const ehMembroReal = c && c.cargo && CARGOS_EQUIPE_R.some(k => c.cargo.toLowerCase().includes(k));
       const badge = isEquipeMembro
-        ? `<span style="font-size:10px;font-weight:600;background:var(--brown-dark);color:var(--gold-light);padding:2px 7px;border-radius:50px;margin-left:6px;">equipe</span>`
+        ? ehMembroReal
+          ? `<span style="font-size:10px;font-weight:600;background:var(--brown-dark);color:var(--gold-light);padding:2px 7px;border-radius:50px;margin-left:6px;">equipe</span>`
+          : `<span style="font-size:10px;font-weight:600;background:var(--brown-mid);color:#fff;padding:2px 7px;border-radius:50px;margin-left:6px;">extra</span>`
         : '';
       return `<div class="escala-inscrito">
         <div class="avatar" style="width:32px;height:32px;font-size:13px;">${iniciais(c ? c.nome : '?')}</div>
@@ -1381,21 +1399,6 @@ async function abrirModalEscala(horario, semanaKey) {
 
   const jaInscritos = new Set(todos.map(r => r.coroinha_id));
 
-  // Busca quem serviu no mesmo horário na semana anterior (via historico_funcoes)
-  const serviramSemPassada = new Set();
-  try {
-    const sexta = new Date(semanaKey + 'T12:00:00');
-    const sextaAnt = new Date(sexta); sextaAnt.setDate(sexta.getDate() - 7);
-    const datasAnt = datasSemanaMissa(sextaAnt.toISOString().split('T')[0]);
-    const dataHorarioAnt = datasAnt[horario];
-    if (dataHorarioAnt) {
-      const [dia, mes, ano] = dataHorarioAnt.split('/');
-      const dataISO = `${ano}-${mes}-${dia}`;
-      const hist = await api('/historico_funcoes?data_missa=eq.' + dataISO + '&horario=eq.' + encodeURIComponent(horario));
-      hist.forEach(h => serviramSemPassada.add(h.coroinha_id));
-    }
-  } catch(e) { /* se falhar, não bloqueia ninguém */ }
-
   escalaModalHorario = horario;
   escalaModalSemana = semanaKey;
 
@@ -1408,13 +1411,10 @@ async function abrirModalEscala(horario, semanaKey) {
     coroinhas
       .filter(c => !jaInscritos.has(c.id) && !ehEquipe(c))
       .sort((a,b) => a.nome.localeCompare(b.nome))
-      .map(c => {
-        const bloqueado = serviramSemPassada.has(c.id);
-        return `<option value="${c.id}" ${bloqueado ? 'disabled' : ''}>${c.nome}${bloqueado ? ' — serviu semana passada' : ''}</option>`;
-      })
+      .map(c => `<option value="${c.id}">${c.nome}</option>`)
       .join('');
 
-  if (sel.querySelectorAll('option:not([disabled])').length <= 1) {
+  if (sel.querySelectorAll('option').length <= 1) {
     toast('Todos os coroinhas disponíveis já estão inscritos nesta missa.', true);
     return;
   }
@@ -1760,9 +1760,9 @@ async function confirmarForcarEscala() {
 
   try {
     const resultado = await api('/escala_inscricoes', 'POST', {
-      semana_key: semanaKey, horario, coroinha_id: coroinhaId, is_equipe: false
+      semana_key: semanaKey, horario, coroinha_id: coroinhaId, is_equipe: true
     });
-    const nova = resultado?.[0] || { id: null, semana_key: semanaKey, horario, coroinha_id: coroinhaId, is_equipe: false };
+    const nova = resultado?.[0] || { id: null, semana_key: semanaKey, horario, coroinha_id: coroinhaId, is_equipe: true };
 
     if (!escalaAdminCache[semanaKey]) escalaAdminCache[semanaKey] = {};
     if (!escalaAdminCache[semanaKey][horario]) escalaAdminCache[semanaKey][horario] = [];
@@ -1792,7 +1792,13 @@ document.getElementById('modal-equipe-escala').addEventListener('click', functio
 // ===================== FIM ESCALA =====================
 
 
-const ADMIN_PIN = '2026'; 
+// PIN armazenado como hash SHA-256 — não é possível recuperar o valor original inspecionando o código
+const ADMIN_PIN_HASH = '25f9b3ab7e7d3634a79eab88d59a0b4592d42384900dfc10ecc481af5b8dfd3d';
+
+async function hashPin(pin) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
 
 function pinDigit(d) {
   if (pinAtual.length >= 4) return;
@@ -1820,12 +1826,12 @@ function atualizarDots() {
   }
 }
 
-function verificarPin() {
-  if (pinAtual === ADMIN_PIN) {
+async function verificarPin() {
+  const hash = await hashPin(pinAtual);
+  if (hash === ADMIN_PIN_HASH) {
     adminDesbloqueado = true;
     document.getElementById('admin-pin-screen').style.display = 'none';
     document.getElementById('admin-painel').style.display = 'block';
-    // Activate default sub-tab
     showAdminTab('gerenciar', document.querySelector('.admin-subtab'));
   } else {
     document.getElementById('pin-erro').textContent = 'PIN incorreto. Tente novamente.';
@@ -1856,7 +1862,7 @@ function renderAdminLista(filtro = '') {
       </div>
       <div class="admin-actions">
         <button class="btn-outline btn-sm" onclick="abrirAdminDetalhe('${c.id}')">✏ Editar & Histórico</button>
-        <button class="btn-danger btn-sm" onclick="confirmarApagarCoroinha('${c.id}', '${c.nome.replace(/'/g,"\'")}')">🗑 Apagar</button>
+        <button class="btn-danger btn-sm" onclick="confirmarApagarCoroinhaPorId('${c.id}')">🗑 Apagar</button>
       </div>
     </div>`;
   }).join('');
@@ -1881,6 +1887,10 @@ async function abrirAdminDetalhe(id) {
     hist = await api('/historico_funcoes?coroinha_id=eq.' + id + '&order=data_missa.desc');
   } catch(e) {}
 
+  // Store hist items in a map so onclick can pass just the id safely
+  window._histMap = {};
+  hist.forEach(h => { window._histMap[h.id] = h; });
+
   const histHTML = hist.length ? hist.map(h => `
     <div class="hist-item-admin" id="hitem-${h.id}">
       <div class="hist-item-admin-info">
@@ -1889,7 +1899,7 @@ async function abrirAdminDetalhe(id) {
         ${h.observacao ? '<div class="hist-obs">'+h.observacao+'</div>' : ''}
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0;">
-        <button class="btn-outline btn-sm" onclick="abrirEditRegistro(${JSON.stringify(h).replace(/"/g,'&quot;')})">✏</button>
+        <button class="btn-outline btn-sm" onclick="abrirEditRegistroPorId('${h.id}')">✏</button>
         <button class="btn-danger btn-sm" onclick="confirmarApagarRegistro('${h.id}')">🗑</button>
       </div>
     </div>`).join('') : '<div class="stat-empty">Nenhuma função registrada.</div>';
@@ -1898,7 +1908,7 @@ async function abrirAdminDetalhe(id) {
     <div class="card" style="margin-bottom:14px;">
       <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Editar dados</div>
       <label>Nome completo</label>
-      <input type="text" id="edit-nome" value="${c.nome}" style="margin-bottom:8px;">
+      <input type="text" id="edit-nome" value="${c.nome.replace(/"/g,'&quot;').replace(/'/g,'&#39;')}" style="margin-bottom:8px;">
       <label>Data de nascimento</label>
       <input type="date" id="edit-nasc" value="${c.data_nascimento || ''}">
       <label>Cargo <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-muted);">(opcional)</span></label>
@@ -1916,6 +1926,10 @@ async function abrirAdminDetalhe(id) {
       <div id="edit-cargo-custom-wrap" style="display:none;margin-top:8px;">
         <input type="text" id="edit-cargo-custom" placeholder="Digite o cargo...">
       </div>
+      <label>Telefone do coroinha</label>
+      <input type="tel" id="edit-telefone" placeholder="(00) 00000-0000" oninput="mascaraTelefone(this)" value="${c.telefone || ''}">
+      <label>Telefone do responsável <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-muted);">(opcional)</span></label>
+      <input type="tel" id="edit-telefone-resp" placeholder="(00) 00000-0000" oninput="mascaraTelefone(this)" value="${c.telefone_responsavel || ''}">
       <div style="display:flex;gap:8px;margin-top:12px;">
         <button class="btn-outline btn-sm" style="flex:1;" onclick="salvarEdicaoCoroinha('${c.id}')">✓ Salvar alterações</button>
       </div>
@@ -1926,7 +1940,7 @@ async function abrirAdminDetalhe(id) {
         <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">
           Histórico de funções <span class="contador" style="display:inline;">${hist.length}</span>
         </div>
-        ${hist.length ? `<button class="btn-danger btn-sm" onclick="confirmarApagarHistoricoTudo('${c.id}', '${c.nome.replace(/'/g,"\'")}')">🗑 Apagar tudo</button>` : ''}
+        ${hist.length ? `<button class="btn-danger btn-sm" onclick="confirmarApagarHistoricoTudoPorId('${c.id}')">🗑 Apagar tudo</button>` : ''}
       </div>
       <div id="hist-admin-list">${histHTML}</div>
     </div>`;
@@ -1961,12 +1975,14 @@ async function salvarEdicaoCoroinha(id) {
   const cargo = cargoSel === '__custom__'
     ? document.getElementById('edit-cargo-custom').value.trim()
     : cargoSel;
+  const telefone = document.getElementById('edit-telefone').value.trim();
+  const telefone_responsavel = document.getElementById('edit-telefone-resp').value.trim();
   if (!nome) { toast('O nome não pode estar vazio.', true); return; }
   try {
-    await api('/coroinhas?id=eq.' + id, 'PATCH', { nome, data_nascimento: nasc || null, cargo: cargo || null });
+    await api('/coroinhas?id=eq.' + id, 'PATCH', { nome, data_nascimento: nasc || null, cargo: cargo || null, telefone: telefone || null, telefone_responsavel: telefone_responsavel || null });
     toast('✓ Dados atualizados!');
     const idx = coroinhas.findIndex(x => x.id === id);
-    if (idx !== -1) { coroinhas[idx].nome = nome; coroinhas[idx].data_nascimento = nasc || null; coroinhas[idx].cargo = cargo || null; }
+    if (idx !== -1) { coroinhas[idx].nome = nome; coroinhas[idx].data_nascimento = nasc || null; coroinhas[idx].cargo = cargo || null; coroinhas[idx].telefone = telefone || null; coroinhas[idx].telefone_responsavel = telefone_responsavel || null; }
     renderAdminLista(document.getElementById('busca-admin').value);
   } catch(e) { toast('Erro ao salvar. Tente novamente.', true); }
 }
@@ -2002,6 +2018,11 @@ document.getElementById('modal').addEventListener('click', function(e) {
   if (e.target === this) fecharModal();
 });
 
+function confirmarApagarCoroinhaPorId(id) {
+  const c = coroinhas.find(x => x.id === id);
+  confirmarApagarCoroinha(id, c ? c.nome : 'este coroinha');
+}
+
 function confirmarApagarCoroinha(id, nome) {
   abrirModal(
     'Apagar coroinha',
@@ -2020,6 +2041,11 @@ function confirmarApagarCoroinha(id, nome) {
     },
     '🗑 Apagar tudo'
   );
+}
+
+function confirmarApagarHistoricoTudoPorId(id) {
+  const c = coroinhas.find(x => x.id === id);
+  confirmarApagarHistoricoTudo(id, c ? c.nome : 'este coroinha');
 }
 
 function confirmarApagarHistoricoTudo(id, nome) {
@@ -2065,6 +2091,12 @@ function confirmarApagarRegistro(histId) {
 
 const FUNCOES_LISTA = ['Ambão','Carrilhão','Cerimonário','Cruz','Ofertório','Pasta','Patena','Purificação','Sino de trás','Turíbulo','Vela','Sem-função'];
 let editRegistroId = null;
+
+function abrirEditRegistroPorId(id) {
+  const h = window._histMap && window._histMap[id];
+  if (!h) { toast('Registro não encontrado.', true); return; }
+  abrirEditRegistro(h);
+}
 
 function abrirEditRegistro(h) {
   editRegistroId = h.id;
@@ -2141,6 +2173,244 @@ document.getElementById('modal-edit-registro').addEventListener('click', functio
 // ===================== FIM EDITAR REGISTRO =====================
 
 // ===================== FIM ADMIN =====================
+
+// ===================== EXPORTAR PDF ESTATÍSTICAS =====================
+
+async function exportarEstatisticasPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  // Período label
+  const periodos = ['Este mês', 'Mês anterior', 'Tudo'];
+  const periodoIdx = statMesOffset === 0 ? 0 : statMesOffset === 1 ? 1 : 2;
+  const periodoLabel = periodos[periodoIdx];
+
+  // Colors
+  const goldR = 201, goldG = 168, goldB = 76;
+  const darkR = 44, darkG = 26, darkB = 14;
+
+  // Header background
+  doc.setFillColor(darkR, darkG, darkB);
+  doc.rect(0, 0, 210, 36, 'F');
+
+  // Gold line
+  doc.setDrawColor(goldR, goldG, goldB);
+  doc.setLineWidth(0.8);
+  doc.line(15, 36, 195, 36);
+
+  // Cross + title
+  doc.setTextColor(goldR, goldG, goldB);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('✝', 105, 10, { align: 'center' });
+
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Coroinhas da Paróquia Santa Edwiges', 105, 18, { align: 'center' });
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Relatório de Estatísticas — ' + periodoLabel, 105, 26, { align: 'center' });
+
+  doc.setTextColor(160, 113, 79);
+  doc.setFontSize(8);
+  const hoje = new Date();
+  doc.text('Gerado em ' + hoje.toLocaleDateString('pt-BR') + ' às ' + hoje.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}), 105, 33, { align: 'center' });
+
+  let y = 44;
+
+  // Fetch data fresh
+  const horariosFixos = ['Sábado 17h','Domingo 7h','Domingo 9h','Domingo 17h'];
+
+  let filtro = '';
+  if (statMesOffset >= 0) {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - statMesOffset, 1);
+    const fim = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    const pad = n => String(n).padStart(2,'0');
+    filtro = '&data_missa=gte.' + d.getFullYear() + '-' + pad(d.getMonth()+1) + '-01'
+           + '&data_missa=lte.' + fim.getFullYear() + '-' + pad(fim.getMonth()+1) + '-' + pad(fim.getDate());
+  }
+
+  let hist = [];
+  try { hist = await api('/historico_funcoes?select=coroinha_id,funcao,horario,data_missa' + filtro); }
+  catch(e) { toast('Erro ao buscar dados para o PDF.', true); return; }
+
+  // ---- SECTION: Participações por horário ----
+  doc.setFillColor(253, 246, 227);
+  doc.rect(14, y, 182, 7, 'F');
+  doc.setTextColor(darkR, darkG, darkB);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('PARTICIPAÇÕES POR HORÁRIO', 15, y + 5);
+  y += 11;
+
+  for (const horario of horariosFixos) {
+    const missasHorario = hist.filter(h => h.horario === horario);
+    if (!missasHorario.length) continue;
+
+    const cCount = {};
+    missasHorario.forEach(h => { cCount[h.coroinha_id] = (cCount[h.coroinha_id]||0)+1; });
+    const ranking = Object.entries(cCount).sort((a,b) => b[1]-a[1]);
+
+    // Sub-header
+    doc.setFillColor(goldR, goldG, goldB);
+    doc.rect(14, y, 182, 6, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text(horario + '  (' + missasHorario.length + ' registro' + (missasHorario.length !== 1 ? 's' : '') + ')', 16, y + 4.3);
+    y += 8;
+
+    const rows = ranking.map(([id, v], i) => {
+      const c = coroinhas.find(x => x.id === id);
+      const nome = c ? c.nome : 'Desconhecido';
+      return [String(i+1), nome, String(v)];
+    });
+
+    doc.autoTable({
+      startY: y,
+      head: [['#', 'Coroinha', 'Participações']],
+      body: rows,
+      theme: 'grid',
+      styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.5, textColor: [darkR, darkG, darkB] },
+      headStyles: { fillColor: [253, 246, 227], textColor: [darkR, darkG, darkB], fontStyle: 'bold', lineColor: [232, 217, 192], lineWidth: 0.3 },
+      alternateRowStyles: { fillColor: [250, 246, 239] },
+      columnStyles: { 0: { cellWidth: 12, halign: 'center' }, 2: { cellWidth: 35, halign: 'center' } },
+      margin: { left: 14, right: 14 },
+    });
+    y = doc.lastAutoTable.finalY + 6;
+
+    if (y > 260) { doc.addPage(); y = 15; }
+  }
+
+  // ---- SECTION: Ranking geral ----
+  if (y > 240) { doc.addPage(); y = 15; }
+
+  doc.setFillColor(253, 246, 227);
+  doc.rect(14, y, 182, 7, 'F');
+  doc.setTextColor(darkR, darkG, darkB);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('COROINHAS QUE MAIS SERVIRAM', 15, y + 5);
+  y += 11;
+
+  const cCount = {};
+  hist.forEach(h => { cCount[h.coroinha_id] = (cCount[h.coroinha_id]||0)+1; });
+  const cSorted = Object.entries(cCount).sort((a,b) => b[1]-a[1]);
+
+  if (cSorted.length) {
+    const rows = cSorted.map(([id, v], i) => {
+      const c = coroinhas.find(x => x.id === id);
+      return [String(i+1), c ? c.nome : 'Desconhecido', String(v)];
+    });
+    doc.autoTable({
+      startY: y,
+      head: [['#', 'Coroinha', 'Total']],
+      body: rows,
+      theme: 'grid',
+      styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.5, textColor: [darkR, darkG, darkB] },
+      headStyles: { fillColor: [253, 246, 227], textColor: [darkR, darkG, darkB], fontStyle: 'bold', lineColor: [232, 217, 192], lineWidth: 0.3 },
+      alternateRowStyles: { fillColor: [250, 246, 239] },
+      columnStyles: { 0: { cellWidth: 12, halign: 'center' }, 2: { cellWidth: 35, halign: 'center' } },
+      margin: { left: 14, right: 14 },
+    });
+    y = doc.lastAutoTable.finalY + 6;
+  } else {
+    doc.setTextColor(139, 107, 74);
+    doc.setFontSize(9);
+    doc.text('Sem registros no período.', 15, y);
+    y += 10;
+  }
+
+  // ---- SECTION: Tempo sem servir (só no modo "Tudo") ----
+  if (statMesOffset === -1) {
+    if (y > 220) { doc.addPage(); y = 15; }
+
+    doc.setFillColor(253, 246, 227);
+    doc.rect(14, y, 182, 7, 'F');
+    doc.setTextColor(darkR, darkG, darkB);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TEMPO SEM SERVIR', 15, y + 5);
+    y += 11;
+
+    try {
+      const histTudo = await api('/historico_funcoes?select=coroinha_id,data_missa&order=data_missa.desc');
+      const ultimaData = {};
+      histTudo.forEach(h => { if (!ultimaData[h.coroinha_id]) ultimaData[h.coroinha_id] = h.data_missa; });
+
+      const CARGOS_EQUIPE = ['equipe', 'coordenador', 'vice-coordenador', 'vice coordenador', 'cerimonário', 'cerimonario'];
+      const ehEquipe = c => c.cargo && CARGOS_EQUIPE.some(k => c.cargo.toLowerCase().includes(k));
+
+      const lista = coroinhas
+        .filter(c => !ehEquipe(c))
+        .map(c => {
+          const ultima = ultimaData[c.id];
+          const dias = ultima ? Math.floor((hoje - new Date(ultima + 'T12:00:00')) / 86400000) : null;
+          const sem = dias !== null ? Math.floor(dias/7) : null;
+          const label = dias === null ? 'Nunca serviu' : sem === 0 ? 'Esta semana' : sem === 1 ? '1 semana' : sem + ' semanas';
+          return { nome: c.nome, dias, label };
+        })
+        .filter(x => x.dias === null || x.dias >= 11)
+        .sort((a,b) => {
+          if (a.dias === null && b.dias === null) return a.nome.localeCompare(b.nome);
+          if (a.dias === null) return 1;
+          if (b.dias === null) return -1;
+          return b.dias - a.dias;
+        });
+
+      if (lista.length) {
+        const rows = lista.map((x, i) => [String(i+1), x.nome, x.label]);
+        doc.autoTable({
+          startY: y,
+          head: [['#', 'Coroinha', 'Última participação']],
+          body: rows,
+          theme: 'grid',
+          styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.5, textColor: [darkR, darkG, darkB] },
+          headStyles: { fillColor: [253, 246, 227], textColor: [darkR, darkG, darkB], fontStyle: 'bold', lineColor: [232, 217, 192], lineWidth: 0.3 },
+          alternateRowStyles: { fillColor: [250, 246, 239] },
+          columnStyles: { 0: { cellWidth: 12, halign: 'center' }, 2: { cellWidth: 50, halign: 'center' } },
+          margin: { left: 14, right: 14 },
+        });
+      }
+    } catch(e) {}
+  }
+
+  // Footer on each page
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(goldR, goldG, goldB);
+    doc.setLineWidth(0.4);
+    doc.line(14, 287, 196, 287);
+    doc.setTextColor(160, 113, 79);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Coroinhas da Paróquia Santa Edwiges', 14, 292);
+    doc.text('Página ' + i + ' de ' + totalPages, 196, 292, { align: 'right' });
+  }
+
+  const nomePeriodo = periodoLabel.toLowerCase().replace(/ /g,'-');
+  doc.save('estatisticas-coroinhas-' + nomePeriodo + '.pdf');
+  toast('✓ PDF exportado!');
+}
+
+// ===================== FIM EXPORTAR PDF =====================
+
+// ===================== MÁSCARA DE TELEFONE =====================
+function mascaraTelefone(input) {
+  let v = input.value.replace(/\D/g, '').slice(0, 11);
+  if (v.length > 10) {
+    v = v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  } else if (v.length > 6) {
+    v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+  } else if (v.length > 2) {
+    v = v.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+  } else if (v.length > 0) {
+    v = v.replace(/(\d{0,2})/, '($1');
+  }
+  input.value = v;
+}
 
 </script>
 </body>
