@@ -261,6 +261,7 @@
       <button class="admin-subtab" onclick="showAdminTab('cadastrar', this)">Cadastrar</button>
       <button class="admin-subtab" onclick="showAdminTab('funcao', this)">Função</button>
       <button class="admin-subtab" onclick="showAdminTab('escala-admin', this)">Escala</button>
+      <button class="admin-subtab" onclick="showAdminTab('criar-escala', this)">Criar Escala</button>
       <button class="admin-subtab" onclick="showAdminTab('stats', this)">Estatísticas</button>
     </div>
 
@@ -340,6 +341,12 @@
           <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Turíbulo"><span>Turíbulo</span></label>
           <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Vela"><span>Vela</span></label>
           <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Sem-função"><span>Sem-função</span></label>
+          <label class="funcao-chip" id="chip-outro" onclick="toggleChipOutro(this)" style="border-style:dashed;">
+            <input type="checkbox" value="__outro__" id="cb-outro"><span>+ Outro</span>
+          </label>
+        </div>
+        <div id="campo-outro-funcao" style="display:none;margin-top:8px;">
+          <input type="text" id="func-outro-texto" placeholder="Descreva a função..." style="margin-bottom:0;" oninput="atualizarChipOutroLabel()">
         </div>
         <input type="hidden" id="func-horario">
         <div id="campo-missa-especial" style="display:none;"></div>
@@ -352,13 +359,30 @@
 
     <!-- Sub-aba: Escala (visão da equipe) -->
     <div id="admin-sub-escala-admin" class="admin-subpage" style="display:none;">
-      <div class="section-title">Escala da Semana</div>
-      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-        <button class="btn-ordem active" id="escala-admin-semana-btn" onclick="setEscalaAdminSemana(0)">Esta semana</button>
-        <button class="btn-ordem" id="escala-admin-ant-btn" onclick="setEscalaAdminSemana(1)">Semana anterior</button>
+      <!-- mini-tabs: Semanal / Especiais -->
+      <div style="display:flex;gap:6px;margin-bottom:14px;">
+        <button class="btn-ordem active" id="escala-admin-mini-semanal" onclick="setEscalaAdminMini('semanal')">Semanal</button>
+        <button class="btn-ordem" id="escala-admin-mini-especiais" onclick="setEscalaAdminMini('especiais')">Missas Especiais</button>
       </div>
-      <div id="escala-admin-container">
-        <div class="loading"><div class="spinner"></div>Carregando...</div>
+
+      <!-- painel semanal -->
+      <div id="escala-admin-painel-semanal">
+        <div class="section-title">Escala da Semana</div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <button class="btn-ordem active" id="escala-admin-semana-btn" onclick="setEscalaAdminSemana(0)">Esta semana</button>
+          <button class="btn-ordem" id="escala-admin-ant-btn" onclick="setEscalaAdminSemana(1)">Semana anterior</button>
+        </div>
+        <div id="escala-admin-container">
+          <div class="loading"><div class="spinner"></div>Carregando...</div>
+        </div>
+      </div>
+
+      <!-- painel especiais -->
+      <div id="escala-admin-painel-especiais" style="display:none;">
+        <div class="section-title">Missas Especiais</div>
+        <div id="escala-admin-especiais-container">
+          <div class="loading"><div class="spinner"></div>Carregando...</div>
+        </div>
       </div>
     </div>
 
@@ -398,30 +422,91 @@
       </div>
     </div>
 
+    <!-- Sub-aba: Criar Escala (missas especiais) -->
+    <div id="admin-sub-criar-escala" class="admin-subpage" style="display:none;">
+      <div class="section-title">Criar Escala</div>
+
+      <!-- Formulário de nova escala -->
+      <div class="card" id="criar-escala-form-card">
+        <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:14px;">Nova escala personalizada</div>
+        <label>Nome / descrição da missa</label>
+        <input type="text" id="ce-nome" placeholder="Missa especial">
+        <label>Data da missa</label>
+        <input type="date" id="ce-data">
+        <label>Horário</label>
+        <input type="text" id="ce-horario" placeholder="Ex: 19h">
+        <label>Limite de coroinhas</label>
+        <input type="number" id="ce-limite" placeholder="7" min="1" max="50" value="7">
+        <label>Inscrições abrem em</label>
+        <input type="datetime-local" id="ce-abre-em">
+        <label>Inscrições fecham em</label>
+        <input type="datetime-local" id="ce-fecha-em">
+        <p style="font-size:12px;color:var(--text-muted);margin-top:8px;line-height:1.5;">⏱ O sistema abrirá e fechará as inscrições automaticamente nos horários definidos. Você também pode abrir ou fechar manualmente a qualquer momento.</p>
+        <button class="btn btn-primary" onclick="criarEscalaEspecial()" style="margin-top:18px;">✚ Criar escala</button>
+      </div>
+
+      <!-- Lista de escalas especiais existentes -->
+      <div class="section-title" style="margin-top:20px;">Escalas criadas</div>
+      <div id="lista-escalas-especiais">
+        <div class="loading"><div class="spinner"></div>Carregando...</div>
+      </div>
+    </div>
+
     <!-- Sub-aba: Estatísticas -->
     <div id="admin-sub-stats" class="admin-subpage" style="display:none;">
-      <div class="section-title">Estatísticas</div>
-      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-        <button class="btn-ordem active" id="stat-mes-btn" onclick="setMes(0)">Este mês</button>
-        <button class="btn-ordem" id="stat-mes-ant-btn" onclick="setMes(1)">Mês anterior</button>
-        <button class="btn-ordem" id="stat-tudo-btn" onclick="setMes(-1)">Tudo</button>
-        <button class="btn-ordem" onclick="exportarEstatisticasPDF()" style="background:var(--gold-pale);border-color:var(--gold);color:var(--brown-mid);font-weight:600;">⬇ Exportar PDF</button>
+      <!-- Mini-tabs: Geral / Missas Especiais -->
+      <div style="display:flex;gap:6px;margin-bottom:16px;">
+        <button class="btn-ordem active" id="stat-mini-geral" onclick="setStatMini('geral')">Geral</button>
+        <button class="btn-ordem" id="stat-mini-especiais" onclick="setStatMini('especiais')">Missas Especiais</button>
       </div>
-      <div id="stat-horarios-container"></div>
-      <div class="card">
-        <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Coroinhas que mais serviram</div>
-        <div id="stat-coroinhas"></div>
+      <!-- Painel geral -->
+      <div id="stat-painel-geral">
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+          <button class="btn-ordem active" id="stat-mes-btn" onclick="setMes(0)">Este mês</button>
+          <button class="btn-ordem" id="stat-mes-ant-btn" onclick="setMes(1)">Mês anterior</button>
+          <button class="btn-ordem" id="stat-tudo-btn" onclick="setMes(-1)">Tudo</button>
+          <button class="btn-ordem" onclick="exportarEstatisticasPDF()" style="background:var(--gold-pale);border-color:var(--gold);color:var(--brown-mid);font-weight:600;">&#8595; Exportar PDF</button>
+        </div>
+        <div id="stat-horarios-container"></div>
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Coroinhas que mais serviram</div>
+          <div id="stat-coroinhas"></div>
+        </div>
+        <div class="card" style="margin-bottom:12px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Tempo sem servir</div>
+          <div id="stat-inativos"></div>
+        </div>
       </div>
-      <div class="card" style="margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Tempo sem servir</div>
-        <div id="stat-inativos"></div>
+      <!-- Painel historico missas especiais -->
+      <div id="stat-painel-especiais" style="display:none;">
+        <div id="stat-especiais-container">
+          <div class="loading"><div class="spinner"></div>Carregando...</div>
+        </div>
       </div>
     </div>
 
   </div>
 </div>
 
-<!-- Modal de editar registro de função -->
+<!-- MODAL INSCREVER ESCALA ESPECIAL -->
+<div class="modal-overlay" id="modal-escala-especial" style="display:none;">
+  <div class="modal-box" style="max-width:360px;">
+    <div class="modal-title" id="modal-ee-titulo"></div>
+    <p style="font-size:13px;color:var(--text-muted);margin:6px 0 14px;">Selecione seu nome para se inscrever nesta missa.</p>
+    <div class="select-wrapper-native" style="position:relative;margin-bottom:16px;">
+      <select id="modal-ee-nome" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
+        <option value="">Selecione seu nome...</option>
+      </select>
+      <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-outline btn-sm" onclick="fecharModalEscalaEspecial()">Cancelar</button>
+      <button class="btn-primary btn-sm" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;" onclick="confirmarInscricaoEscalaEspecial()">✓ Confirmar</button>
+    </div>
+  </div>
+</div>
+
+
 <div class="modal-overlay" id="modal-edit-registro" style="display:none;">
   <div class="modal-box" style="max-width:380px;">
     <div class="modal-title">✏ Editar registro</div>
@@ -471,7 +556,7 @@ const HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type
 const HEADERS_DELETE = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
 
 async function api(path, method='GET', body=null) {
-  const headers = (method === 'DELETE') ? HEADERS_DELETE : HEADERS;
+  const headers = (method === 'DELETE' || method === 'PATCH') ? HEADERS_DELETE : HEADERS;
   const opts = { method, headers };
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch(SUPA_URL + path, opts);
@@ -480,7 +565,7 @@ async function api(path, method='GET', body=null) {
     console.error('Supabase error:', method, path, r.status, errText);
     throw new Error(errText);
   }
-  if (r.status === 204 || method === 'DELETE') return null;
+  if (r.status === 204 || method === 'DELETE' || method === 'PATCH') return null;
   return r.json();
 }
 
@@ -615,6 +700,33 @@ function atualizarCheckCoroinha(el) {
     if (total > 0) { cnt.style.display = 'inline'; cnt.textContent = total + ' selecionado' + (total > 1 ? 's' : ''); }
     else cnt.style.display = 'none';
   }, 0);
+}
+
+function toggleChipOutro(el) {
+  setTimeout(() => {
+    const cb = document.getElementById('cb-outro');
+    const campo = document.getElementById('campo-outro-funcao');
+    const ativo = cb.checked;
+    el.classList.toggle('selecionada', ativo);
+    campo.style.display = ativo ? 'block' : 'none';
+    if (ativo) {
+      document.getElementById('func-outro-texto').focus();
+    } else {
+      document.getElementById('func-outro-texto').value = '';
+      el.querySelector('span').textContent = '+ Outro';
+    }
+    // Atualiza contador geral
+    const total = document.querySelectorAll('.funcao-chip input:checked').length;
+    const cnt = document.getElementById('cnt-funcoes');
+    if (total > 0) { cnt.style.display = 'inline'; cnt.textContent = total + ' selecionada' + (total > 1 ? 's' : ''); }
+    else cnt.style.display = 'none';
+  }, 0);
+}
+
+function atualizarChipOutroLabel() {
+  const texto = document.getElementById('func-outro-texto').value.trim();
+  const span = document.querySelector('#chip-outro span');
+  span.textContent = texto ? texto : '+ Outro';
 }
 
 function atualizarChip(el) {
@@ -795,7 +907,15 @@ document.getElementById('cad-cargo').addEventListener('change', function() {
 
 async function registrarFuncao() {
   const coroinhasSel = [...document.querySelectorAll('#lista-check-coroinhas input:checked')].map(cb => cb.value);
-  const funcoesSel = [...document.querySelectorAll('.funcao-chip input:checked')].map(cb => cb.value);
+  const funcoesSel = [...document.querySelectorAll('.funcao-chip input:checked')]
+    .map(cb => {
+      if (cb.value === '__outro__') {
+        const texto = document.getElementById('func-outro-texto').value.trim();
+        return texto || null;
+      }
+      return cb.value;
+    })
+    .filter(Boolean);
   const data_missa = document.getElementById('func-data').value;
   const observacao = document.getElementById('func-obs').value.trim();
   const horario = document.getElementById('func-horario').value;
@@ -810,10 +930,21 @@ async function registrarFuncao() {
     await api('/historico_funcoes', 'POST', registros);
     const nc = coroinhasSel.length, nf = funcoesSel.length;
     toast('✓ ' + nf + ' função' + (nf>1?'ões':'') + ' para ' + nc + ' coroinha' + (nc>1?'s':'') + '!');
+    // Reset completo do formulário
+    document.getElementById('func-escala-select').value = '';
+    document.getElementById('lista-check-coroinhas').innerHTML = '';
+    document.getElementById('lista-check-coroinhas').style.display = 'none';
+    document.getElementById('escala-funcao-status').style.display = 'none';
+    document.getElementById('func-horario').value = '';
+    document.getElementById('func-data').value = '';
+    document.getElementById('campo-missa-especial').style.display = 'none';
     document.querySelectorAll('#lista-check-coroinhas input').forEach(cb => cb.checked = false);
     document.querySelectorAll('#lista-check-coroinhas .check-item').forEach(el => el.classList.remove('selecionado'));
     document.querySelectorAll('.funcao-chip input').forEach(cb => cb.checked = false);
     document.querySelectorAll('.funcao-chip').forEach(el => el.classList.remove('selecionada'));
+    document.getElementById('func-outro-texto').value = '';
+    document.getElementById('campo-outro-funcao').style.display = 'none';
+    document.querySelector('#chip-outro span').textContent = '+ Outro';
     document.getElementById('cnt-coroinhas').style.display = 'none';
     document.getElementById('cnt-funcoes').style.display = 'none';
     document.getElementById('func-obs').value = '';
@@ -851,7 +982,7 @@ async function popularSelectEscala() {
 
     if (!Object.keys(opcoes).length) {
       sel.innerHTML = '<option value="">Nenhuma escala disponível</option>';
-      return;
+      // Mesmo sem escala padrão, pode ter especiais — continua abaixo
     }
 
     // Ordena por semana desc, depois por ordem das missas
@@ -861,16 +992,52 @@ async function popularSelectEscala() {
       return (ordemMissas[a.horario] ?? 99) - (ordemMissas[b.horario] ?? 99);
     });
 
-    // Monta datas legíveis
+    // Helper: verifica se uma missa ainda está dentro da janela de expiração
+    const agoraMs = Date.now();
+    const dentroJanela = (dataISO, horarioStr, diasJanela) => {
+      const match = (horarioStr || '').match(/(\d{1,2})h?:?(\d{0,2})/);
+      const hh = match ? parseInt(match[1]) : 23;
+      const mm = match && match[2] ? parseInt(match[2]) || 0 : 0;
+      const dtMissa = new Date(dataISO + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00');
+      return agoraMs < dtMissa.getTime() + diasJanela * 24 * 60 * 60 * 1000;
+    };
+
+    // Monta datas legíveis, filtrando missas semanais expiradas (> 3 dias após o horário)
     lista.forEach(op => {
       const datas = datasSemanaMissa(op.semana_key);
       const dataLegivel = datas[op.horario] || op.semana_key;
+      // Converte "DD/MM/YYYY" para "YYYY-MM-DD" para o filtro
+      const partes = dataLegivel.split('/');
+      const dataISO = partes.length === 3 ? `${partes[2]}-${partes[1]}-${partes[0]}` : null;
+      if (dataISO && !dentroJanela(dataISO, op.horario, 3)) return; // expirou após 3 dias
       const label = op.horario + ' — ' + dataLegivel + ' (' + op.ids.length + ' inscrito' + (op.ids.length !== 1 ? 's' : '') + ')';
       const opt = document.createElement('option');
       opt.value = JSON.stringify({ semana_key: op.semana_key, horario: op.horario, ids: op.ids });
       opt.textContent = label;
       sel.appendChild(opt);
     });
+
+    // Adiciona escalas especiais (com inscritos) ao select, filtrando expiradas (> 1 dia)
+    try {
+      const especiais = await api('/escala_especial?order=data.desc,created_at.desc');
+      for (const e of especiais) {
+        if (e.data && !dentroJanela(e.data, e.horario, 1)) continue; // expirou após 1 dia
+        let inscritosEsp = [];
+        try { inscritosEsp = await api('/escala_especial_inscricoes?escala_especial_id=eq.' + e.id + '&order=created_at.asc'); } catch(err) {}
+        if (!inscritosEsp.length) continue;
+        const ids = inscritosEsp.map(r => r.coroinha_id);
+        const dataFmt = e.data ? formatarData(e.data) : e.data;
+        const label = e.nome + ' (' + e.horario + ', ' + dataFmt + ') — ' + ids.length + ' inscrito' + (ids.length !== 1 ? 's' : '');
+        const opt = document.createElement('option');
+        opt.value = JSON.stringify({ especial_id: e.id, horario: e.nome + ' ' + e.horario, data: e.data, ids });
+        opt.textContent = '★ ' + label;
+        sel.appendChild(opt);
+      }
+    } catch(err) {}
+
+    if (sel.querySelectorAll('option').length <= 1) {
+      sel.innerHTML = '<option value="">Nenhuma escala disponível</option>';
+    }
 
   } catch(e) {
     sel.innerHTML = '<option value="">Erro ao carregar escalas</option>';
@@ -896,7 +1063,7 @@ function carregarCoroinhasEscala() {
   let opcao;
   try { opcao = JSON.parse(sel.value); } catch(e) { return; }
 
-  const { horario, ids, semana_key } = opcao;
+  const { horario, ids, semana_key, especial_id, data } = opcao;
 
   // Preenche o horário automaticamente
   const horSel = document.getElementById('func-horario');
@@ -904,14 +1071,27 @@ function carregarCoroinhasEscala() {
   if (horariosFixos.includes(horario)) {
     horSel.value = horario;
     document.getElementById('campo-missa-especial').style.display = 'none';
+  } else {
+    horSel.value = 'Missa Especial';
+    document.getElementById('campo-missa-especial').style.display = 'block';
+    const campoEsp = document.getElementById('campo-missa-especial');
+    if (campoEsp && !campoEsp.querySelector('input')) {
+      campoEsp.innerHTML = '<input type="text" id="func-missa-especial-nome" value="' + horario.replace(/"/g,'&quot;') + '">';
+    } else if (campoEsp && campoEsp.querySelector('input')) {
+      campoEsp.querySelector('input').value = horario;
+    }
   }
 
   // Preenche a data automaticamente
-  const datas = datasSemanaMissa(semana_key);
-  const dataStr = datas[horario]; // formato DD/MM/YYYY
-  if (dataStr) {
-    const [dia, mes, ano] = dataStr.split('/');
-    document.getElementById('func-data').value = `${ano}-${mes}-${dia}`;
+  if (especial_id && data) {
+    document.getElementById('func-data').value = data;
+  } else if (semana_key) {
+    const datas = datasSemanaMissa(semana_key);
+    const dataStr = datas[horario];
+    if (dataStr) {
+      const [dia, mes, ano] = dataStr.split('/');
+      document.getElementById('func-data').value = `${ano}-${mes}-${dia}`;
+    }
   }
 
   const coroinhasDaMissa = coroinhas.filter(c => ids.includes(c.id));
@@ -1087,6 +1267,106 @@ async function carregarStats() {
   }
 }
 
+// ===================== STATS MINI-TABS =====================
+let statMiniAtual = 'geral';
+
+function setStatMini(painel) {
+  statMiniAtual = painel;
+  document.getElementById('stat-mini-geral').classList.toggle('active', painel === 'geral');
+  document.getElementById('stat-mini-especiais').classList.toggle('active', painel === 'especiais');
+  document.getElementById('stat-painel-geral').style.display = painel === 'geral' ? 'block' : 'none';
+  document.getElementById('stat-painel-especiais').style.display = painel === 'especiais' ? 'block' : 'none';
+  if (painel === 'especiais') carregarStatEspeciais();
+}
+
+async function carregarStatEspeciais() {
+  const el = document.getElementById('stat-especiais-container');
+  if (!el) return;
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>';
+
+  try {
+    // Busca todas as missas especiais, ordenadas da mais recente
+    const lista = await api('/escala_especial?order=data.desc,created_at.desc');
+    if (!lista || !lista.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon"></div><p>Nenhuma missa especial registrada ainda.</p></div>';
+      return;
+    }
+
+    // Busca todas as inscrições de uma vez
+    const ids = lista.map(e => e.id);
+    let todasInscricoes = [];
+    try {
+      todasInscricoes = await api('/escala_especial_inscricoes?escala_especial_id=in.(' + ids.join(',') + ')&order=created_at.asc');
+    } catch(err) {}
+
+    // Busca histórico de funções para as datas dessas missas
+    const datasISO = [...new Set(lista.map(e => e.data).filter(Boolean))];
+    let historico = [];
+    if (datasISO.length) {
+      try { historico = await api('/historico_funcoes?data_missa=in.(' + datasISO.join(',') + ')'); } catch(err) {}
+    }
+
+    el.innerHTML = lista.map(e => {
+      const inscritos = todasInscricoes.filter(r => r.escala_especial_id === e.id);
+      const dataFmt = e.data ? formatarData(e.data) : '—';
+
+      // Verifica se já passou (para badge visual)
+      let passou = false;
+      if (e.data) {
+        const match = (e.horario || '').match(/(\d{1,2})h?:?(\d{0,2})/);
+        const hh = match ? parseInt(match[1]) : 23;
+        const mm = match && match[2] ? parseInt(match[2]) || 0 : 0;
+        const dataMissa = new Date(e.data + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00');
+        passou = new Date() > dataMissa;
+      }
+
+      const statusBadge = passou
+        ? `<span style="font-size:10px;font-weight:600;background:#f0f0f0;color:#666;border:1px solid #ccc;padding:2px 8px;border-radius:50px;">✓ Realizada</span>`
+        : `<span style="font-size:10px;font-weight:600;background:#d4edda;color:#276130;border:1px solid #a3d9a5;padding:2px 8px;border-radius:50px;">🟢 Futura</span>`;
+
+      const linhasInscritos = inscritos.length
+        ? inscritos.map(r => {
+            const c = coroinhas.find(x => x.id === r.coroinha_id);
+            const nome = c ? c.nome : 'Desconhecido';
+            const funcoesReg = historico.filter(h =>
+              h.coroinha_id === r.coroinha_id && h.data_missa === e.data &&
+              (h.horario === e.nome + ' ' + e.horario || h.horario === 'Missa Especial' || h.horario === e.horario)
+            );
+            const funcoesTags = funcoesReg.length
+              ? funcoesReg.map(h =>
+                  h.funcao.split(',').map(f => f.trim()).filter(Boolean)
+                    .map(f => `<span class="funcao-tag">${f}</span>`).join('')
+                ).join('')
+              : `<span class="escala-admin-sem-funcao">sem função registrada</span>`;
+
+            return `<div class="escala-admin-coroinha">
+              <div class="avatar" style="width:32px;height:32px;font-size:12px;flex-shrink:0;">${iniciais(nome)}</div>
+              <div style="flex:1;">
+                <div class="escala-admin-nome">${nome}</div>
+                <div class="escala-admin-funcoes" style="margin-top:4px;">${funcoesTags}</div>
+              </div>
+            </div>`;
+          }).join('')
+        : `<div class="escala-vazio">Nenhum inscrito.</div>`;
+
+      return `<div class="escala-horario" style="margin-bottom:14px;opacity:${passou ? '0.85' : '1'};">
+        <div class="escala-horario-header" style="background:var(--gold-pale);">
+          <div>
+            <span class="escala-horario-titulo">${e.nome}</span>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${dataFmt} · ${e.horario} · ${inscritos.length}/${e.limite} inscritos</div>
+          </div>
+          ${statusBadge}
+        </div>
+        ${linhasInscritos}
+      </div>`;
+    }).join('');
+
+  } catch(err) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">⚠</div><p>Erro ao carregar.</p></div>';
+    console.error(err);
+  }
+}
+
 function showAdminTab(tab, btn) {
   document.querySelectorAll('.admin-subpage').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
   document.querySelectorAll('.admin-subtab').forEach(t => t.classList.remove('active'));
@@ -1094,9 +1374,15 @@ function showAdminTab(tab, btn) {
   if (el) { el.style.display = 'block'; el.classList.add('active'); }
   if (btn) btn.classList.add('active');
   if (tab === 'gerenciar') renderAdminLista();
-  if (tab === 'stats') carregarStats();
+  if (tab === 'stats') { setStatMini('geral'); carregarStats(); }
   if (tab === 'funcao') popularSelectEscala();
-  if (tab === 'escala-admin') carregarEscalaAdmin();
+  if (tab === 'escala-admin') {
+    // garante que semanal começa ativo
+    setEscalaAdminMini(escalaAdminMiniAtual || 'semanal');
+  }
+  if (tab === 'criar-escala') {
+    carregarEscalasEspeciaisComInscritos();
+  }
 }
 
 function showTab(tab, btn) {
@@ -1222,36 +1508,65 @@ function msgEscalaFechada() {
 }
 
 async function carregarEscala() {
-  // Fora do horário: mostra mensagem sem carregar o banco
-  if (!inscricoesAbertas()) {
-    document.getElementById('escala-semana-atual').innerHTML = msgEscalaFechada();
-    return;
-  }
+  const padrao = inscricoesAbertas();
 
+  // Se escala padrão fechada, ainda pode haver escalas especiais abertas
   try {
-    // Carrega semana atual e últimas 4 semanas
-    const semanas = [];
-    const agora = new Date();
-    for (let i = 0; i < 5; i++) {
-      const d = new Date(agora);
-      d.setDate(agora.getDate() - i * 7);
-      const key = getSemanaKey(d);
-      if (!semanas.includes(key)) semanas.push(key);
+    const escalasEspeciais = await carregarEscalasEspeciaisPublico();
+    const temEspecial = escalasEspeciais.length > 0;
+
+    if (!padrao && !temEspecial) {
+      document.getElementById('escala-semana-atual').innerHTML = msgEscalaFechada();
+      return;
     }
 
-    // Busca todas as inscrições dessas semanas
-    const semanaAtual = getSemanaKey();
-    const dadosEscala = await api('/escala_inscricoes?semana_key=in.(' + semanas.join(',') + ')&order=created_at.asc');
+    let htmlPadrao = '';
+    if (padrao) {
+      // Carrega inscrições padrão
+      const semanas = [];
+      const agora = new Date();
+      for (let i = 0; i < 5; i++) {
+        const d = new Date(agora); d.setDate(agora.getDate() - i * 7);
+        const key = getSemanaKey(d);
+        if (!semanas.includes(key)) semanas.push(key);
+      }
+      const semanaAtual = getSemanaKey();
+      const dadosEscala = await api('/escala_inscricoes?semana_key=in.(' + semanas.join(',') + ')&order=created_at.asc');
+      escalaCache = {};
+      dadosEscala.forEach(row => {
+        if (!escalaCache[row.semana_key]) escalaCache[row.semana_key] = {};
+        if (!escalaCache[row.semana_key][row.horario]) escalaCache[row.semana_key][row.horario] = [];
+        escalaCache[row.semana_key][row.horario].push(row);
+      });
 
-    // Agrupa por semana e horário
-    escalaCache = {};
-    dadosEscala.forEach(row => {
-      if (!escalaCache[row.semana_key]) escalaCache[row.semana_key] = {};
-      if (!escalaCache[row.semana_key][row.horario]) escalaCache[row.semana_key][row.horario] = [];
-      escalaCache[row.semana_key][row.horario].push(row);
-    });
+      const sexta = new Date(semanaAtual + 'T12:00:00');
+      const sabado = new Date(sexta); sabado.setDate(sexta.getDate() + 1);
+      const domingo = new Date(sexta); domingo.setDate(sexta.getDate() + 2);
+      const pad = n => String(n).padStart(2,'0');
+      const fmtFull = d => `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+      const statusHtml = `<div style="background:#d4edda;border:1px solid #a3d9a5;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#276130;font-weight:500;">
+        Inscrições abertas — até sábado às 15h
+      </div>`;
 
-    renderEscalaSemana(semanaAtual, true);
+      htmlPadrao = `<div class="semana-badge">Semana atual · ${fmtFull(sabado)} – ${fmtFull(domingo)}</div>` +
+        statusHtml + renderEscalaSemana(semanaAtual, true, true);
+    }
+
+    // Escalas especiais abertas
+    const htmlEspecial = await renderEscalasEspeciaisPublico();
+
+    if (!padrao) {
+      // Só especiais abertas — mostra aviso de escala padrão fechada também
+      const { dow, h: hBr, min: minBr } = agoraBrasilia();
+      let msgPadrao = '';
+      if (dow === 6 && hBr >= 15) msgPadrao = 'Inscrições da escala semanal encerradas.';
+      else if (dow === 5 && hBr < 15) { const mr = 15*60-(hBr*60+minBr); msgPadrao = `Escala semanal abre hoje às 15h (faltam ${Math.floor(mr/60)}h${mr%60>0?mr%60+'min':''}).`; }
+      else msgPadrao = 'Inscrições da escala semanal fechadas (abrem sexta às 15h).';
+      const avisoFechada = `<div style="background:var(--gold-pale);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:var(--text-muted);">🔒 ${msgPadrao}</div>`;
+      document.getElementById('escala-semana-atual').innerHTML = avisoFechada + htmlEspecial;
+    } else {
+      document.getElementById('escala-semana-atual').innerHTML = htmlPadrao + (htmlEspecial ? '<div style="margin-top:8px;">' + htmlEspecial + '</div>' : '');
+    }
   } catch(e) {
     document.getElementById('escala-semana-atual').innerHTML =
       '<div class="empty"><div class="empty-icon">⚠</div><p>Erro ao carregar escala. Verifique sua conexão.</p></div>';
@@ -1259,7 +1574,7 @@ async function carregarEscala() {
   }
 }
 
-function renderEscalaSemana(semanaKey, isAtual) {
+function renderEscalaSemana(semanaKey, isAtual, returnOnly) {
   const datas = datasSemanaMissa(semanaKey);
   const aberta = isAtual && inscricoesAbertas();
   const dados = escalaCache[semanaKey] || {};
@@ -1339,7 +1654,7 @@ function renderEscalaSemana(semanaKey, isAtual) {
     </div>`;
   }).join('');
 
-  if (isAtual) {
+  if (isAtual && !returnOnly) {
     document.getElementById('escala-semana-atual').innerHTML =
       `<div class="semana-badge">Semana atual · ${fmtFull(sabado)} – ${fmtFull(domingo)}</div>` +
       statusHtml + blocos;
@@ -1501,6 +1816,17 @@ let escalaAdminSemanaOffset = 0;
 let escalaAdminCache = {}; // semanaKey → { horario → [rows] }
 let equipeModalHorario = null;
 let equipeModalSemana = null;
+let escalaAdminMiniAtual = 'semanal';
+
+function setEscalaAdminMini(painel) {
+  escalaAdminMiniAtual = painel;
+  document.getElementById('escala-admin-mini-semanal').classList.toggle('active', painel === 'semanal');
+  document.getElementById('escala-admin-mini-especiais').classList.toggle('active', painel === 'especiais');
+  document.getElementById('escala-admin-painel-semanal').style.display = painel === 'semanal' ? 'block' : 'none';
+  document.getElementById('escala-admin-painel-especiais').style.display = painel === 'especiais' ? 'block' : 'none';
+  if (painel === 'especiais') carregarEscalaAdminEspeciais();
+  if (painel === 'semanal') carregarEscalaAdmin();
+}
 
 function setEscalaAdminSemana(offset) {
   escalaAdminSemanaOffset = offset;
@@ -1720,6 +2046,7 @@ async function removerFuncaoEscala(histId, funcaoNome) {
 
 let forcarModalHorario = null;
 let forcarModalSemana = null;
+let forcarEspecialAdminId = null;
 
 function abrirModalForcarEscala(horario, semanaKey) {
   forcarModalHorario = horario;
@@ -1747,13 +2074,35 @@ function abrirModalForcarEscala(horario, semanaKey) {
 
 function fecharModalForcarEscala() {
   document.getElementById('modal-forcar-escala').style.display = 'none';
+  document.getElementById('modal-forcar-escala').dataset.modo = '';
   forcarModalHorario = null;
   forcarModalSemana = null;
+  forcarEspecialAdminId = null;
 }
 
 async function confirmarForcarEscala() {
   const coroinhaId = document.getElementById('modal-forcar-nome').value;
   if (!coroinhaId) { toast('Selecione um nome.', true); return; }
+
+  const modo = document.getElementById('modal-forcar-escala').dataset.modo;
+
+  // Modo escala especial
+  if (modo === 'especial') {
+    const escalaId = forcarEspecialAdminId;
+    if (!escalaId) { fecharModalForcarEscala(); return; }
+    try {
+      await api('/escala_especial_inscricoes', 'POST', {
+        escala_especial_id: escalaId, coroinha_id: coroinhaId
+      });
+      fecharModalForcarEscala();
+      document.getElementById('modal-forcar-escala').dataset.modo = '';
+      forcarEspecialAdminId = null;
+      const c = coroinhas.find(x => x.id === coroinhaId);
+      toast('✓ ' + (c ? c.nome : 'Coroinha') + ' adicionado!');
+      carregarEscalaAdminEspeciais();
+    } catch(e) { toast('Erro ao adicionar.', true); console.error(e); }
+    return;
+  }
 
   const semanaKey = forcarModalSemana;
   const horario = forcarModalHorario;
@@ -1787,9 +2136,531 @@ document.getElementById('modal-equipe-escala').addEventListener('click', functio
   if (e.target === this) fecharModalEquipeEscala();
 });
 
+// ---------- Painel admin: missas especiais ----------
+
+async function carregarEscalaAdminEspeciais() {
+  const el = document.getElementById('escala-admin-especiais-container');
+  if (!el) return;
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>';
+
+  try {
+    const listaAll = await api('/escala_especial?order=data.desc,created_at.desc');
+    if (!listaAll || !listaAll.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon"></div><p>Nenhuma missa especial criada ainda.<br><small style="color:var(--text-muted);">Crie uma na aba "Criar Escala".</small></p></div>';
+      return;
+    }
+
+    // Filtra: só mostra missas cuja data+horário ainda não passou de 24h
+    const agora24 = new Date();
+    const lista = listaAll.filter(e => {
+      if (!e.data) return true;
+      // Tenta extrair hora do campo horario (ex: "19h30", "9h", "17h30")
+      let horaStr = e.horario || '23';
+      const match = horaStr.match(/(\d{1,2})h?:?(\d{0,2})/);
+      const hh = match ? parseInt(match[1]) : 23;
+      const mm = match && match[2] ? parseInt(match[2]) || 0 : 0;
+      const dataMissa = new Date(e.data + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00');
+      const expira = new Date(dataMissa.getTime() + 24 * 60 * 60 * 1000);
+      return agora24 < expira;
+    });
+
+    if (!lista.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon"></div><p>Nenhuma missa especial ativa no momento.<br><small style="color:var(--text-muted);">Missas passadas ficam no histórico em Estatísticas.</small></p></div>';
+      return;
+    }
+
+    // Busca todas as inscrições de todas as escalas especiais
+    const ids = lista.map(e => e.id);
+    let todasInscricoes = [];
+    try {
+      todasInscricoes = await api('/escala_especial_inscricoes?escala_especial_id=in.(' + ids.join(',') + ')&order=created_at.asc');
+    } catch(err) {}
+
+    // Busca histórico de funções para as datas dessas missas
+    const datasISO = [...new Set(lista.map(e => e.data).filter(Boolean))];
+    let historico = [];
+    if (datasISO.length) {
+      try { historico = await api('/historico_funcoes?data_missa=in.(' + datasISO.join(',') + ')'); } catch(err) {}
+    }
+
+    el.innerHTML = lista.map(e => {
+      const inscritos = todasInscricoes.filter(r => r.escala_especial_id === e.id);
+      const dataFmt = e.data ? formatarData(e.data) : '—';
+      const agora = new Date();
+      const autoAberta = e.abre_em && e.fecha_em && agora >= new Date(e.abre_em) && agora < new Date(e.fecha_em);
+      const estaAberta = e.aberta || autoAberta;
+
+      const statusBadge = estaAberta
+        ? `<span style="font-size:10px;font-weight:600;background:#d4edda;color:#276130;border:1px solid #a3d9a5;padding:2px 8px;border-radius:50px;">🟢 Aberta</span>`
+        : `<span style="font-size:10px;font-weight:600;background:var(--gold-pale);color:var(--text-muted);border:1px solid var(--border);padding:2px 8px;border-radius:50px;">🔒 Fechada</span>`;
+
+      const linhasInscritos = inscritos.length
+        ? inscritos.map(r => {
+            const c = coroinhas.find(x => x.id === r.coroinha_id);
+            const nome = c ? c.nome : 'Desconhecido';
+            // funções registradas para este coroinha nesta missa
+            const funcoesReg = historico.filter(h =>
+              h.coroinha_id === r.coroinha_id && h.data_missa === e.data &&
+              (h.horario === e.nome + ' ' + e.horario || h.horario === 'Missa Especial' || h.horario === e.horario)
+            );
+            const funcoesTags = funcoesReg.length
+              ? funcoesReg.map(h =>
+                  h.funcao.split(',').map(f => f.trim()).filter(Boolean)
+                    .map(f => `<span class="funcao-tag" style="display:inline-flex;align-items:center;gap:4px;">${f}</span>`).join('')
+                ).join('')
+              : `<span class="escala-admin-sem-funcao">sem função</span>`;
+
+            return `<div class="escala-admin-coroinha">
+              <div class="avatar" style="width:32px;height:32px;font-size:12px;flex-shrink:0;">${iniciais(nome)}</div>
+              <div style="flex:1;">
+                <div class="escala-admin-nome">${nome}</div>
+                <div class="escala-admin-funcoes" style="margin-top:4px;">${funcoesTags}</div>
+              </div>
+              <button onclick="removerInscricaoEspecialAdmin('${r.id}','${e.id}')" style="background:none;border:none;color:var(--danger);font-size:20px;cursor:pointer;padding:0 0 0 8px;line-height:1;flex-shrink:0;" title="Remover">×</button>
+            </div>`;
+          }).join('')
+        : `<div class="escala-vazio">Nenhum inscrito ainda.</div>`;
+
+      return `<div class="escala-horario" style="margin-bottom:14px;">
+        <div class="escala-horario-header" style="background:var(--gold-pale);">
+          <div>
+            <span class="escala-horario-titulo">${e.nome}</span>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${dataFmt} · ${e.horario} · Limite: ${e.limite}</div>
+          </div>
+          ${statusBadge}
+        </div>
+        ${linhasInscritos}
+        <div class="escala-footer" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:12px;color:var(--text-muted);">${inscritos.length}/${e.limite} inscritos</span>
+          <div style="display:flex;gap:6px;">
+            <button onclick="abrirModalForcarEscalaEspecialAdmin('${e.id}')" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;">+ Coroinha</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+  } catch(err) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">⚠</div><p>Erro ao carregar.</p></div>';
+    console.error(err);
+  }
+}
+
+async function removerInscricaoEspecialAdmin(inscricaoId, escalaId) {
+  if (!inscricaoId || inscricaoId === 'null') { toast('Erro: ID inválido.', true); return; }
+  try {
+    await api('/escala_especial_inscricoes?id=eq.' + inscricaoId, 'DELETE');
+    toast('✓ Removido da escala.');
+    carregarEscalaAdminEspeciais();
+  } catch(err) { toast('Erro ao remover.', true); }
+}
+
+// Modal para forçar inscrição em missa especial (pelo admin)
+function abrirModalForcarEscalaEspecialAdmin(escalaId) {
+  forcarEspecialAdminId = escalaId;
+  // Reutiliza o modal de forçar normal mas com callback diferente
+  document.getElementById('modal-forcar-titulo').textContent = 'Adicionar coroinha';
+  const sel = document.getElementById('modal-forcar-nome');
+  const CARGOS_EQUIPE = ['equipe', 'coordenador', 'vice-coordenador', 'vice coordenador', 'cerimonário', 'cerimonario'];
+  const ehEquipe = c => c.cargo && CARGOS_EQUIPE.some(k => c.cargo.toLowerCase().includes(k));
+  sel.innerHTML = '<option value="">Selecione...</option>' +
+    coroinhas.filter(c => !ehEquipe(c)).sort((a,b) => a.nome.localeCompare(b.nome))
+      .map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+  document.getElementById('modal-forcar-escala').style.display = 'flex';
+  // Troca o onclick do botão confirmar para a versão especial
+  document.getElementById('modal-forcar-escala').dataset.modo = 'especial';
+}
+
 // ===================== FIM ESCALA ADMIN =====================
 
-// ===================== FIM ESCALA =====================
+// ===================== ESCALAS ESPECIAIS =====================
+// Escalas personalizadas (missas não-padrão) criadas pela equipe.
+// Persistidas na tabela escala_especial: { id, nome, data, horario, limite, aberta, created_at }
+// Inscrições na tabela escala_especial_inscricoes: { id, escala_especial_id, coroinha_id, created_at }
+
+let escalaEspecialModalId = null;
+
+// Helper: carrega lista de escalas (com filtro de expiração) e inscritos apenas para as ativas
+async function carregarEscalasEspeciaisComInscritos() {
+  await carregarEscalasEspeciais();
+  // Após renderizar, busca inscritos apenas das escalas que aparecem no DOM
+  const els = document.querySelectorAll('[id^="ee-inscritos-"]');
+  els.forEach(el => {
+    const escalaId = el.id.replace('ee-inscritos-', '');
+    carregarInscritosEscalaEspecial(escalaId);
+  });
+}
+
+// ---------- Admin: criar / listar / abrir / fechar ----------
+
+async function carregarEscalasEspeciais() {
+  const el = document.getElementById('lista-escalas-especiais');
+  if (!el) return;
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>';
+  try {
+    const listaAll = await api('/escala_especial?order=data.asc,created_at.asc');
+    if (!listaAll || !listaAll.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon"></div><p>Nenhuma escala criada ainda.</p></div>';
+      return;
+    }
+    const agora = Date.now();
+    const lista = listaAll.filter(e => {
+      if (!e.data) return true;
+      const match = (e.horario || '').match(/(\d{1,2})h?:?(\d{0,2})/);
+      const hh = match ? parseInt(match[1]) : 23;
+      const mm = match && match[2] ? parseInt(match[2]) || 0 : 0;
+      const dtMissa = new Date(e.data + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00');
+      return agora < dtMissa.getTime() + 24 * 60 * 60 * 1000;
+    });
+    if (!lista.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon"></div><p>Nenhuma escala ativa. Escalas passadas ficam no histórico em Estatísticas.</p></div>';
+      return;
+    }
+    el.innerHTML = lista.map(e => renderEscalaEspecialAdminCard(e)).join('');
+  } catch(err) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">⚠</div><p>Erro ao carregar. Verifique sua conexão.</p></div>';
+  }
+}
+
+// Verifica se uma escala especial está no período automático de abertura
+function escalaEspecialDeveEstarAberta(e) {
+  if (!e.abre_em || !e.fecha_em) return null; // sem horário automático
+  const agora = new Date();
+  return agora >= new Date(e.abre_em) && agora < new Date(e.fecha_em);
+}
+
+function formatarDataHora(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2,'0');
+  return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} às ${pad(d.getHours())}h${pad(d.getMinutes()) !== '00' ? pad(d.getMinutes()) : ''}`;
+}
+
+function renderEscalaEspecialAdminCard(e) {
+  const autoAberta = escalaEspecialDeveEstarAberta(e);
+  // Estado real: combina automático + manual
+  // Se dentro do período automático → aberta (a menos que manualmente forçado de outro jeito)
+  // O campo `aberta` no banco é atualizado pelo checkEscalasEspeciaisAutomatico
+  const estaAberta = e.aberta;
+
+  const abertaStyle = estaAberta
+    ? 'background:#d4edda;border:1px solid #a3d9a5;color:#276130;'
+    : 'background:var(--gold-pale);border:1px solid var(--border);color:var(--text-muted);';
+  const abertaLabel = estaAberta ? '🟢 Abertas' : '🔒 Fechadas';
+
+  const btnToggle = estaAberta
+    ? `<button class="btn-danger btn-sm" onclick="toggleEscalaEspecial('${e.id}', false)" style="padding:7px 14px;font-size:13px;">Fechar agora</button>`
+    : `<button class="btn-primary btn-sm" onclick="toggleEscalaEspecial('${e.id}', true)" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;">Abrir agora</button>`;
+
+  const dataFmt = e.data ? formatarData(e.data) : '—';
+
+  // Linha de horário automático
+  let agendaHtml = '';
+  if (e.abre_em && e.fecha_em) {
+    const agora = new Date();
+    const abre = new Date(e.abre_em);
+    const fecha = new Date(e.fecha_em);
+    let agendaInfo = '';
+    if (agora < abre) {
+      agendaInfo = `<span style="color:#276130;">Abre em ${formatarDataHora(e.abre_em)}</span>`;
+    } else if (agora >= abre && agora < fecha) {
+      agendaInfo = `<span style="color:#276130;">Aberta agora · fecha em ${formatarDataHora(e.fecha_em)}</span>`;
+    } else {
+      agendaInfo = `<span style="color:var(--danger);">Período encerrado em ${formatarDataHora(e.fecha_em)}</span>`;
+    }
+    agendaHtml = `<div style="font-size:12px;margin-top:6px;">⏱ ${agendaInfo}</div>`;
+  }
+
+  return `<div class="card" style="margin-bottom:12px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--brown-dark);margin-bottom:4px;">${e.nome}</div>
+        <div style="font-size:12px;color:var(--text-muted);">📅 ${dataFmt} · ⏰ ${e.horario || '—'} · 👥 Limite: ${e.limite}</div>
+        ${agendaHtml}
+      </div>
+      <div style="display:inline-block;padding:4px 10px;border-radius:50px;font-size:11px;font-weight:600;white-space:nowrap;${abertaStyle}">${abertaLabel}</div>
+    </div>
+    <div id="ee-inscritos-${e.id}" style="margin-top:10px;font-size:13px;color:var(--text-muted);">Carregando inscritos...</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+      ${btnToggle}
+      <button class="btn-danger btn-sm" onclick="deletarEscalaEspecial('${e.id}')" style="padding:7px 14px;font-size:13px;">Excluir</button>
+    </div>
+  </div>`;
+}
+
+async function carregarInscritosEscalaEspecial(escalaId) {
+  const el = document.getElementById('ee-inscritos-' + escalaId);
+  if (!el) return;
+  try {
+    const inscritos = await api('/escala_especial_inscricoes?escala_especial_id=eq.' + escalaId + '&order=created_at.asc');
+    if (!inscritos || !inscritos.length) {
+      el.textContent = 'Nenhum inscrito ainda.';
+      return;
+    }
+    const nomes = inscritos.map(r => {
+      const c = coroinhas.find(x => x.id === r.coroinha_id);
+      return c ? c.nome : 'Desconhecido';
+    });
+    el.innerHTML = '<span style="font-weight:600;">Inscritos (' + inscritos.length + '):</span> ' + nomes.join(', ');
+  } catch(err) {
+    el.textContent = 'Erro ao carregar inscritos.';
+  }
+}
+
+async function criarEscalaEspecial() {
+  const nome = document.getElementById('ce-nome').value.trim();
+  const data = document.getElementById('ce-data').value;
+  const horario = document.getElementById('ce-horario').value.trim();
+  const limite = parseInt(document.getElementById('ce-limite').value) || 7;
+  const abre_em = document.getElementById('ce-abre-em').value || null;
+  const fecha_em = document.getElementById('ce-fecha-em').value || null;
+  if (!nome) { toast('Informe o nome/descrição da missa.', true); return; }
+  if (!data) { toast('Informe a data da missa.', true); return; }
+  if (!horario) { toast('Informe o horário da missa.', true); return; }
+  if (!abre_em) { toast('Informe quando as inscrições abrem.', true); return; }
+  if (!fecha_em) { toast('Informe quando as inscrições fecham.', true); return; }
+  if (new Date(abre_em) >= new Date(fecha_em)) { toast('A abertura deve ser antes do fechamento.', true); return; }
+  try {
+    await api('/escala_especial', 'POST', {
+      nome, data, horario, limite,
+      aberta: false,
+      abre_em: new Date(abre_em).toISOString(),
+      fecha_em: new Date(fecha_em).toISOString()
+    });
+    toast('✓ Escala criada! As inscrições abrirão automaticamente.');
+    document.getElementById('ce-nome').value = '';
+    document.getElementById('ce-data').value = '';
+    document.getElementById('ce-horario').value = '';
+    document.getElementById('ce-limite').value = '7';
+    document.getElementById('ce-abre-em').value = '';
+    document.getElementById('ce-fecha-em').value = '';
+    await carregarEscalasEspeciaisComInscritos();
+  } catch(err) {
+    toast('Erro ao criar escala. Verifique a conexão.', true);
+    console.error(err);
+  }
+}
+
+async function toggleEscalaEspecial(id, aberta) {
+  try {
+    await api('/escala_especial?id=eq.' + id, 'PATCH', { aberta });
+    toast(aberta ? '✓ Inscrições abertas!' : '✓ Inscrições fechadas.');
+    await carregarEscalasEspeciaisComInscritos();
+    // Recarrega a aba pública de escala se estiver visível
+    if (document.getElementById('page-escala').classList.contains('active')) carregarEscala();
+  } catch(err) {
+    toast('Erro ao atualizar. Tente novamente.', true);
+  }
+}
+
+async function deletarEscalaEspecial(id) {
+  if (!confirm('Excluir esta escala e todas as inscrições dela?')) return;
+  try {
+    await api('/escala_especial_inscricoes?escala_especial_id=eq.' + id, 'DELETE');
+    await api('/escala_especial?id=eq.' + id, 'DELETE');
+    toast('✓ Escala excluída.');
+    carregarEscalasEspeciais();
+    if (document.getElementById('page-escala').classList.contains('active')) carregarEscala();
+  } catch(err) {
+    toast('Erro ao excluir.', true);
+  }
+}
+
+// ---------- Público: exibir escalas especiais abertas na aba Escala ----------
+
+async function carregarEscalasEspeciaisPublico() {
+  try {
+    const lista = await api('/escala_especial?order=data.asc,created_at.asc');
+    if (!lista) return [];
+    const agora = new Date();
+    const agoraMs = agora.getTime();
+    return lista.filter(e => {
+      // Verifica expiração: 24h após o horário da missa
+      if (e.data) {
+        const match = (e.horario || '').match(/(\d{1,2})h?:?(\d{0,2})/);
+        const hh = match ? parseInt(match[1]) : 23;
+        const mm = match && match[2] ? parseInt(match[2]) || 0 : 0;
+        const dtMissa = new Date(e.data + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00');
+        if (agoraMs >= dtMissa.getTime() + 24 * 60 * 60 * 1000) return false; // expirou
+      }
+      // Dentro do prazo: aberta manualmente OU dentro do período automático
+      if (e.aberta) return true;
+      if (e.abre_em && e.fecha_em) return agora >= new Date(e.abre_em) && agora < new Date(e.fecha_em);
+      return false;
+    });
+  } catch(err) {
+    return [];
+  }
+}
+
+async function renderEscalasEspeciaisPublico(container) {
+  const lista = await carregarEscalasEspeciaisPublico();
+  if (!lista.length) return '';
+
+  // Busca todas as inscrições das escalas abertas de uma vez
+  const ids = lista.map(e => e.id);
+  let todasInscricoes = [];
+  try {
+    todasInscricoes = await api('/escala_especial_inscricoes?escala_especial_id=in.(' + ids.join(',') + ')&order=created_at.asc');
+  } catch(err) {}
+
+  const blocos = lista.map(e => {
+    const inscritos = todasInscricoes.filter(r => r.escala_especial_id === e.id);
+    const cheio = inscritos.length >= e.limite;
+    const dataFmt = e.data ? formatarData(e.data) : '—';
+
+    const listaNomes = inscritos.length
+      ? inscritos.map(r => {
+          const c = coroinhas.find(x => x.id === r.coroinha_id);
+          return `<div class="escala-inscrito">
+            <div class="avatar" style="width:32px;height:32px;font-size:13px;">${iniciais(c ? c.nome : '?')}</div>
+            <span class="escala-inscrito-nome">${c ? c.nome : 'Desconhecido'}</span>
+          </div>`;
+        }).join('')
+      : '<div class="escala-vazio">Nenhum inscrito ainda.</div>';
+
+    const rodape = !cheio
+      ? `<div class="escala-footer">
+           <button class="btn btn-primary" style="margin-top:0;padding:10px;" onclick="abrirModalEscalaEspecial('${e.id}')">
+             + Inscrever-se (${inscritos.length}/${e.limite})
+           </button>
+         </div>`
+      : `<div class="escala-footer" style="display:flex;align-items:center;justify-content:space-between;">
+           <span style="font-size:12px;color:var(--text-muted);">${inscritos.length}/${e.limite} inscritos</span>
+           <span style="font-size:12px;font-weight:600;color:var(--danger);">✕ Lotado</span>
+         </div>`;
+
+    return `<div class="escala-horario" style="border-left:3px solid var(--gold);">
+      <div class="escala-horario-header" style="background:var(--gold-pale);">
+        <span class="escala-horario-titulo">${e.nome}</span>
+        <span class="escala-horario-data">${dataFmt} · ${e.horario}</span>
+      </div>
+      ${listaNomes}
+      ${rodape}
+    </div>`;
+  }).join('');
+
+  return `<div style="margin-bottom:6px;">
+    <div style="background:var(--brown-dark);color:var(--gold-light);font-size:11px;font-weight:600;padding:5px 12px;border-radius:50px;display:inline-block;margin-bottom:12px;">Escalas especiais abertas</div>
+    ${blocos}
+  </div>`;
+}
+
+// ---------- Modal inscrição escala especial ----------
+
+async function abrirModalEscalaEspecial(escalaId) {
+  escalaEspecialModalId = escalaId;
+  let escala;
+  try {
+    const lista = await api('/escala_especial?id=eq.' + escalaId);
+    escala = lista?.[0];
+  } catch(err) { toast('Erro ao carregar escala.', true); return; }
+  const agora = new Date(); const autoAberta = escala?.abre_em && escala?.fecha_em && agora >= new Date(escala.abre_em) && agora < new Date(escala.fecha_em); if (!escala || (!escala.aberta && !autoAberta)) { toast('Inscrições encerradas.', true); return; }
+
+  let inscritos = [];
+  try {
+    inscritos = await api('/escala_especial_inscricoes?escala_especial_id=eq.' + escalaId + '&order=created_at.asc');
+  } catch(err) {}
+
+  if (inscritos.length >= escala.limite) { toast('Esta missa já está lotada!', true); return; }
+
+  const jaInscritos = new Set(inscritos.map(r => r.coroinha_id));
+  const CARGOS_EQUIPE = ['equipe', 'coordenador', 'vice-coordenador', 'vice coordenador', 'cerimonário', 'cerimonario'];
+  const ehEquipe = c => c.cargo && CARGOS_EQUIPE.some(k => c.cargo.toLowerCase().includes(k));
+
+  document.getElementById('modal-ee-titulo').textContent = escala.nome;
+  const sel = document.getElementById('modal-ee-nome');
+  sel.innerHTML = '<option value="">Selecione seu nome...</option>' +
+    coroinhas
+      .filter(c => !jaInscritos.has(c.id) && !ehEquipe(c))
+      .sort((a,b) => a.nome.localeCompare(b.nome))
+      .map(c => `<option value="${c.id}">${c.nome}</option>`)
+      .join('');
+
+  if (sel.querySelectorAll('option').length <= 1) {
+    toast('Todos os coroinhas disponíveis já estão inscritos.', true); return;
+  }
+
+  document.getElementById('modal-escala-especial').style.display = 'flex';
+}
+
+function fecharModalEscalaEspecial() {
+  document.getElementById('modal-escala-especial').style.display = 'none';
+  escalaEspecialModalId = null;
+}
+
+async function confirmarInscricaoEscalaEspecial() {
+  const coroinhaId = document.getElementById('modal-ee-nome').value;
+  if (!coroinhaId) { toast('Selecione um nome.', true); return; }
+  if (!escalaEspecialModalId) { fecharModalEscalaEspecial(); return; }
+
+  try {
+    let escala;
+    try {
+      const lista = await api('/escala_especial?id=eq.' + escalaEspecialModalId);
+      escala = lista?.[0];
+    } catch(err) {}
+    const agora = new Date(); const autoAberta = escala?.abre_em && escala?.fecha_em && agora >= new Date(escala.abre_em) && agora < new Date(escala.fecha_em); if (!escala || (!escala.aberta && !autoAberta)) { toast('Inscrições encerradas.', true); fecharModalEscalaEspecial(); return; }
+
+    let inscritos = [];
+    try { inscritos = await api('/escala_especial_inscricoes?escala_especial_id=eq.' + escalaEspecialModalId); } catch(err) {}
+    if (inscritos.length >= escala.limite) { toast('Missa lotada!', true); fecharModalEscalaEspecial(); return; }
+    if (inscritos.some(r => r.coroinha_id === coroinhaId)) {
+      const c = coroinhas.find(x => x.id === coroinhaId);
+      toast((c ? c.nome : 'Coroinha') + ' já está inscrito(a).', true);
+      fecharModalEscalaEspecial(); return;
+    }
+
+    await api('/escala_especial_inscricoes', 'POST', {
+      escala_especial_id: escalaEspecialModalId,
+      coroinha_id: coroinhaId
+    });
+
+    fecharModalEscalaEspecial();
+    const c = coroinhas.find(x => x.id === coroinhaId);
+    toast('✓ ' + (c ? c.nome : 'Coroinha') + ' inscrito(a) em ' + (escala.nome) + '!');
+    carregarEscala(); // recarrega a tela de escala
+  } catch(err) {
+    toast('Erro ao inscrever. Tente novamente.', true);
+    console.error(err);
+  }
+}
+
+document.getElementById('modal-escala-especial').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalEscalaEspecial();
+});
+
+// ---------- Verificação automática periódica ----------
+// Roda a cada 30 segundos: verifica se alguma escala especial deve abrir ou fechar
+// com base em abre_em / fecha_em e atualiza o campo `aberta` no banco se necessário.
+
+async function checkEscalasEspeciaisAutomatico() {
+  try {
+    const lista = await api('/escala_especial?order=data.asc');
+    if (!lista || !lista.length) return;
+    const agora = new Date();
+    for (const e of lista) {
+      if (!e.abre_em || !e.fecha_em) continue;
+      const deveAbrir = agora >= new Date(e.abre_em) && agora < new Date(e.fecha_em);
+      const deveFechar = agora >= new Date(e.fecha_em);
+      if (deveAbrir && !e.aberta) {
+        await api('/escala_especial?id=eq.' + e.id, 'PATCH', { aberta: true });
+      } else if (deveFechar && e.aberta) {
+        await api('/escala_especial?id=eq.' + e.id, 'PATCH', { aberta: false });
+      }
+    }
+    // Se a aba de escala pública estiver visível, recarrega silenciosamente
+    if (document.getElementById('page-escala').classList.contains('active')) {
+      carregarEscala();
+    }
+  } catch(err) { /* silencioso */ }
+}
+
+// Roda imediatamente e depois a cada 30s
+checkEscalasEspeciaisAutomatico();
+setInterval(checkEscalasEspeciaisAutomatico, 30000);
+
+// ===================== FIM ESCALAS ESPECIAIS =====================
+
 
 
 // PIN armazenado como hash SHA-256 — não é possível recuperar o valor original inspecionando o código
