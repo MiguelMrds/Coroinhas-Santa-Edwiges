@@ -1307,7 +1307,8 @@ async function carregarStatEspeciais() {
     }
 
     el.innerHTML = lista.map(e => {
-      const inscritos = todasInscricoes.filter(r => r.escala_especial_id === e.id);
+      const todos = todasInscricoes.filter(r => r.escala_especial_id === e.id);
+      const inscritos = todos.filter(r => !r.is_equipe);
       const dataFmt = e.data ? formatarData(e.data) : '—';
 
       // Verifica se já passou (para badge visual)
@@ -1324,10 +1325,15 @@ async function carregarStatEspeciais() {
         ? `<span style="font-size:10px;font-weight:600;background:#f0f0f0;color:#666;border:1px solid #ccc;padding:2px 8px;border-radius:50px;">✓ Realizada</span>`
         : `<span style="font-size:10px;font-weight:600;background:#d4edda;color:#276130;border:1px solid #a3d9a5;padding:2px 8px;border-radius:50px;">🟢 Futura</span>`;
 
-      const linhasInscritos = inscritos.length
-        ? inscritos.map(r => {
+      const linhasInscritos = todos.length
+        ? todos.map(r => {
             const c = coroinhas.find(x => x.id === r.coroinha_id);
             const nome = c ? c.nome : 'Desconhecido';
+            const CARGOS_EQ = ['equipe', 'coordenador', 'vice-coordenador', 'vice coordenador', 'cerimonário', 'cerimonario'];
+            const ehMembro = c && c.cargo && CARGOS_EQ.some(k => c.cargo.toLowerCase().includes(k));
+            const equipeBadge = (r.is_equipe && ehMembro)
+              ? `<span style="font-size:10px;font-weight:600;background:var(--brown-dark);color:var(--gold-light);padding:1px 7px;border-radius:50px;margin-left:4px;">equipe</span>`
+              : '';
             const funcoesReg = historico.filter(h =>
               h.coroinha_id === r.coroinha_id && h.data_missa === e.data &&
               (h.horario === e.nome + ' ' + e.horario || h.horario === 'Missa Especial' || h.horario === e.horario)
@@ -1342,18 +1348,21 @@ async function carregarStatEspeciais() {
             return `<div class="escala-admin-coroinha">
               <div class="avatar" style="width:32px;height:32px;font-size:12px;flex-shrink:0;">${iniciais(nome)}</div>
               <div style="flex:1;">
-                <div class="escala-admin-nome">${nome}</div>
+                <div class="escala-admin-nome">${nome}${equipeBadge}</div>
                 <div class="escala-admin-funcoes" style="margin-top:4px;">${funcoesTags}</div>
               </div>
             </div>`;
           }).join('')
         : `<div class="escala-vazio">Nenhum inscrito.</div>`;
 
+      const equipeCount = todos.filter(r => r.is_equipe).length;
+      const contagem = inscritos.length + '/' + e.limite + ' inscritos' + (equipeCount ? ` + ${equipeCount} equipe` : '');
+
       return `<div class="escala-horario" style="margin-bottom:14px;opacity:${passou ? '0.85' : '1'};">
         <div class="escala-horario-header" style="background:var(--gold-pale);">
           <div>
             <span class="escala-horario-titulo">${e.nome}</span>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${dataFmt} · ${e.horario} · ${inscritos.length}/${e.limite} inscritos</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${dataFmt} · ${e.horario} · ${contagem}</div>
           </div>
           ${statusBadge}
         </div>
@@ -1748,6 +1757,7 @@ async function confirmarInscricaoEscala() {
 
   const semanaKey = escalaModalSemana;
   const horario = escalaModalHorario;
+  if (!semanaKey || !horario) { fecharModalEscala(); return; }
   const dados = escalaCache[semanaKey] || {};
   const todos = dados[horario] || [];
   const inscritos = todos.filter(r => !r.is_equipe);
@@ -1823,7 +1833,13 @@ function setEscalaAdminMini(painel) {
   document.getElementById('escala-admin-painel-semanal').style.display = painel === 'semanal' ? 'block' : 'none';
   document.getElementById('escala-admin-painel-especiais').style.display = painel === 'especiais' ? 'block' : 'none';
   if (painel === 'especiais') carregarEscalaAdminEspeciais();
-  if (painel === 'semanal') carregarEscalaAdmin();
+  if (painel === 'semanal') {
+    // Reseta para "Esta semana" sempre que a sub-aba semanal é reaberta
+    escalaAdminSemanaOffset = 0;
+    document.getElementById('escala-admin-semana-btn').classList.add('active');
+    document.getElementById('escala-admin-ant-btn').classList.remove('active');
+    carregarEscalaAdmin();
+  }
 }
 
 function setEscalaAdminSemana(offset) {
@@ -1845,7 +1861,9 @@ async function carregarEscalaAdmin() {
 
     const inscricoes = await api('/escala_inscricoes?semana_key=eq.' + semanaKey + '&order=created_at.asc');
 
-    // Agrupa por horário
+    // Limpa o cache inteiro antes de popular: se a busca falhar, nenhum dado
+    // residual de semana anterior fica disponível para exibição incorreta.
+    escalaAdminCache = {};
     escalaAdminCache[semanaKey] = {};
     inscricoes.forEach(r => {
       if (!escalaAdminCache[semanaKey][r.horario]) escalaAdminCache[semanaKey][r.horario] = [];
@@ -1897,7 +1915,7 @@ function renderEscalaAdmin(semanaKey, datas, historico) {
       const funcoesTags = funcoesReg.length
         ? funcoesReg.map(h => {
             const fs = h.funcao.split(',').map(f => f.trim()).filter(Boolean);
-            return fs.map(f => `<span class="funcao-tag" style="display:inline-flex;align-items:center;gap:4px;">${f}<button onclick="removerFuncaoEscala('${h.id}','${f.replace(/'/g,"\\'")}')" style="background:none;border:none;color:var(--danger);font-size:13px;font-weight:700;cursor:pointer;padding:0 0 0 2px;line-height:1;flex-shrink:0;" title="Remover função">×</button></span>`).join('');
+            return fs.map(f => `<span class="funcao-tag" style="display:inline-flex;align-items:center;gap:4px;">${f}<button onclick="removerFuncaoEscala('${h.id}','${f.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')" style="background:none;border:none;color:var(--danger);font-size:13px;font-weight:700;cursor:pointer;padding:0 0 0 2px;line-height:1;flex-shrink:0;" title="Remover função">×</button></span>`).join('');
           }).join('')
         : `<span class="escala-admin-sem-funcao">sem função</span>`;
 
@@ -1990,6 +2008,14 @@ async function confirmarEquipeEscala() {
     const escalaId = forcarEspecialAdminId;
     if (!escalaId) { fecharModalEquipeEscala(); return; }
     try {
+      // Verifica duplicata
+      const jaInscritos = await api('/escala_especial_inscricoes?escala_especial_id=eq.' + escalaId + '&coroinha_id=eq.' + coroinhaId);
+      if (jaInscritos && jaInscritos.length > 0) {
+        const c = coroinhas.find(x => x.id === coroinhaId);
+        toast((c ? c.nome : 'Membro') + ' já está inscrito(a) nesta missa.', true);
+        fecharModalEquipeEscala();
+        return;
+      }
       await api('/escala_especial_inscricoes', 'POST', {
         escala_especial_id: escalaId, coroinha_id: coroinhaId, is_equipe: true
       });
@@ -2005,6 +2031,7 @@ async function confirmarEquipeEscala() {
 
   const semanaKey = equipeModalSemana;
   const horario = equipeModalHorario;
+  if (!semanaKey || !horario) { fecharModalEquipeEscala(); return; }
 
   try {
     const resultado = await api('/escala_inscricoes', 'POST', {
@@ -2112,6 +2139,14 @@ async function confirmarForcarEscala() {
     const escalaId = forcarEspecialAdminId;
     if (!escalaId) { fecharModalForcarEscala(); return; }
     try {
+      // Verifica duplicata
+      const jaInscritos = await api('/escala_especial_inscricoes?escala_especial_id=eq.' + escalaId + '&coroinha_id=eq.' + coroinhaId);
+      if (jaInscritos && jaInscritos.length > 0) {
+        const c = coroinhas.find(x => x.id === coroinhaId);
+        toast((c ? c.nome : 'Coroinha') + ' já está inscrito(a) nesta missa.', true);
+        fecharModalForcarEscala();
+        return;
+      }
       await api('/escala_especial_inscricoes', 'POST', {
         escala_especial_id: escalaId, coroinha_id: coroinhaId, is_equipe: true
       });
@@ -2234,7 +2269,7 @@ async function carregarEscalaAdminEspeciais() {
             const funcoesTags = funcoesReg.length
               ? funcoesReg.map(h =>
                   h.funcao.split(',').map(f => f.trim()).filter(Boolean)
-                    .map(f => `<span class="funcao-tag" style="display:inline-flex;align-items:center;gap:4px;">${f}</span>`).join('')
+                    .map(f => `<span class="funcao-tag" style="display:inline-flex;align-items:center;gap:4px;">${f}<button onclick="removerFuncaoEspecialEscala('${h.id}','${f.replace(/'/g,"\\'").replace(/"/g,'&quot;')}','${e.id}')" style="background:none;border:none;color:var(--danger);font-size:13px;font-weight:700;cursor:pointer;padding:0 0 0 2px;line-height:1;flex-shrink:0;" title="Remover função">×</button></span>`).join('')
                 ).join('')
               : `<span class="escala-admin-sem-funcao">sem função</span>`;
 
@@ -2283,32 +2318,64 @@ async function removerInscricaoEspecialAdmin(inscricaoId, escalaId) {
   } catch(err) { toast('Erro ao remover.', true); }
 }
 
+async function removerFuncaoEspecialEscala(histId, funcaoNome, escalaId) {
+  try {
+    const registros = await api('/historico_funcoes?id=eq.' + histId);
+    if (!registros || !registros.length) { toast('Registro não encontrado.', true); return; }
+    const reg = registros[0];
+    const funcoes = reg.funcao.split(',').map(f => f.trim()).filter(f => f && f !== funcaoNome);
+    if (funcoes.length === 0) {
+      await api('/historico_funcoes?id=eq.' + histId, 'DELETE');
+    } else {
+      await api('/historico_funcoes?id=eq.' + histId, 'PATCH', { funcao: funcoes.join(', ') });
+    }
+    toast('✓ Função "' + funcaoNome + '" removida.');
+    carregarEscalaAdminEspeciais();
+  } catch(e) { toast('Erro ao remover função.', true); console.error(e); }
+}
+
 // Modal para forçar inscrição em missa especial (pelo admin)
-function abrirModalForcarEscalaEspecialAdmin(escalaId) {
+async function abrirModalForcarEscalaEspecialAdmin(escalaId) {
   forcarEspecialAdminId = escalaId;
-  // Reutiliza o modal de forçar normal mas com callback diferente
   document.getElementById('modal-forcar-titulo').textContent = 'Adicionar coroinha';
   const sel = document.getElementById('modal-forcar-nome');
   const CARGOS_EQUIPE = ['equipe', 'coordenador', 'vice-coordenador', 'vice coordenador', 'cerimonário', 'cerimonario'];
   const ehEquipe = c => c.cargo && CARGOS_EQUIPE.some(k => c.cargo.toLowerCase().includes(k));
+  // Busca já inscritos para filtrar
+  let jaInscritos = new Set();
+  try {
+    const ins = await api('/escala_especial_inscricoes?escala_especial_id=eq.' + escalaId);
+    if (ins) ins.forEach(r => jaInscritos.add(r.coroinha_id));
+  } catch(e) {}
   sel.innerHTML = '<option value="">Selecione...</option>' +
-    coroinhas.filter(c => !ehEquipe(c)).sort((a,b) => a.nome.localeCompare(b.nome))
+    coroinhas.filter(c => !ehEquipe(c) && !jaInscritos.has(c.id)).sort((a,b) => a.nome.localeCompare(b.nome))
       .map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+  if (sel.querySelectorAll('option').length <= 1) {
+    toast('Todos os coroinhas já estão inscritos nesta missa.', true); return;
+  }
   document.getElementById('modal-forcar-escala').style.display = 'flex';
-  // Troca o onclick do botão confirmar para a versão especial
   document.getElementById('modal-forcar-escala').dataset.modo = 'especial';
 }
 
 // Modal para adicionar membro da EQUIPE em missa especial (não conta no limite)
-function abrirModalEquipeEscalaEspecialAdmin(escalaId) {
+async function abrirModalEquipeEscalaEspecialAdmin(escalaId) {
   forcarEspecialAdminId = escalaId;
   document.getElementById('modal-equipe-titulo').textContent = 'Adicionar membro da equipe';
   const sel = document.getElementById('modal-equipe-nome');
   const CARGOS_EQUIPE = ['equipe', 'coordenador', 'vice-coordenador', 'vice coordenador', 'cerimonário', 'cerimonario'];
   const ehEquipe = c => c.cargo && CARGOS_EQUIPE.some(k => c.cargo.toLowerCase().includes(k));
+  // Busca já inscritos para filtrar
+  let jaInscritos = new Set();
+  try {
+    const ins = await api('/escala_especial_inscricoes?escala_especial_id=eq.' + escalaId);
+    if (ins) ins.forEach(r => jaInscritos.add(r.coroinha_id));
+  } catch(e) {}
   sel.innerHTML = '<option value="">Selecione...</option>' +
-    coroinhas.filter(c => ehEquipe(c)).sort((a,b) => a.nome.localeCompare(b.nome))
+    coroinhas.filter(c => ehEquipe(c) && !jaInscritos.has(c.id)).sort((a,b) => a.nome.localeCompare(b.nome))
       .map(c => `<option value="${c.id}">${c.nome}${c.cargo ? ' — ' + c.cargo : ''}</option>`).join('');
+  if (sel.querySelectorAll('option').length <= 1) {
+    toast('Todos os membros da equipe já estão inscritos nesta missa.', true); return;
+  }
   document.getElementById('modal-equipe-escala').dataset.modo = 'especial';
   document.getElementById('modal-equipe-escala').style.display = 'flex';
 }
@@ -2441,9 +2508,15 @@ async function carregarInscritosEscalaEspecial(escalaId) {
     }
     const normais = inscritos.filter(r => !r.is_equipe);
     const equipeM = inscritos.filter(r => r.is_equipe);
+    const CARGOS_EQ = ['equipe', 'coordenador', 'vice-coordenador', 'vice coordenador', 'cerimonário', 'cerimonario'];
     const nomes = inscritos.map(r => {
       const c = coroinhas.find(x => x.id === r.coroinha_id);
-      return c ? c.nome : 'Desconhecido';
+      const nome = c ? c.nome : 'Desconhecido';
+      const ehMembro = c && c.cargo && CARGOS_EQ.some(k => c.cargo.toLowerCase().includes(k));
+      const badge = (r.is_equipe && ehMembro)
+        ? ` <span style="font-size:10px;font-weight:600;background:var(--brown-dark);color:var(--gold-light);padding:1px 6px;border-radius:50px;">equipe</span>`
+        : (r.is_equipe ? ` <span style="font-size:10px;font-weight:600;background:var(--gold-pale);color:var(--brown-mid);border:1px solid var(--gold);padding:1px 6px;border-radius:50px;">forçado</span>` : '');
+      return nome + badge;
     });
     const contagem = normais.length + (equipeM.length ? ` + ${equipeM.length} equipe` : '');
     el.innerHTML = '<span style="font-weight:600;">Inscritos (' + contagem + '):</span> ' + nomes.join(', ');
@@ -2558,9 +2631,14 @@ async function renderEscalasEspeciaisPublico(container) {
     const listaNomes = todos.length
       ? todos.map(r => {
           const c = coroinhas.find(x => x.id === r.coroinha_id);
+          const CARGOS_EQ_PUB = ['equipe', 'coordenador', 'vice-coordenador', 'vice coordenador', 'cerimonário', 'cerimonario'];
+          const ehMemPub = c && c.cargo && CARGOS_EQ_PUB.some(k => c.cargo.toLowerCase().includes(k));
+          const badgePub = (r.is_equipe && ehMemPub)
+            ? `<span style="font-size:10px;font-weight:600;background:var(--brown-dark);color:var(--gold-light);padding:2px 7px;border-radius:50px;margin-left:6px;">equipe</span>`
+            : '';
           return `<div class="escala-inscrito">
             <div class="avatar" style="width:32px;height:32px;font-size:13px;">${iniciais(c ? c.nome : '?')}</div>
-            <span class="escala-inscrito-nome">${c ? c.nome : 'Desconhecido'}</span>
+            <span class="escala-inscrito-nome">${c ? c.nome : 'Desconhecido'}${badgePub}</span>
           </div>`;
         }).join('')
       : '<div class="escala-vazio">Nenhum inscrito ainda.</div>';
@@ -2949,6 +3027,8 @@ function confirmarApagarCoroinha(id, nome) {
     async () => {
       try {
         await api('/historico_funcoes?coroinha_id=eq.' + id, 'DELETE');
+        await api('/escala_inscricoes?coroinha_id=eq.' + id, 'DELETE');
+        await api('/escala_especial_inscricoes?coroinha_id=eq.' + id, 'DELETE');
         await api('/coroinhas?id=eq.' + id, 'DELETE');
         coroinhas = coroinhas.filter(x => x.id !== id);
         fecharAdminDetalhe();
