@@ -362,7 +362,7 @@
       <!-- mini-tabs: Semanal / Especiais -->
       <div style="display:flex;gap:6px;margin-bottom:14px;">
         <button class="btn-ordem active" id="escala-admin-mini-semanal" onclick="setEscalaAdminMini('semanal')">Semanal</button>
-        <button class="btn-ordem" id="escala-admin-mini-especiais" onclick="setEscalaAdminMini('especiais')">Missas Especiais</button>
+        <button class="btn-ordem" id="escala-admin-mini-especiais" onclick="setEscalaAdminMini('especiais')">Outras Missas</button>
       </div>
 
       <!-- painel semanal -->
@@ -379,7 +379,7 @@
 
       <!-- painel especiais -->
       <div id="escala-admin-painel-especiais" style="display:none;">
-        <div class="section-title">Missas Especiais</div>
+        <div class="section-title">Outras Missas</div>
         <div id="escala-admin-especiais-container">
           <div class="loading"><div class="spinner"></div>Carregando...</div>
         </div>
@@ -457,7 +457,7 @@
       <!-- Mini-tabs: Geral / Missas Especiais -->
       <div style="display:flex;gap:6px;margin-bottom:16px;">
         <button class="btn-ordem active" id="stat-mini-geral" onclick="setStatMini('geral')">Geral</button>
-        <button class="btn-ordem" id="stat-mini-especiais" onclick="setStatMini('especiais')">Missas Especiais</button>
+        <button class="btn-ordem" id="stat-mini-especiais" onclick="setStatMini('especiais')">Outras Missas</button>
       </div>
       <!-- Painel geral -->
       <div id="stat-painel-geral">
@@ -513,17 +513,23 @@
     <div style="margin-top:12px;">
       <label>Funções</label>
       <div class="funcoes-chips" id="edit-reg-funcoes" style="margin-bottom:0;"></div>
+      <div id="edit-campo-outro-funcao" style="display:none;margin-top:8px;">
+        <input type="text" id="edit-func-outro-texto" placeholder="Descreva a função..." style="margin-bottom:0;" oninput="atualizarChipOutroLabelEdit()">
+      </div>
       <label>Horário da missa</label>
       <div class="select-wrapper-native" style="position:relative;">
-        <select id="edit-reg-horario" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
+        <select id="edit-reg-horario" onchange="toggleEditRegMissaEspecial()" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
           <option value="">Selecione...</option>
           <option value="Sábado 17h">Sábado 17h</option>
           <option value="Domingo 7h">Domingo 7h</option>
           <option value="Domingo 9h">Domingo 9h</option>
           <option value="Domingo 17h">Domingo 17h</option>
-          <option value="Missa Especial">Missa Especial</option>
+          <option value="Missa Especial">Outra Missa</option>
         </select>
         <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+      </div>
+      <div id="edit-reg-campo-especial" style="display:none;margin-top:8px;">
+        <input type="text" id="edit-reg-nome-especial" placeholder="Nome da missa (ex: CORPUS CHRISTI)">
       </div>
       <label>Data da missa</label>
       <input type="date" id="edit-reg-data">
@@ -763,29 +769,48 @@ function renderDetalheStats(mesKey) {
     return;
   }
 
-  // Horários
+  // Deduplica: missas únicas (uma missa pode ter várias funções registradas)
+  const missasUnicasMap = {};
+  hist.forEach(h => {
+    const chave = h.data_missa + '|' + (h.horario || '');
+    if (!missasUnicasMap[chave]) missasUnicasMap[chave] = h;
+  });
+  const histDedup = Object.values(missasUnicasMap);
+
+  // Total geral deduplicated
+  const totalMissasUnicasGeral = (() => {
+    const m = {};
+    detalheHistAll.forEach(h => { const k = h.data_missa + '|' + (h.horario||''); m[k] = true; });
+    return Object.keys(m).length;
+  })();
+  const totalMesDedup = (() => {
+    const m = {};
+    detalheHistAll.filter(h => h.data_missa && h.data_missa.slice(0,7) === mesAtual)
+      .forEach(h => { const k = h.data_missa + '|' + (h.horario||''); m[k] = true; });
+    return Object.keys(m).length;
+  })();
+
+  // Horários — contagem de missas únicas por horário
   const hCount = {};
-  hist.forEach(h => { const k = h.horario || 'Não informado'; hCount[k] = (hCount[k]||0)+1; });
+  histDedup.forEach(h => { const k = h.horario || 'Não informado'; hCount[k] = (hCount[k]||0)+1; });
   const hMax = Math.max(...Object.values(hCount), 1);
   const hOrdem = ['Sábado 17h','Domingo 7h','Domingo 9h','Domingo 17h'];
   const hSorted = hOrdem.filter(k => hCount[k]).concat(Object.keys(hCount).filter(k => !hOrdem.includes(k)));
 
-  // Funções
+  // Funções mais exercidas (estas sim usam todas as linhas)
   const fCount = {};
   hist.forEach(h => h.funcao.split(',').forEach(f => { const k=f.trim(); fCount[k]=(fCount[k]||0)+1; }));
   const fSorted = Object.entries(fCount).sort((a,b) => b[1]-a[1]);
   const fMax = fSorted[0]?.[1] || 1;
 
-  const totalMes = detalheHistAll.filter(h => h.data_missa && h.data_missa.slice(0,7) === mesAtual).length;
-
   elStats.querySelector('#detalhe-stats-body').innerHTML = `
     <div style="display:flex;gap:12px;margin-bottom:16px;">
       <div style="flex:1;background:var(--gold-pale);border:1px solid var(--gold);border-radius:12px;padding:14px;text-align:center;">
-        <div style="font-size:28px;font-weight:700;color:var(--brown-mid);font-family:'Playfair Display',serif;">${detalheHistAll.length}</div>
+        <div style="font-size:28px;font-weight:700;color:var(--brown-mid);font-family:'Playfair Display',serif;">${totalMissasUnicasGeral}</div>
         <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px;">Total geral</div>
       </div>
       <div style="flex:1;background:var(--gold-pale);border:1px solid var(--gold);border-radius:12px;padding:14px;text-align:center;">
-        <div style="font-size:28px;font-weight:700;color:var(--brown-mid);font-family:'Playfair Display',serif;">${totalMes}</div>
+        <div style="font-size:28px;font-weight:700;color:var(--brown-mid);font-family:'Playfair Display',serif;">${totalMesDedup}</div>
         <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px;">Neste mês</div>
       </div>
     </div>
@@ -841,9 +866,64 @@ async function abrirDetalhe(id, nome, idade) {
   try {
     detalheHistAll = await api('/historico_funcoes?coroinha_id=eq.'+id+'&order=data_missa.desc');
 
-    if (!detalheHistAll.length) {
+    // Busca também inscrições em escalas normais e especiais para mostrar missas sem função registrada
+    let inscricoesNormais = [];
+    let inscricoesEspeciais = [];
+    let escalaEspecialMap = {}; // id → { nome, data, horario }
+    try {
+      inscricoesNormais = await api('/escala_inscricoes?coroinha_id=eq.'+id+'&order=created_at.desc');
+    } catch(e) {}
+    try {
+      inscricoesEspeciais = await api('/escala_especial_inscricoes?coroinha_id=eq.'+id+'&order=created_at.desc');
+      if (inscricoesEspeciais.length) {
+        const idsEsp = [...new Set(inscricoesEspeciais.map(r => r.escala_especial_id))];
+        const escalas = await api('/escala_especial?id=in.(' + idsEsp.join(',') + ')');
+        escalas.forEach(e => { escalaEspecialMap[e.id] = e; });
+      }
+    } catch(e) {}
+
+    // Monta conjunto de todas as missas (chave = data|horario)
+    // Para inscrições normais, precisa converter semana_key+horario em data
+    const todasMissasMap = {};
+
+    // Primeiro, adiciona do historico_funcoes (tem data_missa e horario reais)
+    detalheHistAll.forEach(h => {
+      const chave = h.data_missa + '|' + (h.horario || '');
+      if (!todasMissasMap[chave]) todasMissasMap[chave] = { data_missa: h.data_missa, horario: h.horario, funcoes: [] };
+      todasMissasMap[chave].funcoes.push(...h.funcao.split(',').map(f => f.trim()).filter(Boolean));
+      if (h.observacao && !todasMissasMap[chave].observacao) todasMissasMap[chave].observacao = h.observacao;
+    });
+
+    // Depois, adiciona inscrições normais que não têm função registrada
+    inscricoesNormais.forEach(r => {
+      const datas = datasSemanaMissa(r.semana_key);
+      const dataFormatada = datas[r.horario];
+      if (!dataFormatada) return;
+      const [dia, mes, ano] = dataFormatada.split('/');
+      const dataISO = `${ano}-${mes}-${dia}`;
+      const chave = dataISO + '|' + r.horario;
+      if (!todasMissasMap[chave]) todasMissasMap[chave] = { data_missa: dataISO, horario: r.horario, funcoes: [] };
+    });
+
+    // Inscrições especiais
+    inscricoesEspeciais.forEach(r => {
+      const e = escalaEspecialMap[r.escala_especial_id];
+      if (!e || !e.data) return;
+      const horarioLabel = e.nome; // usa o nome real da missa especial
+      const chave = e.data + '|' + horarioLabel;
+      if (!todasMissasMap[chave]) todasMissasMap[chave] = { data_missa: e.data, horario: horarioLabel, funcoes: [] };
+    });
+
+    // Para o historico_funcoes com horario "Missa Especial", tenta encontrar o nome real
+    // (já está resolvido pelo registrarFuncao que salva o nome real, mas para dados antigos:)
+    // deixa como está — exibe o que está gravado
+
+    const todasMissas = Object.values(todasMissasMap)
+      .sort((a, b) => b.data_missa.localeCompare(a.data_missa));
+
+    if (!todasMissas.length && !detalheHistAll.length) {
       elStats.innerHTML = '<div class="empty"><p>Nenhuma estatística ainda.</p></div>';
-      el.innerHTML = '<div class="empty"><p>Nenhuma função registrada ainda.</p></div>';
+      el.innerHTML = '<div class="empty"><p>Nenhuma missa registrada ainda.</p></div>';
       return;
     }
 
@@ -857,14 +937,18 @@ async function abrirDetalhe(id, nome, idade) {
 
     renderDetalheStats('mes');
 
-    // Histórico completo
-    el.innerHTML = detalheHistAll.map(h => `
+    // Histórico completo — todas as missas (com ou sem função)
+    el.innerHTML = todasMissas.map(m => {
+      const badges = m.funcoes.length
+        ? m.funcoes.map(f => '<span class="badge">'+f+'</span>').join('')
+        : '<span style="font-size:12px;color:var(--text-muted);font-style:italic;">sem função registrada</span>';
+      return `
       <div class="hist-item">
-        <div class="hist-funcoes">${h.funcao.split(',').map(f => '<span class="badge">'+f.trim()+'</span>').join('')}</div>
-        <div class="hist-data">${formatarData(h.data_missa)}${h.horario ? ' · ' + h.horario : ''}</div>
-        ${h.observacao ? '<div class="hist-obs">'+h.observacao+'</div>' : ''}
-      </div>
-    `).join('');
+        <div class="hist-funcoes">${badges}</div>
+        <div class="hist-data">${formatarData(m.data_missa)}${m.horario ? ' · ' + m.horario : ''}</div>
+        ${m.observacao ? '<div class="hist-obs">'+m.observacao+'</div>' : ''}
+      </div>`;
+    }).join('');
 
   } catch(e) {
     el.innerHTML = '<div class="empty"><p>Erro ao carregar histórico.</p></div>';
@@ -918,7 +1002,12 @@ async function registrarFuncao() {
     .filter(Boolean);
   const data_missa = document.getElementById('func-data').value;
   const observacao = document.getElementById('func-obs').value.trim();
-  const horario = document.getElementById('func-horario').value;
+  let horario = document.getElementById('func-horario').value;
+  // Se for missa especial, usa o nome real registrado no campo de texto
+  if (horario === 'Missa Especial') {
+    const nomeEsp = document.getElementById('func-missa-especial-nome');
+    if (nomeEsp && nomeEsp.value.trim()) horario = nomeEsp.value.trim();
+  }
 
   if (!coroinhasSel.length) { toast('Selecione ao menos um coroinha', true); return; }
   if (!funcoesSel.length) { toast('Selecione ao menos uma função', true); return; }
@@ -926,8 +1015,19 @@ async function registrarFuncao() {
 
   const funcao = funcoesSel.join(', ');
   try {
-    const registros = coroinhasSel.map(coroinha_id => ({ coroinha_id, funcao, horario, data_missa, observacao: observacao || null }));
-    await api('/historico_funcoes', 'POST', registros);
+    // Para cada coroinha, verifica se já existe registro na mesma missa (mesmo horario + data)
+    // Se sim, junta as funções; se não, cria novo
+    for (const coroinha_id of coroinhasSel) {
+      const existentes = await api('/historico_funcoes?coroinha_id=eq.' + coroinha_id + '&horario=eq.' + encodeURIComponent(horario) + '&data_missa=eq.' + data_missa);
+      if (existentes && existentes.length > 0) {
+        const reg = existentes[0];
+        const funcoesAntigas = reg.funcao ? reg.funcao.split(',').map(f => f.trim()) : [];
+        const funcoesMerged = [...new Set([...funcoesAntigas, ...funcoesSel])].join(', ');
+        await api('/historico_funcoes?id=eq.' + reg.id, 'PATCH', { funcao: funcoesMerged, observacao: observacao || reg.observacao || null });
+      } else {
+        await api('/historico_funcoes', 'POST', [{ coroinha_id, funcao, horario, data_missa, observacao: observacao || null }]);
+      }
+    }
     const nc = coroinhasSel.length, nf = funcoesSel.length;
     toast('✓ ' + nf + ' função' + (nf>1?'ões':'') + ' para ' + nc + ' coroinha' + (nc>1?'s':'') + '!');
     // Reset completo do formulário
@@ -998,7 +1098,7 @@ async function popularSelectEscala() {
       const match = (horarioStr || '').match(/(\d{1,2})h?:?(\d{0,2})/);
       const hh = match ? parseInt(match[1]) : 23;
       const mm = match && match[2] ? parseInt(match[2]) || 0 : 0;
-      const dtMissa = new Date(dataISO + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00');
+      const dtMissa = new Date(dataISO + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00-03:00');
       return agoraMs < dtMissa.getTime() + diasJanela * 24 * 60 * 60 * 1000;
     };
 
@@ -1149,10 +1249,18 @@ async function carregarStats() {
     // Horários fixos (sem missas especiais)
     const horariosFixos = ['Sábado 17h','Domingo 7h','Domingo 9h','Domingo 17h'];
 
+    // Deduplica: conta missas únicas por coroinha (não linhas de função)
+    const missasUnicas = {};
+    hist.forEach(h => {
+      const chave = h.coroinha_id + '|' + h.data_missa + '|' + h.horario;
+      if (!missasUnicas[chave]) missasUnicas[chave] = h;
+    });
+    const histDedup = Object.values(missasUnicas);
+
     // Para cada horário, montar ranking de coroinhas
     const container = document.getElementById('stat-horarios-container');
     const blocos = horariosFixos.map(horario => {
-      const missasHorario = hist.filter(h => h.horario === horario);
+      const missasHorario = histDedup.filter(h => h.horario === horario);
       if (!missasHorario.length) return '';
 
       const cCount = {};
@@ -1178,9 +1286,9 @@ async function carregarStats() {
 
     container.innerHTML = blocos || '<div class="card" style="margin-bottom:12px;"><div class="stat-empty">Sem registros no período.</div></div>';
 
-    // Coroinhas que mais serviram (geral)
+    // Coroinhas que mais serviram (geral) — missas únicas
     const cCount = {};
-    hist.forEach(h => { cCount[h.coroinha_id]=(cCount[h.coroinha_id]||0)+1; });
+    histDedup.forEach(h => { cCount[h.coroinha_id]=(cCount[h.coroinha_id]||0)+1; });
     const cSorted = Object.entries(cCount).sort((a,b) => b[1]-a[1]).slice(0,5);
     const cMax = cSorted[0]?.[1] || 1;
     document.getElementById('stat-coroinhas').innerHTML = cSorted.length ? cSorted.map(([id,v]) => {
@@ -1288,7 +1396,7 @@ async function carregarStatEspeciais() {
     // Busca todas as missas especiais, ordenadas da mais recente
     const lista = await api('/escala_especial?order=data.desc,created_at.desc');
     if (!lista || !lista.length) {
-      el.innerHTML = '<div class="empty"><div class="empty-icon"></div><p>Nenhuma missa especial registrada ainda.</p></div>';
+      el.innerHTML = '<div class="empty"><div class="empty-icon"></div><p>Nenhuma outra missa registrada ainda.</p></div>';
       return;
     }
 
@@ -1317,7 +1425,7 @@ async function carregarStatEspeciais() {
         const match = (e.horario || '').match(/(\d{1,2})h?:?(\d{0,2})/);
         const hh = match ? parseInt(match[1]) : 23;
         const mm = match && match[2] ? parseInt(match[2]) || 0 : 0;
-        const dataMissa = new Date(e.data + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00');
+        const dataMissa = new Date(e.data + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00-03:00');
         passou = new Date() > dataMissa;
       }
 
@@ -1516,66 +1624,108 @@ function msgEscalaFechada() {
   </div>`;
 }
 
+// Verifica se ainda há missas desta semana que não aconteceram (para mostrar escala fechada com inscritos)
+function escalaSemanaAindaRelevante() {
+  const { dow, h: hBr } = agoraBrasilia();
+  // Domingo 17h é a última missa; após domingo 18h já não é relevante mostrar
+  if (dow === 0 && hBr >= 18) return false;
+  // Segunda a quinta também não há missas desta semana
+  if (dow >= 1 && dow <= 4) return false;
+  // Sexta (antes das 15h), sábado (após 15h) ou domingo (antes das 18h) → ainda relevante
+  return true;
+}
+
+// Retorna a semana mais útil para exibir inscritos quando a escala está fechada.
+// De segunda a quinta: mostra a semana PRÓXIMA (que vai abrir na sexta).
+// Nos demais dias: mostra a semana atual.
+function getSemanaParaExibicao() {
+  const { dow } = agoraBrasilia();
+  // De segunda (1) a quinta (4): avança 7 dias para pegar a próxima semana
+  if (dow >= 1 && dow <= 4) {
+    const agora = new Date();
+    const proxSemana = new Date(agora);
+    proxSemana.setDate(agora.getDate() + 7);
+    return { key: getSemanaKey(proxSemana), isProxima: true };
+  }
+  return { key: getSemanaKey(), isProxima: false };
+}
+
 async function carregarEscala() {
   const padrao = inscricoesAbertas();
 
-  // Se escala padrão fechada, ainda pode haver escalas especiais abertas
+  // Sempre mostra inscritos: se aberta = semana atual, se fechada = semana atual ou próxima
   try {
+    // Carrega escalas especiais uma única vez e reutiliza o resultado
     const escalasEspeciais = await carregarEscalasEspeciaisPublico();
     const temEspecial = escalasEspeciais.length > 0;
 
-    if (!padrao && !temEspecial) {
-      document.getElementById('escala-semana-atual').innerHTML = msgEscalaFechada();
-      return;
+    // Carrega inscrições da semana relevante (sempre)
+    const { key: semanaExibir, isProxima } = getSemanaParaExibicao();
+    const semanaAtual = getSemanaKey();
+
+    const semanas = [];
+    const agora = new Date();
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(agora); d.setDate(agora.getDate() - i * 7);
+      const key = getSemanaKey(d);
+      if (!semanas.includes(key)) semanas.push(key);
     }
+    // Garante que a semana a exibir está no array
+    if (!semanas.includes(semanaExibir)) semanas.push(semanaExibir);
 
-    let htmlPadrao = '';
+    const dadosEscala = await api('/escala_inscricoes?semana_key=in.(' + semanas.join(',') + ')&order=created_at.asc');
+    escalaCache = {};
+    dadosEscala.forEach(row => {
+      if (!escalaCache[row.semana_key]) escalaCache[row.semana_key] = {};
+      if (!escalaCache[row.semana_key][row.horario]) escalaCache[row.semana_key][row.horario] = [];
+      escalaCache[row.semana_key][row.horario].push(row);
+    });
+
+    const sexta = new Date(semanaExibir + 'T12:00:00');
+    const sabado = new Date(sexta); sabado.setDate(sexta.getDate() + 1);
+    const domingo = new Date(sexta); domingo.setDate(sexta.getDate() + 2);
+    const pad = n => String(n).padStart(2,'0');
+    const fmtFull = d => `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+
+    let statusHtml = '';
     if (padrao) {
-      // Carrega inscrições padrão
-      const semanas = [];
-      const agora = new Date();
-      for (let i = 0; i < 5; i++) {
-        const d = new Date(agora); d.setDate(agora.getDate() - i * 7);
-        const key = getSemanaKey(d);
-        if (!semanas.includes(key)) semanas.push(key);
-      }
-      const semanaAtual = getSemanaKey();
-      const dadosEscala = await api('/escala_inscricoes?semana_key=in.(' + semanas.join(',') + ')&order=created_at.asc');
-      escalaCache = {};
-      dadosEscala.forEach(row => {
-        if (!escalaCache[row.semana_key]) escalaCache[row.semana_key] = {};
-        if (!escalaCache[row.semana_key][row.horario]) escalaCache[row.semana_key][row.horario] = [];
-        escalaCache[row.semana_key][row.horario].push(row);
-      });
-
-      const sexta = new Date(semanaAtual + 'T12:00:00');
-      const sabado = new Date(sexta); sabado.setDate(sexta.getDate() + 1);
-      const domingo = new Date(sexta); domingo.setDate(sexta.getDate() + 2);
-      const pad = n => String(n).padStart(2,'0');
-      const fmtFull = d => `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
-      const statusHtml = `<div style="background:#d4edda;border:1px solid #a3d9a5;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#276130;font-weight:500;">
+      statusHtml = `<div style="background:#d4edda;border:1px solid #a3d9a5;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#276130;font-weight:500;">
         Inscrições abertas — até sábado às 15h
       </div>`;
-
-      htmlPadrao = `<div class="semana-badge">Semana atual · ${fmtFull(sabado)} – ${fmtFull(domingo)}</div>` +
-        statusHtml + renderEscalaSemana(semanaAtual, true, true);
-    }
-
-    // Escalas especiais abertas
-    const htmlEspecial = await renderEscalasEspeciaisPublico();
-
-    if (!padrao) {
-      // Só especiais abertas — mostra aviso de escala padrão fechada também
-      const { dow, h: hBr, min: minBr } = agoraBrasilia();
-      let msgPadrao = '';
-      if (dow === 6 && hBr >= 15) msgPadrao = 'Inscrições da escala semanal encerradas.';
-      else if (dow === 5 && hBr < 15) { const mr = 15*60-(hBr*60+minBr); msgPadrao = `Escala semanal abre hoje às 15h (faltam ${Math.floor(mr/60)}h${mr%60>0?mr%60+'min':''}).`; }
-      else msgPadrao = 'Inscrições da escala semanal fechadas (abrem sexta às 15h).';
-      const avisoFechada = `<div style="background:var(--gold-pale);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:var(--text-muted);"> ${msgPadrao}</div>`;
-      document.getElementById('escala-semana-atual').innerHTML = avisoFechada + htmlEspecial;
     } else {
-      document.getElementById('escala-semana-atual').innerHTML = htmlPadrao + (htmlEspecial ? '<div style="margin-top:8px;">' + htmlEspecial + '</div>' : '');
+      const { dow, h: hBr, min: minBr } = agoraBrasilia();
+      let msgF = '';
+      if (isProxima) {
+        const diasFaltam = dow === 1 ? 4 : dow === 2 ? 3 : dow === 3 ? 2 : 1;
+        msgF = `Inscrições abrem na ${diasFaltam === 1 ? 'próxima' : ''} sexta às 15h. Confira abaixo quem já está inscrito na escala da semana que vem.`;
+      } else if (dow === 6 && hBr >= 15) {
+        msgF = 'Inscrições encerradas para esta semana.';
+      } else if (dow === 0) {
+        msgF = 'Inscrições encerradas — confira abaixo quem está escalado hoje.';
+      } else if (dow === 5 && hBr < 15) {
+        const minRestantes = 15*60 - (hBr*60 + minBr);
+        const h = Math.floor(minRestantes/60), m = minRestantes % 60;
+        msgF = `Inscrições abrem hoje às 15h (faltam ${h > 0 ? h+'h' : ''}${m > 0 ? m+'min' : ''}).`;
+      } else {
+        msgF = 'Inscrições encerradas.';
+      }
+      statusHtml = `<div style="background:var(--gold-pale);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--text-muted);">
+        🔒 ${msgF}
+      </div>`;
     }
+
+    const semanaLabel = isProxima
+      ? `Próxima semana · ${fmtFull(sabado)} – ${fmtFull(domingo)}`
+      : `Semana atual · ${fmtFull(sabado)} – ${fmtFull(domingo)}`;
+
+    const htmlPadrao = `<div class="semana-badge">${semanaLabel}</div>` +
+      statusHtml + renderEscalaSemana(semanaExibir, !isProxima, true);
+
+    // Escalas especiais abertas — reutiliza a lista já carregada (sem nova chamada à API)
+    const htmlEspecial = await renderEscalasEspeciaisPublico(null, escalasEspeciais);
+
+    document.getElementById('escala-semana-atual').innerHTML = htmlPadrao + (htmlEspecial ? '<div style="margin-top:8px;">' + htmlEspecial + '</div>' : '');
+
   } catch(e) {
     document.getElementById('escala-semana-atual').innerHTML =
       '<div class="empty"><div class="empty-icon">⚠</div><p>Erro ao carregar escala. Verifique sua conexão.</p></div>';
@@ -1807,7 +1957,7 @@ async function confirmarInscricaoEscala() {
     fecharModalEscala();
     const c = coroinhas.find(x => x.id === coroinhaId);
     toast('✓ ' + (c ? c.nome : 'Coroinha') + ' inscrito(a) em ' + horario + '!');
-    renderEscalaSemana(semanaKey, true);
+    carregarEscala();
   } catch(e) {
     toast('Erro ao inscrever. Tente novamente.', true);
     console.error(e);
@@ -2202,7 +2352,7 @@ async function carregarEscalaAdminEspeciais() {
   try {
     const listaAll = await api('/escala_especial?order=data.desc,created_at.desc');
     if (!listaAll || !listaAll.length) {
-      el.innerHTML = '<div class="empty"><div class="empty-icon"></div><p>Nenhuma missa especial criada ainda.<br><small style="color:var(--text-muted);">Crie uma na aba "Criar Escala".</small></p></div>';
+      el.innerHTML = '<div class="empty"><div class="empty-icon"></div><p>Nenhuma outra missa criada ainda.<br><small style="color:var(--text-muted);">Crie uma na aba "Criar Escala".</small></p></div>';
       return;
     }
 
@@ -2215,13 +2365,13 @@ async function carregarEscalaAdminEspeciais() {
       const match = horaStr.match(/(\d{1,2})h?:?(\d{0,2})/);
       const hh = match ? parseInt(match[1]) : 23;
       const mm = match && match[2] ? parseInt(match[2]) || 0 : 0;
-      const dataMissa = new Date(e.data + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00');
+      const dataMissa = new Date(e.data + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00-03:00');
       const expira = new Date(dataMissa.getTime() + 24 * 60 * 60 * 1000);
       return agora24 < expira;
     });
 
     if (!lista.length) {
-      el.innerHTML = '<div class="empty"><div class="empty-icon"></div><p>Nenhuma missa especial ativa no momento.<br><small style="color:var(--text-muted);">Missas passadas ficam no histórico em Estatísticas.</small></p></div>';
+      el.innerHTML = '<div class="empty"><div class="empty-icon"></div><p>Nenhuma outra missa ativa no momento.<br><small style="color:var(--text-muted);">Missas passadas ficam no histórico em Estatísticas.</small></p></div>';
       return;
     }
 
@@ -2418,7 +2568,7 @@ async function carregarEscalasEspeciais() {
       const match = (e.horario || '').match(/(\d{1,2})h?:?(\d{0,2})/);
       const hh = match ? parseInt(match[1]) : 23;
       const mm = match && match[2] ? parseInt(match[2]) || 0 : 0;
-      const dtMissa = new Date(e.data + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00');
+      const dtMissa = new Date(e.data + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00-03:00');
       return agora < dtMissa.getTime() + 24 * 60 * 60 * 1000;
     });
     if (!lista.length) {
@@ -2561,7 +2711,20 @@ async function criarEscalaEspecial() {
 
 async function toggleEscalaEspecial(id, aberta) {
   try {
-    await api('/escala_especial?id=eq.' + id, 'PATCH', { aberta });
+    // Ao fechar manualmente durante o período automático:
+    // seta fecha_em = agora para que o checker não force reabertura
+    const patch = { aberta };
+    if (!aberta) {
+      const agora = new Date();
+      const registros = await api('/escala_especial?id=eq.' + id);
+      if (registros && registros.length) {
+        const e = registros[0];
+        if (e.fecha_em && agora < new Date(e.fecha_em)) {
+          patch.fecha_em = agora.toISOString();
+        }
+      }
+    }
+    await api('/escala_especial?id=eq.' + id, 'PATCH', patch);
     toast(aberta ? '✓ Inscrições abertas!' : '✓ Inscrições fechadas.');
     await carregarEscalasEspeciaisComInscritos();
     // Recarrega a aba pública de escala se estiver visível
@@ -2592,39 +2755,45 @@ async function carregarEscalasEspeciaisPublico() {
     if (!lista) return [];
     const agora = new Date();
     const agoraMs = agora.getTime();
-    return lista.filter(e => {
-      // Verifica expiração: 24h após o horário da missa
-      if (e.data) {
+    // Retorna todas as escalas ainda não expiradas (dentro das 24h após a missa),
+    // com um campo extra `_estaAberta` para diferenciar abertas de fechadas na renderização.
+    // IMPORTANTE: interpreta a data/hora da missa como horário de Brasília (UTC-3)
+    return lista
+      .filter(e => {
+        if (!e.data) return true;
         const match = (e.horario || '').match(/(\d{1,2})h?:?(\d{0,2})/);
         const hh = match ? parseInt(match[1]) : 23;
         const mm = match && match[2] ? parseInt(match[2]) || 0 : 0;
-        const dtMissa = new Date(e.data + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00');
-        if (agoraMs >= dtMissa.getTime() + 24 * 60 * 60 * 1000) return false; // expirou
-      }
-      // Dentro do prazo: aberta manualmente OU dentro do período automático
-      if (e.aberta) return true;
-      if (e.abre_em && e.fecha_em) return agora >= new Date(e.abre_em) && agora < new Date(e.fecha_em);
-      return false;
-    });
+        // Trata a data como horário de Brasília (UTC-3): soma 3h para converter para UTC
+        const dtMissaUTC = new Date(e.data + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00-03:00');
+        return agoraMs < dtMissaUTC.getTime() + 24 * 60 * 60 * 1000;
+      })
+      .map(e => {
+        const autoAberta = e.abre_em && e.fecha_em && agora >= new Date(e.abre_em) && agora < new Date(e.fecha_em);
+        return Object.assign({}, e, { _estaAberta: !!(e.aberta || autoAberta) });
+      });
   } catch(err) {
     return [];
   }
 }
 
-async function renderEscalasEspeciaisPublico(container) {
-  const lista = await carregarEscalasEspeciaisPublico();
+async function renderEscalasEspeciaisPublico(container, listaPreCarregada) {
+  const lista = listaPreCarregada !== undefined ? listaPreCarregada : await carregarEscalasEspeciaisPublico();
   if (!lista.length) return '';
 
-  // Busca todas as inscrições das escalas abertas de uma vez
+  // Busca todas as inscrições de uma vez (abertas e fechadas)
   const ids = lista.map(e => e.id);
   let todasInscricoes = [];
   try {
     todasInscricoes = await api('/escala_especial_inscricoes?escala_especial_id=in.(' + ids.join(',') + ')&order=created_at.asc');
   } catch(err) {}
 
-  const blocos = lista.map(e => {
+  const abertas  = lista.filter(e => e._estaAberta);
+  const fechadas = lista.filter(e => !e._estaAberta);
+
+  const renderBloco = (e, mostrarBotao) => {
     const todos = todasInscricoes.filter(r => r.escala_especial_id === e.id);
-    const inscritos = todos.filter(r => !r.is_equipe);   // só normais contam no limite
+    const inscritos = todos.filter(r => !r.is_equipe);
     const cheio = inscritos.length >= e.limite;
     const dataFmt = e.data ? formatarData(e.data) : '—';
 
@@ -2643,18 +2812,28 @@ async function renderEscalasEspeciaisPublico(container) {
         }).join('')
       : '<div class="escala-vazio">Nenhum inscrito ainda.</div>';
 
-    const rodape = !cheio
-      ? `<div class="escala-footer">
-           <button class="btn btn-primary" style="margin-top:0;padding:10px;" onclick="abrirModalEscalaEspecial('${e.id}')">
-             + Inscrever-se (${inscritos.length}/${e.limite})
-           </button>
-         </div>`
-      : `<div class="escala-footer" style="display:flex;align-items:center;justify-content:space-between;">
-           <span style="font-size:12px;color:var(--text-muted);">${inscritos.length}/${e.limite} inscritos</span>
-           <span style="font-size:12px;font-weight:600;color:var(--danger);">✕ Lotado</span>
-         </div>`;
+    let rodape;
+    if (!mostrarBotao) {
+      rodape = `<div class="escala-footer" style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:12px;color:var(--text-muted);">${inscritos.length}/${e.limite} inscritos</span>
+        <span style="font-size:12px;color:var(--text-muted);">🔒 Inscrições encerradas</span>
+      </div>`;
+    } else if (cheio) {
+      rodape = `<div class="escala-footer" style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:12px;color:var(--text-muted);">${inscritos.length}/${e.limite} inscritos</span>
+        <span style="font-size:12px;font-weight:600;color:var(--danger);">✕ Lotado</span>
+      </div>`;
+    } else {
+      rodape = `<div class="escala-footer">
+        <button class="btn btn-primary" style="margin-top:0;padding:10px;" onclick="abrirModalEscalaEspecial('${e.id}')">
+          + Inscrever-se (${inscritos.length}/${e.limite})
+        </button>
+      </div>`;
+    }
 
-    return `<div class="escala-horario" style="border-left:3px solid var(--gold);">
+    const borderColor = mostrarBotao ? 'var(--gold)' : 'var(--border)';
+    const opacity = mostrarBotao ? '1' : '0.85';
+    return `<div class="escala-horario" style="border-left:3px solid ${borderColor};opacity:${opacity};">
       <div class="escala-horario-header" style="background:var(--gold-pale);">
         <span class="escala-horario-titulo">${e.nome}</span>
         <span class="escala-horario-data">${dataFmt} · ${e.horario}</span>
@@ -2662,12 +2841,22 @@ async function renderEscalasEspeciaisPublico(container) {
       ${listaNomes}
       ${rodape}
     </div>`;
-  }).join('');
+  };
 
-  return `<div style="margin-bottom:6px;">
-    <div style="background:var(--brown-dark);color:var(--gold-light);font-size:11px;font-weight:600;padding:5px 12px;border-radius:50px;display:inline-block;margin-bottom:12px;">Escalas especiais abertas</div>
-    ${blocos}
-  </div>`;
+  let html = '';
+  if (abertas.length) {
+    html += `<div style="margin-bottom:6px;">
+      <div style="background:var(--brown-dark);color:var(--gold-light);font-size:11px;font-weight:600;padding:5px 12px;border-radius:50px;display:inline-block;margin-bottom:12px;">✨ Outras missas</div>
+      ${abertas.map(e => renderBloco(e, true)).join('')}
+    </div>`;
+  }
+  if (fechadas.length) {
+    html += `<div style="margin-bottom:6px;">
+      <div style="background:var(--brown-mid);color:var(--gold-light);font-size:11px;font-weight:600;padding:5px 12px;border-radius:50px;display:inline-block;margin-bottom:12px;">🔒 Outras missas (inscrições encerradas)</div>
+      ${fechadas.map(e => renderBloco(e, false)).join('')}
+    </div>`;
+  }
+  return html;
 }
 
 // ---------- Modal inscrição escala especial ----------
@@ -2766,10 +2955,18 @@ async function checkEscalasEspeciaisAutomatico() {
     const agora = new Date();
     for (const e of lista) {
       if (!e.abre_em || !e.fecha_em) continue;
-      const deveAbrir = agora >= new Date(e.abre_em) && agora < new Date(e.fecha_em);
-      const deveFechar = agora >= new Date(e.fecha_em);
-      if (deveAbrir && !e.aberta) {
-        await api('/escala_especial?id=eq.' + e.id, 'PATCH', { aberta: true });
+      const abre = new Date(e.abre_em);
+      const fecha = new Date(e.fecha_em);
+      const dentroDoperiodo = agora >= abre && agora < fecha;
+      const deveFechar = agora >= fecha;
+      // Só abre automaticamente se ainda não abriu nenhuma vez (antes do período)
+      // Nunca reabre se foi fechado manualmente durante o período (fecha_em já foi ajustado para passado)
+      if (dentroDoperiodo && !e.aberta) {
+        // Verifica se fecha_em ainda é o original (futuro) — se for, é abertura automática legítima
+        // Se fecha_em já foi setado para passado pelo fechamento manual, não reabre
+        if (fecha > agora) {
+          await api('/escala_especial?id=eq.' + e.id, 'PATCH', { aberta: true });
+        }
       } else if (deveFechar && e.aberta) {
         await api('/escala_especial?id=eq.' + e.id, 'PATCH', { aberta: false });
       }
@@ -3088,6 +3285,13 @@ function confirmarApagarRegistro(histId) {
 
 // ===================== EDITAR REGISTRO =====================
 
+function toggleEditRegMissaEspecial() {
+  const val = document.getElementById('edit-reg-horario').value;
+  const campoEsp = document.getElementById('edit-reg-campo-especial');
+  campoEsp.style.display = val === 'Missa Especial' ? 'block' : 'none';
+  if (val !== 'Missa Especial') document.getElementById('edit-reg-nome-especial').value = '';
+}
+
 const FUNCOES_LISTA = ['Ambão','Carrilhão','Cerimonário','Cruz','Ofertório','Pasta','Patena','Purificação','Sino de trás','Turíbulo','Vela','Sem-função'];
 let editRegistroId = null;
 
@@ -3101,6 +3305,11 @@ function abrirEditRegistro(h) {
   editRegistroId = h.id;
   const funcoesSelecionadas = h.funcao ? h.funcao.split(',').map(f => f.trim()) : [];
 
+  // Detecta funções customizadas (não estão na lista fixa)
+  const funcoesCustom = funcoesSelecionadas.filter(f => !FUNCOES_LISTA.includes(f));
+  const temOutro = funcoesCustom.length > 0;
+  const outroTexto = funcoesCustom.join(', ');
+
   // Renderiza chips de funções
   const chipsEl = document.getElementById('edit-reg-funcoes');
   chipsEl.innerHTML = FUNCOES_LISTA.map(f => {
@@ -3108,17 +3317,39 @@ function abrirEditRegistro(h) {
     return `<label class="funcao-chip${sel ? ' selecionada' : ''}" onclick="atualizarChipEdit(this)">
       <input type="checkbox" value="${f}"${sel ? ' checked' : ''}><span>${f}</span>
     </label>`;
-  }).join('');
+  }).join('') + `<label class="funcao-chip${temOutro ? ' selecionada' : ''}" id="edit-chip-outro" onclick="toggleChipOutroEdit(this)" style="border-style:dashed;">
+    <input type="checkbox" value="__outro__" id="edit-cb-outro"${temOutro ? ' checked' : ''}><span id="edit-chip-outro-span">${temOutro ? outroTexto : '+ Outro'}</span>
+  </label>`;
+
+  // Campo de texto do outro
+  const campOutro = document.getElementById('edit-campo-outro-funcao');
+  const inputOutro = document.getElementById('edit-func-outro-texto');
+  if (temOutro) {
+    campOutro.style.display = 'block';
+    inputOutro.value = outroTexto;
+  } else {
+    campOutro.style.display = 'none';
+    inputOutro.value = '';
+  }
 
   // Horário
   const horSel = document.getElementById('edit-reg-horario');
   const horarios = ['Sábado 17h','Domingo 7h','Domingo 9h','Domingo 17h'];
+  const campoEspEdit = document.getElementById('edit-reg-campo-especial');
+  const nomeEspInputEdit = document.getElementById('edit-reg-nome-especial');
   if (h.horario && horarios.includes(h.horario)) {
     horSel.value = h.horario;
+    campoEspEdit.style.display = 'none';
+    nomeEspInputEdit.value = '';
   } else if (h.horario) {
     horSel.value = 'Missa Especial';
+    // Se o valor gravado não é "Missa Especial" literal, usa o nome real; senão deixa em branco para preencher
+    nomeEspInputEdit.value = h.horario !== 'Missa Especial' ? h.horario : '';
+    campoEspEdit.style.display = 'block';
   } else {
     horSel.value = '';
+    campoEspEdit.style.display = 'none';
+    nomeEspInputEdit.value = '';
   }
 
   document.getElementById('edit-reg-data').value = h.data_missa || '';
@@ -3135,14 +3366,51 @@ function atualizarChipEdit(el) {
   }, 0);
 }
 
+function toggleChipOutroEdit(el) {
+  setTimeout(() => {
+    const cb = el.querySelector('input');
+    const campo = document.getElementById('edit-campo-outro-funcao');
+    const input = document.getElementById('edit-func-outro-texto');
+    if (cb.checked) {
+      el.classList.add('selecionada');
+      campo.style.display = 'block';
+      input.focus();
+    } else {
+      el.classList.remove('selecionada');
+      campo.style.display = 'none';
+      input.value = '';
+      document.getElementById('edit-chip-outro-span').textContent = '+ Outro';
+    }
+  }, 0);
+}
+
+function atualizarChipOutroLabelEdit() {
+  const texto = document.getElementById('edit-func-outro-texto').value.trim();
+  const span = document.getElementById('edit-chip-outro-span');
+  span.textContent = texto || '+ Outro';
+}
+
 function fecharModalEditRegistro() {
   document.getElementById('modal-edit-registro').style.display = 'none';
   editRegistroId = null;
 }
 
 async function salvarEditRegistro() {
-  const funcoesSel = [...document.querySelectorAll('#edit-reg-funcoes input:checked')].map(cb => cb.value);
-  const horario = document.getElementById('edit-reg-horario').value;
+  let funcoesSel = [...document.querySelectorAll('#edit-reg-funcoes input:checked')].map(cb => cb.value);
+  // Substitui __outro__ pelo valor digitado
+  if (funcoesSel.includes('__outro__')) {
+    const outroTexto = document.getElementById('edit-func-outro-texto').value.trim();
+    if (!outroTexto) { toast('Descreva a função personalizada.', true); return; }
+    funcoesSel = funcoesSel.filter(v => v !== '__outro__');
+    funcoesSel.push(outroTexto);
+  }
+  let horario = document.getElementById('edit-reg-horario').value;
+  // Se for "Outra Missa", usa o nome real digitado no campo de texto
+  if (horario === 'Missa Especial') {
+    const nomeReal = document.getElementById('edit-reg-nome-especial').value.trim();
+    if (!nomeReal) { toast('Informe o nome da missa especial.', true); return; }
+    horario = nomeReal;
+  }
   const data_missa = document.getElementById('edit-reg-data').value;
   const observacao = document.getElementById('edit-reg-obs').value.trim();
 
