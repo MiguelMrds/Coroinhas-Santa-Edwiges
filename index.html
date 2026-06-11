@@ -13,6 +13,23 @@
     --border: #E8D9C0; --danger: #9B3A3A; --radius: 16px; --radius-sm: 10px;
     --shadow: 0 4px 24px rgba(44,26,14,0.10);
   }
+  [data-theme="dark"] {
+    --gold: #D4A853; --gold-light: #F0D98A; --gold-pale: #2A2010;
+    --brown-dark: #1A1208; --brown-mid: #8B6B4A; --brown-light: #C9A07A;
+    --cream: #121212; --white: #1E1E1E; --text: #F0E6D3; --text-muted: #A08060;
+    --border: #3A2E20; --danger: #C05050; --radius: 16px; --radius-sm: 10px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.40);
+  }
+  .theme-toggle {
+    position: absolute; top: 16px; right: 16px;
+    background: rgba(255,255,255,0.08); border: 1.5px solid rgba(201,168,76,0.35);
+    border-radius: 50px; padding: 6px 12px; cursor: pointer;
+    font-size: 15px; line-height: 1; color: var(--gold-light);
+    transition: background 0.2s, border-color 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .theme-toggle:hover { background: rgba(201,168,76,0.15); border-color: var(--gold); }
+  .theme-toggle-label { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; color: var(--gold-light); letter-spacing: 0.3px; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
   header { background: var(--brown-dark); padding: 24px 20px 20px; text-align: center; position: relative; }
@@ -157,6 +174,10 @@
 <body>
 
 <header>
+  <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Alternar tema">
+    <span id="theme-icon">🌙</span>
+    <span class="theme-toggle-label" id="theme-label">Escuro</span>
+  </button>
   <div class="header-cross">✝</div>
   <h1>Coroinhas da Paróquia Santa Edwiges</h1>
   <p>Organização geral</p>
@@ -465,7 +486,7 @@
           <button class="btn-ordem active" id="stat-mes-btn" onclick="setMes(0)">Este mês</button>
           <button class="btn-ordem" id="stat-mes-ant-btn" onclick="setMes(1)">Mês anterior</button>
           <button class="btn-ordem" id="stat-tudo-btn" onclick="setMes(-1)">Tudo</button>
-          <button class="btn-ordem" onclick="exportarEstatisticasPDF()" style="background:var(--gold-pale);border-color:var(--gold);color:var(--brown-mid);font-weight:600;">&#8595; Exportar PDF</button>
+          <button class="btn-ordem" onclick="abrirModalPdfExport()" style="background:var(--gold-pale);border-color:var(--gold);color:var(--brown-mid);font-weight:600;">&#8595; Exportar PDF</button>
         </div>
         <div id="stat-horarios-container"></div>
         <div class="card">
@@ -529,7 +550,7 @@
         <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
       </div>
       <div id="edit-reg-campo-especial" style="display:none;margin-top:8px;">
-        <input type="text" id="edit-reg-nome-especial" placeholder="Nome da missa (ex: CORPUS CHRISTI)">
+        <input type="text" id="edit-reg-nome-especial" placeholder="Nome da missa (Nome da Missa)">
       </div>
       <label>Data da missa</label>
       <input type="date" id="edit-reg-data">
@@ -1540,9 +1561,9 @@ const MISSAS = ['Sábado 17h', 'Domingo 7h', 'Domingo 9h', 'Domingo 17h'];
 const LIMITE_MISSA = 7;
 
 // Retorna a hora atual no fuso de Brasília (UTC-3) como objeto com dow, h, min
+// Usa o relógio LOCAL (para exibição de mensagens e cálculos não-críticos)
 function agoraBrasilia() {
   const agora = new Date();
-  // UTC-3: subtrai 3 horas
   const brasilia = new Date(agora.getTime() - 3 * 60 * 60 * 1000);
   return {
     dow: brasilia.getUTCDay(),
@@ -1550,6 +1571,38 @@ function agoraBrasilia() {
     min: brasilia.getUTCMinutes(),
     date: brasilia
   };
+}
+
+// Busca a hora REAL do servidor Supabase (não confia no relógio do usuário)
+// Usada apenas na hora de confirmar inscrição
+async function horaServidorBrasilia() {
+  try {
+    const r = await fetch('https://gehccrknzobcurclbnpt.supabase.co/rest/v1/rpc/hora_servidor', {
+      method: 'POST',
+      headers: HEADERS,
+      body: JSON.stringify({})
+    });
+    if (!r.ok) throw new Error('Falha ao buscar hora do servidor');
+    const iso = await r.json(); // ex: "2025-06-13T18:00:00+00:00"
+    const d = new Date(iso);
+    const brasilia = new Date(d.getTime() - 3 * 60 * 60 * 1000);
+    return {
+      dow: brasilia.getUTCDay(),
+      h: brasilia.getUTCHours(),
+      min: brasilia.getUTCMinutes(),
+    };
+  } catch(e) {
+    console.warn('Não foi possível verificar hora do servidor, usando hora local:', e);
+    return null; // fallback: bloqueia por segurança (tratado em confirmarInscricaoEscala)
+  }
+}
+
+// Verifica se inscrições estão abertas com base em hora/dia fornecidos
+function inscricoesAbertasComHora({ dow, h, min }) {
+  const totalMin = h * 60 + min;
+  if (dow === 5 && totalMin >= 15*60) return true;  // sexta >= 15h
+  if (dow === 6 && totalMin < 15*60) return true;   // sábado < 15h
+  return false;
 }
 
 // Retorna a chave da semana atual (sexta 15h → próxima sexta 14h59) — baseado em Brasília (UTC-3)
@@ -1573,13 +1626,9 @@ function getSemanaKey(date) {
   return `${y}-${m}-${day}`;
 }
 
-// Verifica se inscrições estão abertas (sexta 15h até sábado 15h) — horário de Brasília (UTC-3)
+// Verifica se inscrições estão abertas — usa hora LOCAL (apenas para exibição na tela)
 function inscricoesAbertas() {
-  const { dow, h, min } = agoraBrasilia();
-  const totalMin = h * 60 + min;
-  if (dow === 5 && totalMin >= 15*60) return true;  // sexta >= 15h Brasília
-  if (dow === 6 && totalMin < 15*60) return true;   // sábado < 15h Brasília
-  return false;
+  return inscricoesAbertasComHora(agoraBrasilia());
 }
 
 // Datas das missas da semana (a partir da sexta)
@@ -1695,9 +1744,11 @@ async function carregarEscala() {
     } else {
       const { dow, h: hBr, min: minBr } = agoraBrasilia();
       let msgF = '';
-      if (isProxima) {
-        const diasFaltam = dow === 1 ? 4 : dow === 2 ? 3 : dow === 3 ? 2 : 1;
-        msgF = `Inscrições abrem na ${diasFaltam === 1 ? 'próxima' : ''} sexta às 15h. Confira abaixo quem já está inscrito na escala da semana que vem.`;
+      if (dow === 5 && hBr < 15) {
+        // sexta antes das 15h: mostra contagem regressiva
+        const minRestantes = 15*60 - (hBr*60 + minBr);
+        const h = Math.floor(minRestantes/60), m = minRestantes % 60;
+        msgF = `As inscrições abrem hoje às 15h (faltam ${h > 0 ? h+'h' : ''}${m > 0 ? m+'min' : ''}).`;
       } else if (dow === 6 && hBr >= 15) {
         msgF = 'Inscrições encerradas para esta semana.';
       } else if (dow === 0) {
@@ -1718,13 +1769,48 @@ async function carregarEscala() {
       ? `Próxima semana · ${fmtFull(sabado)} – ${fmtFull(domingo)}`
       : `Semana atual · ${fmtFull(sabado)} – ${fmtFull(domingo)}`;
 
-    const htmlPadrao = `<div class="semana-badge">${semanaLabel}</div>` +
-      statusHtml + renderEscalaSemana(semanaExibir, !isProxima, true);
+    const blocosSemanais = renderEscalaSemana(semanaExibir, !isProxima, true);
 
-    // Escalas especiais abertas — reutiliza a lista já carregada (sem nova chamada à API)
+    // Só mostra o bloco semanal se:
+    // (a) inscrições abertas, OU
+    // (b) fechadas mas ainda há missas para acontecer (blocos não vazios)
+    // Mostra bloco semanal se:
+    // - inscrições abertas (sex 15h → sáb 15h), OU
+    // - sexta antes das 15h (mostra próxima semana com inscritos, avisando quando abre), OU
+    // - sábado/domingo após fechamento e ainda há missas pendentes
+    const { dow: dowAtual } = agoraBrasilia();
+    const sextraAntesAbertura = (dowAtual === 5); // sexta (antes ou depois das 15h já cai em padrao)
+    const mostrarBlocoSemanal = padrao || sextraAntesAbertura || blocosSemanais.trim() !== '';
+    const htmlPadrao = mostrarBlocoSemanal
+      ? `<div class="semana-badge">${semanaLabel}</div>` + statusHtml + blocosSemanais
+      : '';
+
+    // Escalas especiais — reutiliza a lista já carregada (sem nova chamada à API)
     const htmlEspecial = await renderEscalasEspeciaisPublico(null, escalasEspeciais);
 
-    document.getElementById('escala-semana-atual').innerHTML = htmlPadrao + (htmlEspecial ? '<div style="margin-top:8px;">' + htmlEspecial + '</div>' : '');
+    const htmlFinal = htmlPadrao + (htmlEspecial ? '<div style="margin-top:8px;">' + htmlEspecial + '</div>' : '');
+
+    if (!htmlFinal.trim()) {
+      // Nada a mostrar: escala fechada e sem missas pendentes
+      const { dow, h: hBr, min: minBr } = agoraBrasilia();
+      let msgVazia = '';
+      if (dow === 5 && hBr < 15) {
+        const minR = 15*60 - (hBr*60 + minBr);
+        const hh = Math.floor(minR/60), mm = minR % 60;
+        msgVazia = `As inscrições abrem hoje às 15h (faltam ${hh > 0 ? hh+'h' : ''}${mm > 0 ? mm+'min' : ''}).`;
+      } else {
+        msgVazia = 'As inscrições ficam abertas toda sexta-feira às 15h até sábado às 15h.';
+      }
+      document.getElementById('escala-semana-atual').innerHTML = `
+        <div style="text-align:center;padding:40px 20px;">
+          <div style="font-size:32px;margin-bottom:12px;">🔒</div>
+          <div style="font-family:'Playfair Display',serif;font-size:17px;color:var(--brown-dark);margin-bottom:8px;">Escala fechada</div>
+          <div style="font-size:13px;color:var(--text-muted);line-height:1.6;">${msgVazia}</div>
+        </div>`;
+      return;
+    } else {
+      document.getElementById('escala-semana-atual').innerHTML = htmlFinal;
+    }
 
   } catch(e) {
     document.getElementById('escala-semana-atual').innerHTML =
@@ -1766,7 +1852,26 @@ function renderEscalaSemana(semanaKey, isAtual, returnOnly) {
     }
   }
 
-  const blocos = MISSAS.map(horario => {
+  // Semana futura (próxima semana, seg-qui): não mostra nada — inscrições não abriram
+  if (!isAtual && !aberta) return '';
+
+  // Retorna o timestamp (ms) em que a missa acontece, em horário de Brasília
+  const tsMissa = (horario) => {
+    const base = horario.startsWith('Sáb') ? sabado : domingo;
+    const hMap = { 'Sábado 17h': 17, 'Domingo 7h': 7, 'Domingo 9h': 9, 'Domingo 17h': 17 };
+    const d = new Date(base); d.setHours(hMap[horario] || 0, 0, 0, 0);
+    // base está em local, mas precisamos comparar com UTC-3
+    return d.getTime() + 3 * 60 * 60 * 1000; // converte para UTC para comparar com Date.now() em UTC
+  };
+  const agora = new Date();
+  // Quando a escala está aberta: mostra todas as missas (para inscrição)
+  // Quando fechada: mostra só as missas que ainda não aconteceram
+  const missasFiltradas = aberta ? MISSAS : MISSAS.filter(h => agora.getTime() < tsMissa(h));
+
+  // Se não há missas a mostrar, retorna vazio imediatamente
+  if (!missasFiltradas.length) return '';
+
+  const blocos = missasFiltradas.map(horario => {
     const todos = dados[horario] || [];
     const inscritos = todos.filter(r => !r.is_equipe);   // coroinhas normais
     const equipe   = todos.filter(r => r.is_equipe);     // membros da equipe (não contam no limite)
@@ -1903,7 +2008,19 @@ function fecharModalEscala() {
 async function confirmarInscricaoEscala() {
   const coroinhaId = document.getElementById('modal-escala-nome').value;
   if (!coroinhaId) { toast('Selecione um nome.', true); return; }
-  if (!inscricoesAbertas()) { toast('Inscrições encerradas.', true); fecharModalEscala(); return; }
+
+  // Verificação pela hora do SERVIDOR (não pode ser burlada pelo usuário)
+  const horaServidor = await horaServidorBrasilia();
+  if (!horaServidor) {
+    toast('Não foi possível verificar o horário. Tente novamente.', true);
+    fecharModalEscala();
+    return;
+  }
+  if (!inscricoesAbertasComHora(horaServidor)) {
+    toast('Inscrições encerradas.', true);
+    fecharModalEscala();
+    return;
+  }
 
   const semanaKey = escalaModalSemana;
   const horario = escalaModalHorario;
@@ -2711,17 +2828,22 @@ async function criarEscalaEspecial() {
 
 async function toggleEscalaEspecial(id, aberta) {
   try {
-    // Ao fechar manualmente durante o período automático:
-    // seta fecha_em = agora para que o checker não force reabertura
     const patch = { aberta };
+    const registros = await api('/escala_especial?id=eq.' + id);
+    const e = registros && registros.length ? registros[0] : null;
+    const agora = new Date();
+
     if (!aberta) {
-      const agora = new Date();
-      const registros = await api('/escala_especial?id=eq.' + id);
-      if (registros && registros.length) {
-        const e = registros[0];
-        if (e.fecha_em && agora < new Date(e.fecha_em)) {
-          patch.fecha_em = agora.toISOString();
-        }
+      // Fechar manualmente: trava o fecha_em no passado para o checker automático não reabrir
+      if (e && e.fecha_em && agora < new Date(e.fecha_em)) {
+        patch.fecha_em = agora.toISOString();
+      }
+    } else {
+      // Abrir manualmente: se fecha_em está no passado, empurra para daqui 24h
+      // para garantir que o checker automático não feche imediatamente
+      if (e && e.fecha_em && agora >= new Date(e.fecha_em)) {
+        const novoFecha = new Date(agora.getTime() + 24 * 60 * 60 * 1000);
+        patch.fecha_em = novoFecha.toISOString();
       }
     }
     await api('/escala_especial?id=eq.' + id, 'PATCH', patch);
@@ -2788,8 +2910,18 @@ async function renderEscalasEspeciaisPublico(container, listaPreCarregada) {
     todasInscricoes = await api('/escala_especial_inscricoes?escala_especial_id=in.(' + ids.join(',') + ')&order=created_at.asc');
   } catch(err) {}
 
+  const agoraMs = Date.now();
+  // Missas especiais fechadas: só mostra se a missa ainda não aconteceu
   const abertas  = lista.filter(e => e._estaAberta);
-  const fechadas = lista.filter(e => !e._estaAberta);
+  const fechadas = lista.filter(e => {
+    if (e._estaAberta) return false;
+    if (!e.data) return true; // sem data: sempre mostra
+    const match = (e.horario || '').match(/(\d{1,2})h?:?(\d{0,2})/);
+    const hh = match ? parseInt(match[1]) : 23;
+    const mm = match && match[2] ? parseInt(match[2]) || 0 : 0;
+    const dtMissa = new Date(e.data + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00-03:00');
+    return agoraMs < dtMissa.getTime(); // só mostra se missa ainda não começou
+  });
 
   const renderBloco = (e, mostrarBotao) => {
     const todos = todasInscricoes.filter(r => r.escala_especial_id === e.id);
@@ -2846,7 +2978,7 @@ async function renderEscalasEspeciaisPublico(container, listaPreCarregada) {
   let html = '';
   if (abertas.length) {
     html += `<div style="margin-bottom:6px;">
-      <div style="background:var(--brown-dark);color:var(--gold-light);font-size:11px;font-weight:600;padding:5px 12px;border-radius:50px;display:inline-block;margin-bottom:12px;">✨ Outras missas</div>
+      <div style="background:var(--brown-dark);color:var(--gold-light);font-size:11px;font-weight:600;padding:5px 12px;border-radius:50px;display:inline-block;margin-bottom:12px;">Outras missas</div>
       ${abertas.map(e => renderBloco(e, true)).join('')}
     </div>`;
   }
@@ -3443,14 +3575,26 @@ document.getElementById('modal-edit-registro').addEventListener('click', functio
 
 // ===================== EXPORTAR PDF ESTATÍSTICAS =====================
 
+// Chamada do botão antigo (usa período da tela de estatísticas)
 async function exportarEstatisticasPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-  // Período label
   const periodos = ['Este mês', 'Mês anterior', 'Tudo'];
   const periodoIdx = statMesOffset === 0 ? 0 : statMesOffset === 1 ? 1 : 2;
-  const periodoLabel = periodos[periodoIdx];
+  const label = periodos[periodoIdx];
+  let inicio = null, fim = null;
+  if (statMesOffset >= 0) {
+    const hoje = new Date();
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - statMesOffset, 1);
+    const fimD = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    const pad = n => String(n).padStart(2,'0');
+    inicio = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-01';
+    fim = fimD.getFullYear() + '-' + pad(fimD.getMonth()+1) + '-' + pad(fimD.getDate());
+  }
+  await exportarEstatisticasPDFPeriodo(statMesOffset, label, inicio, fim);
+}
+
+async function exportarEstatisticasPDFPeriodo(offset, periodoLabel, dataInicio, dataFim) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
   // Colors
   const goldR = 201, goldG = 168, goldB = 76;
@@ -3490,12 +3634,8 @@ async function exportarEstatisticasPDF() {
   const horariosFixos = ['Sábado 17h','Domingo 7h','Domingo 9h','Domingo 17h'];
 
   let filtro = '';
-  if (statMesOffset >= 0) {
-    const d = new Date(hoje.getFullYear(), hoje.getMonth() - statMesOffset, 1);
-    const fim = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-    const pad = n => String(n).padStart(2,'0');
-    filtro = '&data_missa=gte.' + d.getFullYear() + '-' + pad(d.getMonth()+1) + '-01'
-           + '&data_missa=lte.' + fim.getFullYear() + '-' + pad(fim.getMonth()+1) + '-' + pad(fim.getDate());
+  if (dataInicio && dataFim) {
+    filtro = '&data_missa=gte.' + dataInicio + '&data_missa=lte.' + dataFim;
   }
 
   let hist = [];
@@ -3590,7 +3730,7 @@ async function exportarEstatisticasPDF() {
   }
 
   // ---- SECTION: Tempo sem servir (só no modo "Tudo") ----
-  if (statMesOffset === -1) {
+  if (offset === -1) {
     if (y > 220) { doc.addPage(); y = 15; }
 
     doc.setFillColor(253, 246, 227);
@@ -3657,12 +3797,439 @@ async function exportarEstatisticasPDF() {
     doc.text('Página ' + i + ' de ' + totalPages, 196, 292, { align: 'right' });
   }
 
-  const nomePeriodo = periodoLabel.toLowerCase().replace(/ /g,'-');
+  const nomePeriodo = periodoLabel.toLowerCase().replace(/ /g,'-').replace(/\/de\//g,'-');
   doc.save('estatisticas-coroinhas-' + nomePeriodo + '.pdf');
   toast('✓ PDF exportado!');
 }
 
+// ===================== MODAL E FUNÇÕES DE EXPORTAR PDF =====================
+
+async function mostrarSelecaoPeriodoPDF() {
+  // Esconde outros painéis
+  document.getElementById('pdf-selecao-missa').style.display = 'none';
+  document.getElementById('pdf-selecao-especial').style.display = 'none';
+  document.getElementById('pdf-selecao-periodo').style.display = 'block';
+
+  const sel = document.getElementById('pdf-periodo-select');
+  sel.innerHTML = '<option value="">Carregando meses...</option>';
+
+  try {
+    // Busca meses distintos do histórico
+    const hist = await api('/historico_funcoes?select=data_missa&order=data_missa.desc');
+    const mesesSet = {};
+    hist.forEach(h => {
+      if (h.data_missa) {
+        const ym = h.data_missa.slice(0, 7); // YYYY-MM
+        if (!mesesSet[ym]) {
+          const [y, m] = ym.split('-');
+          const nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+          mesesSet[ym] = nomes[parseInt(m) - 1] + ' ' + y;
+        }
+      }
+    });
+    const keys = Object.keys(mesesSet).sort().reverse();
+    let options = '<option value="tudo">Todos os meses</option>';
+    options += keys.map(k => `<option value="${k}">${mesesSet[k]}</option>`).join('');
+    sel.innerHTML = options;
+  } catch(e) {
+    sel.innerHTML = '<option value="tudo">Todos os meses</option>';
+  }
+}
+
+async function exportarEstatisticasPDFComPeriodo() {
+  const periodo = document.getElementById('pdf-periodo-select').value;
+  fecharModalPdfExport();
+
+  // Configura statMesOffset com base no período selecionado
+  // e chama exportarEstatisticasPDF com o período certo
+  if (periodo === 'tudo') {
+    await exportarEstatisticasPDFPeriodo(-1, 'Tudo', null, null);
+  } else {
+    const [y, m] = periodo.split('-');
+    const nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const label = nomes[parseInt(m) - 1] + ' de ' + y;
+    const inicio = periodo + '-01';
+    const fim = new Date(parseInt(y), parseInt(m), 0); // último dia do mês
+    const pad = n => String(n).padStart(2,'0');
+    const fimStr = y + '-' + m + '-' + pad(fim.getDate());
+    await exportarEstatisticasPDFPeriodo(0, label, inicio, fimStr);
+  }
+}
+
+function abrirModalPdfExport() {
+  document.getElementById('pdf-selecao-missa').style.display = 'none';
+  document.getElementById('pdf-selecao-especial').style.display = 'none';
+  document.getElementById('modal-pdf-export').style.display = 'flex';
+}
+
+function fecharModalPdfExport() {
+  document.getElementById('modal-pdf-export').style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const m = document.getElementById('modal-pdf-export');
+  if (m) m.addEventListener('click', function(e) { if (e.target === this) fecharModalPdfExport(); });
+});
+
+async function mostrarSelecaoMissaPDF() {
+  // Popula semanas disponíveis do banco
+  document.getElementById('pdf-selecao-especial').style.display = 'none';
+  const sel = document.getElementById('pdf-semana-select');
+  sel.innerHTML = '<option value="">Carregando...</option>';
+  document.getElementById('pdf-selecao-missa').style.display = 'block';
+
+  try {
+    // Busca semanas distintas do histórico
+    const hist = await api('/historico_funcoes?select=data_missa,horario&order=data_missa.desc');
+    const MISSAS_FIXAS = ['Sábado 17h','Domingo 7h','Domingo 9h','Domingo 17h'];
+    // Agrupa por semana (semana_key)
+    const semanasMap = {};
+    hist.filter(h => MISSAS_FIXAS.includes(h.horario)).forEach(h => {
+      const key = getSemanaKey(new Date(h.data_missa + 'T12:00:00'));
+      if (!semanasMap[key]) {
+        const sexta = new Date(key + 'T12:00:00');
+        const sab = new Date(sexta); sab.setDate(sexta.getDate() + 1);
+        const dom = new Date(sexta); dom.setDate(sexta.getDate() + 2);
+        const fmt = d => d.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'});
+        semanasMap[key] = fmt(sab) + ' – ' + fmt(dom);
+      }
+    });
+    // Também inclui semanas da tabela de inscrições
+    try {
+      const insc = await api('/escala_inscricoes?select=semana_key&order=semana_key.desc');
+      insc.forEach(r => {
+        if (!semanasMap[r.semana_key]) {
+          const sexta = new Date(r.semana_key + 'T12:00:00');
+          const sab = new Date(sexta); sab.setDate(sexta.getDate() + 1);
+          const dom = new Date(sexta); dom.setDate(sexta.getDate() + 2);
+          const fmt = d => d.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'});
+          semanasMap[r.semana_key] = fmt(sab) + ' – ' + fmt(dom);
+        }
+      });
+    } catch(e) {}
+
+    const keys = Object.keys(semanasMap).sort().reverse();
+    if (!keys.length) { sel.innerHTML = '<option>Nenhuma semana encontrada</option>'; return; }
+    sel.innerHTML = keys.map(k => `<option value="${k}">${semanasMap[k]}</option>`).join('');
+    atualizarOpcoesMissaPDF();
+  } catch(e) {
+    sel.innerHTML = '<option>Erro ao carregar</option>';
+  }
+}
+
+function atualizarOpcoesMissaPDF() {
+  const MISSAS_FIXAS = ['Sábado 17h','Domingo 7h','Domingo 9h','Domingo 17h'];
+  const sel = document.getElementById('pdf-missa-select');
+  sel.innerHTML = MISSAS_FIXAS.map(m => `<option value="${m}">${m}</option>`).join('');
+}
+
+async function mostrarSelecaoMissaEspecialPDF() {
+  document.getElementById('pdf-selecao-missa').style.display = 'none';
+  document.getElementById('pdf-selecao-especial').style.display = 'block';
+  const sel = document.getElementById('pdf-especial-select');
+  sel.innerHTML = '<option>Carregando...</option>';
+  try {
+    const lista = await api('/escala_especial?order=data.desc,created_at.desc');
+    if (!lista || !lista.length) { sel.innerHTML = '<option>Nenhuma missa especial encontrada</option>'; return; }
+    sel.innerHTML = lista.map(e => {
+      const dataFmt = e.data ? new Date(e.data + 'T12:00:00').toLocaleDateString('pt-BR') : '';
+      return `<option value="${e.id}">${e.nome}${dataFmt ? ' — ' + dataFmt : ''}${e.horario ? ' · ' + e.horario : ''}</option>`;
+    }).join('');
+  } catch(e) {
+    sel.innerHTML = '<option>Erro ao carregar</option>';
+  }
+}
+
+// ---- PDF: missa fixa (semanal) ----
+async function exportarMissaPDF() {
+  const semanaKey = document.getElementById('pdf-semana-select').value;
+  const horario = document.getElementById('pdf-missa-select').value;
+  if (!semanaKey || !horario) { toast('Selecione a semana e a missa.', true); return; }
+  fecharModalPdfExport();
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const goldR = 201, goldG = 168, goldB = 76;
+  const darkR = 44, darkG = 26, darkB = 14;
+
+  const datas = datasSemanaMissa(semanaKey);
+  const dataMissa = datas[horario] || '';
+
+  // Header
+  doc.setFillColor(darkR, darkG, darkB);
+  doc.rect(0, 0, 210, 36, 'F');
+  doc.setDrawColor(goldR, goldG, goldB);
+  doc.setLineWidth(0.8);
+  doc.line(15, 36, 195, 36);
+  doc.setTextColor(goldR, goldG, goldB);
+  doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+  doc.text('✝', 105, 10, { align: 'center' });
+  doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+  doc.text('Coroinhas da Paróquia Santa Edwiges', 105, 18, { align: 'center' });
+  doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+  doc.text(horario + (dataMissa ? ' — ' + dataMissa : ''), 105, 26, { align: 'center' });
+  doc.setTextColor(160, 113, 79); doc.setFontSize(8);
+  const hoje = new Date();
+  doc.text('Gerado em ' + hoje.toLocaleDateString('pt-BR') + ' às ' + hoje.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}), 105, 33, { align: 'center' });
+
+  let y = 44;
+
+  // Busca inscrições da escala
+  try {
+    const inscritos = await api('/escala_inscricoes?semana_key=eq.' + semanaKey + '&horario=eq.' + encodeURIComponent(horario) + '&order=created_at.asc');
+
+    // Busca funções registradas no histórico para esta missa
+    const [dia, mes, ano] = dataMissa.split('/');
+    const dataISO = dataMissa ? `${ano}-${mes}-${dia}` : null;
+    let funcoes = [];
+    if (dataISO) {
+      try {
+        // Busca por data e filtra por horário no JS (evita problema de encoding no filtro da URL)
+        const todasFuncoesDia = await api('/historico_funcoes?select=coroinha_id,funcao,horario,data_missa&data_missa=eq.' + dataISO);
+        funcoes = todasFuncoesDia.filter(f => f.horario === horario);
+        console.log('[PDF] dataISO:', dataISO, 'horario:', horario, 'funcoes encontradas:', funcoes.length, todasFuncoesDia);
+      } catch(e) { console.error('[PDF] erro ao buscar funcoes:', e); }
+    }
+
+    // Monta mapa coroinha_id → [funções]
+    const funcoesMap = {};
+    funcoes.forEach(f => {
+      if (!funcoesMap[f.coroinha_id]) funcoesMap[f.coroinha_id] = [];
+      funcoesMap[f.coroinha_id].push(f.funcao);
+    });
+
+    // Seção: Coroinhas inscritos + funções
+    doc.setFillColor(253, 246, 227);
+    doc.rect(14, y, 182, 7, 'F');
+    doc.setTextColor(darkR, darkG, darkB);
+    doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+    doc.text('COROINHAS ESCALADOS', 15, y + 5);
+    y += 11;
+
+    const normal = inscritos.filter(r => !r.is_equipe);
+    const equipe = inscritos.filter(r => r.is_equipe);
+    const todos = [...normal, ...equipe];
+
+    if (todos.length) {
+      const rows = todos.map((r, i) => {
+        const co = coroinhas.find(x => x.id === r.coroinha_id);
+        const nome = co ? co.nome : 'Desconhecido';
+        const fns = funcoesMap[r.coroinha_id] ? funcoesMap[r.coroinha_id].join(', ') : '—';
+        const tipo = r.is_equipe ? 'Equipe' : 'Coroinha';
+        return [String(i+1), nome, fns, tipo];
+      });
+
+      doc.autoTable({
+        startY: y,
+        head: [['#', 'Coroinha', 'Funções', 'Tipo']],
+        body: rows,
+        theme: 'grid',
+        styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.5, textColor: [darkR, darkG, darkB] },
+        headStyles: { fillColor: [253, 246, 227], textColor: [darkR, darkG, darkB], fontStyle: 'bold', lineColor: [232, 217, 192], lineWidth: 0.3 },
+        alternateRowStyles: { fillColor: [250, 246, 239] },
+        columnStyles: { 0: { cellWidth: 10, halign: 'center' }, 3: { cellWidth: 22, halign: 'center' } },
+        margin: { left: 14, right: 14 },
+      });
+      y = doc.lastAutoTable.finalY + 6;
+    } else {
+      doc.setTextColor(139, 107, 74); doc.setFontSize(9);
+      doc.text('Nenhum coroinha inscrito nesta missa.', 15, y);
+      y += 10;
+    }
+
+    // Seção: Funções sem vínculo de inscrição (se houver)
+    const funcoesSemInscricao = funcoes.filter(f => !inscritos.some(r => r.coroinha_id === f.coroinha_id));
+    if (funcoesSemInscricao.length) {
+      if (y > 240) { doc.addPage(); y = 15; }
+      doc.setFillColor(253, 246, 227);
+      doc.rect(14, y, 182, 7, 'F');
+      doc.setTextColor(darkR, darkG, darkB);
+      doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      doc.text('FUNÇÕES REGISTRADAS (SEM INSCRIÇÃO NA ESCALA)', 15, y + 5);
+      y += 11;
+      const rows2 = funcoesSemInscricao.map((f, i) => {
+        const co = coroinhas.find(x => x.id === f.coroinha_id);
+        return [String(i+1), co ? co.nome : 'Desconhecido', f.funcao || '—'];
+      });
+      doc.autoTable({
+        startY: y,
+        head: [['#', 'Coroinha', 'Função']],
+        body: rows2,
+        theme: 'grid',
+        styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.5, textColor: [darkR, darkG, darkB] },
+        headStyles: { fillColor: [253, 246, 227], textColor: [darkR, darkG, darkB], fontStyle: 'bold', lineColor: [232, 217, 192], lineWidth: 0.3 },
+        alternateRowStyles: { fillColor: [250, 246, 239] },
+        columnStyles: { 0: { cellWidth: 10, halign: 'center' } },
+        margin: { left: 14, right: 14 },
+      });
+      y = doc.lastAutoTable.finalY + 6;
+    }
+  } catch(e) {
+    toast('Erro ao gerar PDF da missa.', true);
+    console.error(e); return;
+  }
+
+  // Footer
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(goldR, goldG, goldB); doc.setLineWidth(0.4);
+    doc.line(14, 287, 196, 287);
+    doc.setTextColor(160, 113, 79); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+    doc.text('Coroinhas da Paróquia Santa Edwiges', 14, 292);
+    doc.text('Página ' + i + ' de ' + totalPages, 196, 292, { align: 'right' });
+  }
+
+  doc.save('escala-' + horario.replace(/ /g,'-').toLowerCase() + '-' + (dataMissa.replace(/\//g,'-') || semanaKey) + '.pdf');
+  toast('✓ PDF exportado!');
+}
+
+// ---- PDF: missa especial ----
+async function exportarMissaEspecialPDF() {
+  const escalaId = document.getElementById('pdf-especial-select').value;
+  if (!escalaId) { toast('Selecione uma missa especial.', true); return; }
+  fecharModalPdfExport();
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const goldR = 201, goldG = 168, goldB = 76;
+  const darkR = 44, darkG = 26, darkB = 14;
+
+  try {
+    const lista = await api('/escala_especial?id=eq.' + escalaId);
+    const escala = lista && lista[0];
+    if (!escala) { toast('Missa especial não encontrada.', true); return; }
+
+    const dataFmt = escala.data ? new Date(escala.data + 'T12:00:00').toLocaleDateString('pt-BR') : '';
+
+    // Header
+    doc.setFillColor(darkR, darkG, darkB);
+    doc.rect(0, 0, 210, 36, 'F');
+    doc.setDrawColor(goldR, goldG, goldB); doc.setLineWidth(0.8);
+    doc.line(15, 36, 195, 36);
+    doc.setTextColor(goldR, goldG, goldB);
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+    doc.text('✝', 105, 10, { align: 'center' });
+    doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+    doc.text('Coroinhas da Paróquia Santa Edwiges', 105, 18, { align: 'center' });
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+    doc.text(escala.nome + (dataFmt ? ' — ' + dataFmt : '') + (escala.horario ? ' · ' + escala.horario : ''), 105, 26, { align: 'center' });
+    doc.setTextColor(160, 113, 79); doc.setFontSize(8);
+    const hoje = new Date();
+    doc.text('Gerado em ' + hoje.toLocaleDateString('pt-BR') + ' às ' + hoje.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}), 105, 33, { align: 'center' });
+
+    let y = 44;
+
+    // Inscritos
+    const inscritos = await api('/escala_especial_inscricoes?escala_especial_id=eq.' + escalaId + '&order=created_at.asc');
+
+    // Funções do histórico — busca por data e filtra por nome da missa no JS
+    let funcoes = [];
+    if (escala.data) {
+      try {
+        const todasFuncoesDia = await api('/historico_funcoes?select=coroinha_id,funcao,horario,data_missa&data_missa=eq.' + escala.data);
+        // O horário salvo no histórico de especiais é o nome da missa (escala.nome)
+        funcoes = todasFuncoesDia.filter(f => f.horario === escala.nome || f.horario === 'Missa Especial');
+        console.log('[PDF Especial] data:', escala.data, 'nome:', escala.nome, 'funcoes:', funcoes.length, todasFuncoesDia);
+      } catch(e) { console.error('[PDF Especial] erro funcoes:', e); }
+    }
+    const funcoesMap = {};
+    funcoes.forEach(f => {
+      if (!funcoesMap[f.coroinha_id]) funcoesMap[f.coroinha_id] = [];
+      funcoesMap[f.coroinha_id].push(f.funcao);
+    });
+
+    // Seção inscritos
+    doc.setFillColor(253, 246, 227);
+    doc.rect(14, y, 182, 7, 'F');
+    doc.setTextColor(darkR, darkG, darkB);
+    doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+    doc.text('COROINHAS ESCALADOS', 15, y + 5);
+    y += 11;
+
+    const normal = inscritos.filter(r => !r.is_equipe);
+    const equipe = inscritos.filter(r => r.is_equipe);
+    const todos = [...normal, ...equipe];
+
+    if (todos.length) {
+      const rows = todos.map((r, i) => {
+        const co = coroinhas.find(x => x.id === r.coroinha_id);
+        const nome = co ? co.nome : 'Desconhecido';
+        const fns = funcoesMap[r.coroinha_id] ? funcoesMap[r.coroinha_id].join(', ') : '—';
+        const tipo = r.is_equipe ? 'Equipe' : 'Coroinha';
+        return [String(i+1), nome, fns, tipo];
+      });
+      doc.autoTable({
+        startY: y,
+        head: [['#', 'Coroinha', 'Funções', 'Tipo']],
+        body: rows,
+        theme: 'grid',
+        styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.5, textColor: [darkR, darkG, darkB] },
+        headStyles: { fillColor: [253, 246, 227], textColor: [darkR, darkG, darkB], fontStyle: 'bold', lineColor: [232, 217, 192], lineWidth: 0.3 },
+        alternateRowStyles: { fillColor: [250, 246, 239] },
+        columnStyles: { 0: { cellWidth: 10, halign: 'center' }, 3: { cellWidth: 22, halign: 'center' } },
+        margin: { left: 14, right: 14 },
+      });
+      y = doc.lastAutoTable.finalY + 6;
+    } else {
+      doc.setTextColor(139, 107, 74); doc.setFontSize(9);
+      doc.text('Nenhum coroinha inscrito nesta missa.', 15, y);
+      y += 10;
+    }
+  } catch(e) {
+    toast('Erro ao gerar PDF da missa especial.', true);
+    console.error(e); return;
+  }
+
+  // Footer
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(goldR, goldG, goldB); doc.setLineWidth(0.4);
+    doc.line(14, 287, 196, 287);
+    doc.setTextColor(160, 113, 79); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+    doc.text('Coroinhas da Paróquia Santa Edwiges', 14, 292);
+    doc.text('Página ' + i + ' de ' + totalPages, 196, 292, { align: 'right' });
+  }
+
+  const nomeArq = (document.getElementById('pdf-especial-select').options[document.getElementById('pdf-especial-select').selectedIndex]?.text || 'missa-especial').replace(/[^a-zA-Z0-9]/g,'-').toLowerCase();
+  doc.save('escala-' + nomeArq + '.pdf');
+  toast('✓ PDF exportado!');
+}
+
 // ===================== FIM EXPORTAR PDF =====================
+
+// ===================== TEMA CLARO/ESCURO =====================
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    html.removeAttribute('data-theme');
+    document.getElementById('theme-icon').textContent = '🌙';
+    document.getElementById('theme-label').textContent = 'Escuro';
+    localStorage.setItem('tema', 'light');
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    document.getElementById('theme-icon').textContent = '☀️';
+    document.getElementById('theme-label').textContent = 'Claro';
+    localStorage.setItem('tema', 'dark');
+  }
+}
+
+// Aplica tema salvo ao carregar
+(function() {
+  const temaSalvo = localStorage.getItem('tema');
+  if (temaSalvo === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    // Atualiza botão depois que o DOM carregar
+    document.addEventListener('DOMContentLoaded', function() {
+      const icon = document.getElementById('theme-icon');
+      const label = document.getElementById('theme-label');
+      if (icon) icon.textContent = '☀️';
+      if (label) label.textContent = 'Claro';
+    });
+  }
+})();
 
 // ===================== MÁSCARA DE TELEFONE =====================
 function mascaraTelefone(input) {
@@ -3680,5 +4247,74 @@ function mascaraTelefone(input) {
 }
 
 </script>
+<!-- MODAL EXPORTAR PDF -->
+<div class="modal-overlay" id="modal-pdf-export" style="display:none;">
+  <div class="modal-box" style="max-width:380px;">
+    <div class="modal-title">Exportar PDF</div>
+    <p style="font-size:13px;color:var(--text-muted);margin:6px 0 16px;">Escolha o que deseja exportar:</p>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn btn-primary" style="margin-top:0;" onclick="mostrarSelecaoPeriodoPDF()">
+        📊 Estatísticas gerais
+        <div style="font-size:11px;font-weight:400;margin-top:2px;opacity:0.8;">Ranking, participações por horário, inativos</div>
+      </button>
+      <button class="btn" style="margin-top:0;background:var(--gold-pale);border:1.5px solid var(--gold);color:var(--brown-mid);font-weight:600;" onclick="mostrarSelecaoMissaPDF()">
+        📋 Por missa específica
+        <div style="font-size:11px;font-weight:400;margin-top:2px;opacity:0.8;">Coroinhas e funções de uma missa</div>
+      </button>
+      <button class="btn" style="margin-top:0;background:var(--gold-pale);border:1.5px solid var(--gold);color:var(--brown-mid);font-weight:600;" onclick="mostrarSelecaoMissaEspecialPDF()">
+        📑 Outras missas
+        <div style="font-size:11px;font-weight:400;margin-top:2px;opacity:0.8;">Coroinhas e funções de outras missas</div>
+      </button>
+    </div>
+
+    <!-- Seleção de período (estatísticas gerais) -->
+    <div id="pdf-selecao-periodo" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Período</label>
+      <div class="select-wrapper-native" style="position:relative;margin-bottom:14px;">
+        <select id="pdf-periodo-select" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--cream);outline:none;appearance:none;"></select>
+        <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+      </div>
+      <div class="modal-btns">
+        <button class="btn-outline btn-sm" onclick="fecharModalPdfExport()">Cancelar</button>
+        <button class="btn-primary btn-sm" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;" onclick="exportarEstatisticasPDFComPeriodo()">⬇ Exportar</button>
+      </div>
+    </div>
+
+    <!-- Seleção de missa fixa -->
+    <div id="pdf-selecao-missa" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Semana</label>
+      <div class="select-wrapper-native" style="position:relative;margin-bottom:10px;">
+        <select id="pdf-semana-select" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--cream);outline:none;appearance:none;" onchange="atualizarOpcoesMissaPDF()"></select>
+        <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+      </div>
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Missa</label>
+      <div class="select-wrapper-native" style="position:relative;margin-bottom:14px;">
+        <select id="pdf-missa-select" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--cream);outline:none;appearance:none;"></select>
+        <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+      </div>
+      <div class="modal-btns">
+        <button class="btn-outline btn-sm" onclick="fecharModalPdfExport()">Cancelar</button>
+        <button class="btn-primary btn-sm" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;" onclick="exportarMissaPDF()">⬇ Exportar</button>
+      </div>
+    </div>
+
+    <!-- Seleção de missa especial -->
+    <div id="pdf-selecao-especial" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Missa especial</label>
+      <div class="select-wrapper-native" style="position:relative;margin-bottom:14px;">
+        <select id="pdf-especial-select" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--cream);outline:none;appearance:none;"></select>
+        <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+      </div>
+      <div class="modal-btns">
+        <button class="btn-outline btn-sm" onclick="fecharModalPdfExport()">Cancelar</button>
+        <button class="btn-primary btn-sm" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;" onclick="exportarMissaEspecialPDF()">⬇ Exportar</button>
+      </div>
+    </div>
+
+    <button class="btn-outline btn-sm" style="margin-top:14px;width:100%;" onclick="fecharModalPdfExport()">Fechar</button>
+  </div>
+</div>
+
 </body>
 </html>
