@@ -95,6 +95,19 @@
   .funcao-chip input[type=checkbox] { width: 13px; height: 13px; accent-color: var(--gold); cursor: pointer; padding: 0; margin: 0; flex-shrink: 0; }
   .funcao-chip span { text-transform: none; letter-spacing: 0; font-size: 13px; }
 
+  /* Registro individual de funções (uma missa, cada coroinha com sua própria função) */
+  .lista-individual { border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--cream); max-height: 440px; overflow-y: auto; padding: 6px; }
+  .individual-item { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin: 6px; transition: border-color 0.15s; }
+  .individual-item.tem-funcao { border-color: var(--gold); }
+  .individual-nome { font-weight: 600; font-size: 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; text-transform: none; letter-spacing: normal; }
+  .individual-check { width: 16px; height: 16px; accent-color: var(--gold); cursor: pointer; flex-shrink: 0; }
+  .funcoes-chips-mini { display: flex; flex-wrap: wrap; gap: 6px; }
+  .funcao-chip-mini { display: inline-flex; align-items: center; gap: 4px; padding: 6px 11px; border-radius: 50px; border: 1.5px solid var(--border); background: var(--cream); cursor: pointer; font-size: 12px; font-weight: 500; color: var(--text); user-select: none; transition: all 0.15s; white-space: nowrap; text-transform: none !important; letter-spacing: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; }
+  .funcao-chip-mini.selecionada { background: var(--gold-pale); border-color: var(--gold); color: var(--brown-mid); }
+  .funcao-chip-mini input[type=checkbox] { width: 12px; height: 12px; accent-color: var(--gold); cursor: pointer; padding: 0; margin: 0; flex-shrink: 0; }
+  .funcao-chip-mini span, .chip-outro-mini span { text-transform: none; letter-spacing: 0; font-size: 12px; }
+  .campo-outro-individual input { padding: 8px 10px; font-size: 13px; margin-top: 6px; }
+
   .stat-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
   .stat-label { font-size:13px; font-weight:500; color:var(--text); min-width:120px; flex-shrink:0; }
   .stat-bar-wrap { flex:1; background:var(--border); border-radius:50px; height:8px; overflow:hidden; }
@@ -343,43 +356,75 @@
     <div id="admin-sub-funcao" class="admin-subpage" style="display:none;">
       <div class="section-title">Registrar Função</div>
       <div class="card">
-        <label>Selecione a missa da escala</label>
-        <div class="select-wrapper" style="position:relative;">
-          <select id="func-escala-select" onchange="carregarCoroinhasEscala()" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
-            <option value="">Selecione a missa...</option>
-          </select>
-          <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+        <div style="display:flex;gap:6px;margin-bottom:14px;">
+          <button class="btn-ordem active" id="func-modo-recente-btn" onclick="setFuncModo('recente')">Escala Recente</button>
+          <button class="btn-ordem" id="func-modo-antiga-btn" onclick="setFuncModo('antiga')">Escalas Anteriores</button>
         </div>
-        <label>Coroinhas da escala <span id="cnt-coroinhas" class="contador" style="display:none"></span></label>
+
+        <div id="func-painel-recente">
+          <label>Selecione a missa da escala</label>
+          <div class="select-wrapper" style="position:relative;">
+            <select id="func-escala-select" onchange="carregarCoroinhasEscala()" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
+              <option value="">Selecione a missa...</option>
+            </select>
+            <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+          </div>
+        </div>
+
+        <div id="func-painel-antiga" style="display:none;">
+          <label>Tipo de missa</label>
+          <div class="select-wrapper" style="position:relative;">
+            <select id="func-antiga-tipo" onchange="toggleFuncAntigaTipo()" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
+              <option value="semanal">Missa Semanal</option>
+              <option value="outra">Outra Missa</option>
+            </select>
+            <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+          </div>
+
+          <div id="func-antiga-semanal-wrap">
+            <label>Horário</label>
+            <div class="select-wrapper" style="position:relative;">
+              <select id="func-antiga-horario-fixo" onchange="popularDatasMissaAntiga()" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
+                <option value="Sábado 17h">Sábado 17h</option>
+                <option value="Domingo 7h">Domingo 7h</option>
+                <option value="Domingo 9h">Domingo 9h</option>
+                <option value="Domingo 17h">Domingo 17h</option>
+              </select>
+              <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+            </div>
+
+            <label>Data da missa <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-muted);">(inscritos ou já com função)</span></label>
+            <div class="select-wrapper" style="position:relative;">
+              <select id="func-antiga-data-select" onchange="selecionarDataMissaAntiga()" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
+                <option value="">Selecione uma data...</option>
+              </select>
+              <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+            </div>
+          </div>
+
+          <div id="func-antiga-outra-wrap" style="display:none;">
+            <label>Nome da missa</label>
+            <input type="text" id="func-antiga-nome" placeholder="Ex: Batizado, Casamento..." oninput="carregarCoroinhasAntiga()">
+          </div>
+
+          <div id="func-antiga-data-manual-wrap" style="display:none;">
+            <label>Data da missa</label>
+            <input type="date" id="func-antiga-data" onchange="document.getElementById('func-antiga-data-select').value=''; carregarCoroinhasAntiga();">
+          </div>
+        </div>
+
+        <p style="font-size:11px;color:var(--text-muted);margin:16px 0 0;">Marque a função de cada coroinha e salve tudo de uma vez.</p>
+
+        <label>Coroinhas <span id="cnt-coroinhas" class="contador" style="display:none"></span></label>
         <div id="escala-funcao-status" style="font-size:13px;color:var(--text-muted);padding:10px 0;display:none;"></div>
         <div class="check-lista" id="lista-check-coroinhas" style="display:none;"></div>
-        <label>Funções na missa <span id="cnt-funcoes" class="contador" style="display:none"></span></label>
-        <div class="funcoes-chips">
-          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Ambão"><span>Ambão</span></label>
-          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Carrilhão"><span>Carrilhão</span></label>
-          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Cerimonário"><span>Cerimonário</span></label>
-          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Cruz"><span>Cruz</span></label>
-          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Ofertório"><span>Ofertório</span></label>
-          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Pasta"><span>Pasta</span></label>
-          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Patena"><span>Patena</span></label>
-          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Purificação"><span>Purificação</span></label>
-          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Sino de trás"><span>Sino de trás</span></label>
-          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Turíbulo"><span>Turiferário</span></label>
-          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Vela"><span>Vela</span></label>
-          <label class="funcao-chip" onclick="atualizarChip(this)"><input type="checkbox" value="Sem-função"><span>Sem-função</span></label>
-          <label class="funcao-chip" id="chip-outro" onclick="toggleChipOutro(this)" style="border-style:dashed;">
-            <input type="checkbox" value="__outro__" id="cb-outro"><span>+ Outro</span>
-          </label>
-        </div>
-        <div id="campo-outro-funcao" style="display:none;margin-top:8px;">
-          <input type="text" id="func-outro-texto" placeholder="Descreva a função..." style="margin-bottom:0;" oninput="atualizarChipOutroLabel()">
-        </div>
+
         <input type="hidden" id="func-horario">
         <div id="campo-missa-especial" style="display:none;"></div>
         <input type="hidden" id="func-data">
         <label>Observação (opcional)</label>
         <textarea id="func-obs" placeholder=""></textarea>
-        <button class="btn btn-primary" onclick="registrarFuncao()">Registrar</button>
+        <button class="btn btn-primary" id="btn-salvar-individual" onclick="salvarFuncoesIndividual()">Salvar tudo</button>
       </div>
     </div>
 
@@ -593,16 +638,6 @@ async function api(path, method='GET', body=null) {
   return r.json();
 }
 
-// Função de diagnóstico — chame testarDelete() no console do navegador para ver o erro real
-async function testarDelete() {
-  const url = SUPA_URL + '/historico_funcoes?id=eq.00000000-0000-0000-0000-000000000000';
-  const r = await fetch(url, { method: 'DELETE', headers: HEADERS_DELETE });
-  console.log('Status DELETE:', r.status, r.statusText);
-  const body = await r.text();
-  console.log('Resposta:', body);
-  alert('Status: ' + r.status + '\n' + body);
-}
-
 function toast(msg, err=false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -711,10 +746,6 @@ function renderCheckCoroinhas(filtro='') {
   `).join('');
 }
 
-function filtrarCheckCoroinhas() {
-  renderCheckCoroinhas(document.getElementById('busca-funcao').value);
-}
-
 function atualizarCheckCoroinha(el) {
   const cb = el.querySelector('input');
   el.classList.toggle('selecionado', cb.checked);
@@ -722,44 +753,6 @@ function atualizarCheckCoroinha(el) {
   const cnt = document.getElementById('cnt-coroinhas');
   if (total > 0) { cnt.style.display = 'inline'; cnt.textContent = total + ' selecionado' + (total > 1 ? 's' : ''); }
   else cnt.style.display = 'none';
-}
-
-function toggleChipOutro(el) {
-  setTimeout(() => {
-    const cb = document.getElementById('cb-outro');
-    const campo = document.getElementById('campo-outro-funcao');
-    const ativo = cb.checked;
-    el.classList.toggle('selecionada', ativo);
-    campo.style.display = ativo ? 'block' : 'none';
-    if (ativo) {
-      document.getElementById('func-outro-texto').focus();
-    } else {
-      document.getElementById('func-outro-texto').value = '';
-      el.querySelector('span').textContent = '+ Outro';
-    }
-    // Atualiza contador geral
-    const total = document.querySelectorAll('.funcao-chip input:checked').length;
-    const cnt = document.getElementById('cnt-funcoes');
-    if (total > 0) { cnt.style.display = 'inline'; cnt.textContent = total + ' selecionada' + (total > 1 ? 's' : ''); }
-    else cnt.style.display = 'none';
-  }, 0);
-}
-
-function atualizarChipOutroLabel() {
-  const texto = document.getElementById('func-outro-texto').value.trim();
-  const span = document.querySelector('#chip-outro span');
-  span.textContent = texto ? texto : '+ Outro';
-}
-
-function atualizarChip(el) {
-  setTimeout(() => {
-    const cb = el.querySelector('input');
-    el.classList.toggle('selecionada', cb.checked);
-    const total = document.querySelectorAll('.funcao-chip input:checked').length;
-    const cnt = document.getElementById('cnt-funcoes');
-    if (total > 0) { cnt.style.display = 'inline'; cnt.textContent = total + ' selecionada' + (total > 1 ? 's' : ''); }
-    else cnt.style.display = 'none';
-  }, 0);
 }
 
 let detalheHistAll = [];
@@ -1005,68 +998,184 @@ document.getElementById('cad-cargo').addEventListener('change', function() {
   document.getElementById('cad-cargo-custom-wrap').style.display = this.value === '__custom__' ? 'block' : 'none';
 });
 
-async function registrarFuncao() {
-  const coroinhasSel = [...document.querySelectorAll('#lista-check-coroinhas input:checked')].map(cb => cb.value);
-  const funcoesSel = [...document.querySelectorAll('.funcao-chip input:checked')]
-    .map(cb => {
-      if (cb.value === '__outro__') {
-        const texto = document.getElementById('func-outro-texto').value.trim();
-        return texto || null;
-      }
-      return cb.value;
-    })
-    .filter(Boolean);
-  const data_missa = document.getElementById('func-data').value;
-  const observacao = document.getElementById('func-obs').value.trim();
+// ===================== MODO DE REGISTRO: INDIVIDUAL x EM LOTE =====================
+
+const FUNCOES_OPCOES = [
+  { value: 'Ambão', label: 'Ambão' },
+  { value: 'Carrilhão', label: 'Carrilhão' },
+  { value: 'Cerimonário', label: 'Cerimonário' },
+  { value: 'Cruz', label: 'Cruz' },
+  { value: 'Ofertório', label: 'Ofertório' },
+  { value: 'Pasta', label: 'Pasta' },
+  { value: 'Patena', label: 'Patena' },
+  { value: 'Purificação', label: 'Purificação' },
+  { value: 'Sino de trás', label: 'Sino de trás' },
+  { value: 'Turíbulo', label: 'Turiferário' },
+  { value: 'Vela', label: 'Vela' },
+  { value: 'Sem-função', label: 'Sem-função' }
+];
+
+let funcListaCache = { lista: [], funcoesPorCoroinha: {} };
+
+function renderListaCoroinhasFuncao() {
+  const listaEl = document.getElementById('lista-check-coroinhas');
+  const cntEl = document.getElementById('cnt-coroinhas');
+  const { lista, funcoesPorCoroinha } = funcListaCache;
+
+  if (!lista || !lista.length) {
+    listaEl.innerHTML = '';
+    listaEl.style.display = 'none';
+    return;
+  }
+
+  const ordenada = lista.slice().sort((a, b) => a.nome.localeCompare(b.nome));
+
+  listaEl.className = 'lista-individual';
+  listaEl.innerHTML = ordenada.map(c => renderCoroinhaIndividualRow(c, funcoesPorCoroinha[c.id] || [])).join('');
+
+  cntEl.style.display = 'none';
+  listaEl.style.display = 'block';
+}
+
+function renderCoroinhaIndividualRow(c, funcoesAtuais) {
+  const valoresConhecidos = FUNCOES_OPCOES.map(o => o.value);
+  const outroAtual = funcoesAtuais.find(f => !valoresConhecidos.includes(f)) || '';
+  const temFuncao = funcoesAtuais.length > 0;
+
+  const chips = FUNCOES_OPCOES.map(o => {
+    const checked = funcoesAtuais.includes(o.value);
+    return `<label class="funcao-chip-mini${checked ? ' selecionada' : ''}" onclick="atualizarChipIndividual(this)">
+      <input type="checkbox" value="${o.value}" ${checked ? 'checked' : ''}><span>${o.label}</span>
+    </label>`;
+  }).join('');
+
+  return `
+  <div class="individual-item${temFuncao ? ' tem-funcao' : ''}" data-cid="${c.id}">
+    <div class="individual-nome">${c.nome}</div>
+    <div class="funcoes-chips-mini">
+      ${chips}
+      <label class="funcao-chip-mini chip-outro-mini${outroAtual ? ' selecionada' : ''}" onclick="toggleChipOutroIndividual(this)">
+        <input type="checkbox" value="__outro__" class="cb-outro-mini" ${outroAtual ? 'checked' : ''}><span class="outro-label-mini">${outroAtual ? outroAtual : '+ Outro'}</span>
+      </label>
+    </div>
+    <div class="campo-outro-individual" style="display:${outroAtual ? 'block' : 'none'};">
+      <input type="text" class="outro-texto-individual" placeholder="Descreva a função..." value="${outroAtual.replace(/"/g, '&quot;')}" oninput="atualizarOutroLabelIndividual(this)">
+    </div>
+  </div>`;
+}
+
+function atualizarChipIndividual(el) {
+  setTimeout(() => {
+    const cb = el.querySelector('input');
+    el.classList.toggle('selecionada', cb.checked);
+    const item = el.closest('.individual-item');
+    const algumaMarcada = [...item.querySelectorAll('.funcao-chip-mini input:checked')].length > 0;
+    item.classList.toggle('tem-funcao', algumaMarcada);
+  }, 0);
+}
+
+function toggleChipOutroIndividual(el) {
+  setTimeout(() => {
+    const cb = el.querySelector('.cb-outro-mini');
+    const item = el.closest('.individual-item');
+    const campo = item.querySelector('.campo-outro-individual');
+    const ativo = cb.checked;
+    el.classList.toggle('selecionada', ativo);
+    campo.style.display = ativo ? 'block' : 'none';
+    if (ativo) {
+      campo.querySelector('input').focus();
+    } else {
+      campo.querySelector('input').value = '';
+      el.querySelector('.outro-label-mini').textContent = '+ Outro';
+    }
+    const algumaMarcada = [...item.querySelectorAll('.funcao-chip-mini input:checked')].length > 0;
+    item.classList.toggle('tem-funcao', algumaMarcada);
+  }, 0);
+}
+
+function atualizarOutroLabelIndividual(input) {
+  const texto = input.value.trim();
+  const item = input.closest('.individual-item');
+  item.querySelector('.outro-label-mini').textContent = texto || '+ Outro';
+}
+
+function resolverHorarioFuncao() {
   let horario = document.getElementById('func-horario').value;
-  // Se for missa especial, usa o nome real registrado no campo de texto
   if (horario === 'Missa Especial') {
     const nomeEsp = document.getElementById('func-missa-especial-nome');
     if (nomeEsp && nomeEsp.value.trim()) horario = nomeEsp.value.trim();
   }
-
-  if (!coroinhasSel.length) { toast('Selecione ao menos um coroinha', true); return; }
-  if (!funcoesSel.length) { toast('Selecione ao menos uma função', true); return; }
-  if (!horario) { toast('Selecione a missa da escala primeiro', true); return; }
-
-  const funcao = funcoesSel.join(', ');
-  try {
-    // Para cada coroinha, verifica se já existe registro na mesma missa (mesmo horario + data)
-    // Se sim, junta as funções; se não, cria novo
-    for (const coroinha_id of coroinhasSel) {
-      const existentes = await api('/historico_funcoes?coroinha_id=eq.' + coroinha_id + '&horario=eq.' + encodeURIComponent(horario) + '&data_missa=eq.' + data_missa);
-      if (existentes && existentes.length > 0) {
-        const reg = existentes[0];
-        const funcoesAntigas = reg.funcao ? reg.funcao.split(',').map(f => f.trim()) : [];
-        const funcoesMerged = [...new Set([...funcoesAntigas, ...funcoesSel])].join(', ');
-        await api('/historico_funcoes?id=eq.' + reg.id, 'PATCH', { funcao: funcoesMerged, observacao: observacao || reg.observacao || null });
-      } else {
-        await api('/historico_funcoes', 'POST', [{ coroinha_id, funcao, horario, data_missa, observacao: observacao || null }]);
-      }
-    }
-    const nc = coroinhasSel.length, nf = funcoesSel.length;
-    toast('✓ ' + nf + ' função' + (nf>1?'ões':'') + ' para ' + nc + ' coroinha' + (nc>1?'s':'') + '!');
-    // Reset completo do formulário
-    document.getElementById('func-escala-select').value = '';
-    document.getElementById('lista-check-coroinhas').innerHTML = '';
-    document.getElementById('lista-check-coroinhas').style.display = 'none';
-    document.getElementById('escala-funcao-status').style.display = 'none';
-    document.getElementById('func-horario').value = '';
-    document.getElementById('func-data').value = '';
-    document.getElementById('campo-missa-especial').style.display = 'none';
-    document.querySelectorAll('#lista-check-coroinhas input').forEach(cb => cb.checked = false);
-    document.querySelectorAll('#lista-check-coroinhas .check-item').forEach(el => el.classList.remove('selecionado'));
-    document.querySelectorAll('.funcao-chip input').forEach(cb => cb.checked = false);
-    document.querySelectorAll('.funcao-chip').forEach(el => el.classList.remove('selecionada'));
-    document.getElementById('func-outro-texto').value = '';
-    document.getElementById('campo-outro-funcao').style.display = 'none';
-    document.querySelector('#chip-outro span').textContent = '+ Outro';
-    document.getElementById('cnt-coroinhas').style.display = 'none';
-    document.getElementById('cnt-funcoes').style.display = 'none';
-    document.getElementById('func-obs').value = '';
-
-  } catch(e) { toast('Erro ao registrar. Tente novamente.', true); }
+  return horario;
 }
+
+function arraysIguaisSet(a, b) {
+  if (a.length !== b.length) return false;
+  const sa = [...a].sort();
+  const sb = [...b].sort();
+  return sa.every((v, i) => v === sb[i]);
+}
+
+// Salva (substituindo) as funções de UM coroinha para a missa atual.
+// Se funcoesSel estiver vazio e já existir registro, apaga o registro (removeu a função).
+async function salvarFuncaoCoroinhaReplace(coroinha_id, funcoesSel, horario, data_missa, observacao) {
+  const existentes = await api('/historico_funcoes?coroinha_id=eq.' + coroinha_id + '&horario=eq.' + encodeURIComponent(horario) + '&data_missa=eq.' + data_missa);
+  if (existentes && existentes.length > 0) {
+    const reg = existentes[0];
+    if (!funcoesSel.length) {
+      await api('/historico_funcoes?id=eq.' + reg.id, 'DELETE');
+    } else {
+      await api('/historico_funcoes?id=eq.' + reg.id, 'PATCH', { funcao: funcoesSel.join(', '), observacao: observacao || reg.observacao || null });
+    }
+  } else if (funcoesSel.length) {
+    await api('/historico_funcoes', 'POST', [{ coroinha_id, funcao: funcoesSel.join(', '), horario, data_missa, observacao: observacao || null }]);
+  }
+}
+
+async function salvarFuncoesIndividual() {
+  const itens = [...document.querySelectorAll('#lista-check-coroinhas .individual-item')];
+  if (!itens.length) { toast('Selecione uma missa primeiro', true); return; }
+
+  const horario = resolverHorarioFuncao();
+  const data_missa = document.getElementById('func-data').value;
+  const observacao = document.getElementById('func-obs').value.trim();
+  if (!horario || !data_missa) { toast('Selecione a missa primeiro', true); return; }
+
+  const linhas = itens.map(item => {
+    const cid = item.getAttribute('data-cid');
+    const funcoesSel = [...item.querySelectorAll('.funcao-chip-mini input:checked')].map(cb => {
+      if (cb.value === '__outro__') {
+        const texto = item.querySelector('.outro-texto-individual').value.trim();
+        return texto || null;
+      }
+      return cb.value;
+    }).filter(Boolean);
+    const funcoesOriginais = funcListaCache.funcoesPorCoroinha[cid] || [];
+    return { cid, funcoesSel, mudou: !arraysIguaisSet(funcoesSel, funcoesOriginais) };
+  });
+
+  const paraSalvar = linhas.filter(l => l.mudou);
+  if (!paraSalvar.length) { toast('Nada para salvar — nenhuma função foi alterada', true); return; }
+
+  try {
+    for (const l of paraSalvar) {
+      await salvarFuncaoCoroinhaReplace(l.cid, l.funcoesSel, horario, data_missa, observacao);
+    }
+    toast('✓ Funções salvas para ' + paraSalvar.length + ' coroinha' + (paraSalvar.length > 1 ? 's' : '') + '!');
+    document.getElementById('func-obs').value = '';
+    await recarregarListaAtualFuncao();
+  } catch (e) { toast('Erro ao salvar. Tente novamente.', true); }
+}
+
+async function recarregarListaAtualFuncao() {
+  const modoAntigo = document.getElementById('func-modo-antiga-btn').classList.contains('active');
+  if (modoAntigo) {
+    carregarCoroinhasAntiga();
+  } else {
+    await carregarCoroinhasEscala();
+  }
+}
+
+// ===================== FIM MODO DE REGISTRO =====================
 
 // ===================== REGISTRAR FUNÇÃO — COROINHAS DA ESCALA =====================
 
@@ -1173,6 +1282,7 @@ async function carregarCoroinhasEscala() {
   listaEl.innerHTML = '';
   cntEl.style.display = 'none';
   cntEl.textContent = '';
+  funcListaCache = { lista: [], funcoesPorCoroinha: {} };
 
   if (!sel.value) return;
 
@@ -1218,6 +1328,7 @@ async function carregarCoroinhasEscala() {
   if (!coroinhasDaMissa.length) {
     statusEl.textContent = 'Nenhum coroinha inscrito nesta missa.';
     statusEl.style.display = 'block';
+    funcListaCache = { lista: [], funcoesPorCoroinha: {} };
     return;
   }
 
@@ -1239,33 +1350,250 @@ async function carregarCoroinhasEscala() {
     } catch(e) {}
   }
 
-  listaEl.innerHTML = coroinhasDaMissa
-    .sort((a, b) => a.nome.localeCompare(b.nome))
-    .map(c => {
-      const funcoes = funcoesPorCoroinha[c.id] || [];
-      const funcoesBadges = funcoes.length
-        ? funcoes.map(f =>
-            `<span style="display:inline-block;padding:1px 7px;border-radius:50px;font-size:10px;font-weight:600;background:var(--gold-pale);color:var(--brown-mid);border:1px solid var(--gold);margin-left:3px;">${f}</span>`
-          ).join('')
-        : '';
-      return `
-        <label class="check-item" onchange="atualizarCheckCoroinha(this)">
-          <input type="checkbox" value="${c.id}">
-          <span class="check-nome" style="display:flex;align-items:center;flex-wrap:wrap;gap:2px;">
-            ${c.nome}${funcoesBadges}
-          </span>
-        </label>`;
-    }).join('');
-
-  listaEl.style.display = 'block';
+  funcListaCache = { lista: coroinhasDaMissa, funcoesPorCoroinha };
+  renderListaCoroinhasFuncao();
 }
+
+// ===================== REGISTRAR FUNÇÃO — MISSA ANTIGA =====================
+
+// Dado um horário fixo (Sábado/Domingo) e a data da missa, calcula a
+// semana_key (sexta-feira daquela semana) — inverso de datasSemanaMissa().
+function semanaKeyFromDataHorario(dataISO, horario) {
+  const d = new Date(dataISO + 'T12:00:00');
+  const diasVoltar = horario.startsWith('Sábado') ? 1 : 2;
+  d.setDate(d.getDate() - diasVoltar);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+async function popularDatasMissaAntiga() {
+  const sel = document.getElementById('func-antiga-data-select');
+  const horario = document.getElementById('func-antiga-horario-fixo').value;
+  sel.innerHTML = '<option value="">Selecione uma data...</option>';
+  document.getElementById('func-antiga-data').value = '';
+  document.getElementById('func-antiga-data-manual-wrap').style.display = 'none';
+  if (!horario) return;
+
+  // Uma missa "existe" tanto quando já tem função registrada quanto quando
+  // teve pelo menos 1 coroinha inscrito na escala daquele horário — mesmo
+  // que ninguém tenha registrado função ainda.
+  const datasISO = new Set();
+
+  try {
+    const inscricoes = await api(
+      '/escala_inscricoes?horario=eq.' + encodeURIComponent(horario) + '&select=semana_key'
+    );
+    const semanas = [...new Set(inscricoes.map(r => r.semana_key).filter(Boolean))];
+    semanas.forEach(sk => {
+      const dataStr = datasSemanaMissa(sk)[horario];
+      if (!dataStr) return;
+      const [dia, mes, ano] = dataStr.split('/');
+      datasISO.add(`${ano}-${mes}-${dia}`);
+    });
+  } catch(e) {}
+
+  try {
+    const registros = await api(
+      '/historico_funcoes?horario=eq.' + encodeURIComponent(horario) + '&select=data_missa'
+    );
+    registros.forEach(r => { if (r.data_missa) datasISO.add(r.data_missa); });
+  } catch(e) {}
+
+  const datas = [...datasISO].sort((a, b) => b.localeCompare(a));
+  datas.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = formatarData(d);
+    sel.appendChild(opt);
+  });
+
+  const optManual = document.createElement('option');
+  optManual.value = '__manual__';
+  optManual.textContent = '+ Outra data (não listada)';
+  sel.appendChild(optManual);
+
+  if (!datas.length) sel.value = '';
+}
+
+function selecionarDataMissaAntiga() {
+  const sel = document.getElementById('func-antiga-data-select');
+  if (sel.value === '__manual__') {
+    document.getElementById('func-antiga-data-manual-wrap').style.display = 'block';
+    document.getElementById('func-antiga-data').value = '';
+    carregarCoroinhasAntiga();
+    return;
+  }
+  document.getElementById('func-antiga-data-manual-wrap').style.display = 'none';
+  if (!sel.value) return;
+  document.getElementById('func-antiga-data').value = sel.value;
+  carregarCoroinhasAntiga();
+}
+
+function setFuncModo(modo) {
+  document.getElementById('func-modo-recente-btn').classList.toggle('active', modo === 'recente');
+  document.getElementById('func-modo-antiga-btn').classList.toggle('active', modo === 'antiga');
+  document.getElementById('func-painel-recente').style.display = modo === 'recente' ? 'block' : 'none';
+  document.getElementById('func-painel-antiga').style.display = modo === 'antiga' ? 'block' : 'none';
+
+  // Reseta campos comuns ao trocar de modo
+  funcListaCache = { lista: [], funcoesPorCoroinha: {} };
+  document.getElementById('lista-check-coroinhas').innerHTML = '';
+  document.getElementById('lista-check-coroinhas').style.display = 'none';
+  document.getElementById('escala-funcao-status').style.display = 'none';
+  document.getElementById('cnt-coroinhas').style.display = 'none';
+  document.getElementById('func-horario').value = '';
+  document.getElementById('func-data').value = '';
+  document.getElementById('campo-missa-especial').style.display = 'none';
+  document.getElementById('func-escala-select').value = '';
+  document.getElementById('func-antiga-data').value = '';
+  document.getElementById('func-antiga-nome').value = '';
+  document.getElementById('func-antiga-tipo').value = 'semanal';
+  document.getElementById('func-antiga-semanal-wrap').style.display = 'block';
+  document.getElementById('func-antiga-outra-wrap').style.display = 'none';
+  document.getElementById('func-antiga-data-manual-wrap').style.display = 'none';
+  document.getElementById('func-antiga-horario-fixo').value = 'Sábado 17h';
+  document.getElementById('func-antiga-data-select').innerHTML = '<option value="">Selecione uma data...</option>';
+  if (modo === 'antiga') popularDatasMissaAntiga();
+}
+
+function toggleFuncAntigaTipo() {
+  const tipo = document.getElementById('func-antiga-tipo').value;
+  const semanal = tipo === 'semanal';
+  document.getElementById('func-antiga-semanal-wrap').style.display = semanal ? 'block' : 'none';
+  document.getElementById('func-antiga-outra-wrap').style.display = semanal ? 'none' : 'block';
+  document.getElementById('func-antiga-data-select').value = '';
+  document.getElementById('func-antiga-data').value = '';
+  document.getElementById('func-antiga-nome').value = '';
+  if (semanal) {
+    // Missa Semanal: a lista já cobre inscritos + funções; data manual fica escondida
+    document.getElementById('func-antiga-data-manual-wrap').style.display = 'none';
+    popularDatasMissaAntiga();
+  } else {
+    // Outra Missa: não há lista pré-existente por nome, então a data manual fica sempre visível
+    document.getElementById('func-antiga-data-manual-wrap').style.display = 'block';
+  }
+  carregarCoroinhasAntiga();
+}
+
+function carregarCoroinhasAntiga() {
+  const tipo = document.getElementById('func-antiga-tipo').value;
+  const data = document.getElementById('func-antiga-data').value;
+  const horario = tipo === 'semanal'
+    ? document.getElementById('func-antiga-horario-fixo').value
+    : document.getElementById('func-antiga-nome').value.trim();
+
+  const listaEl = document.getElementById('lista-check-coroinhas');
+  const statusEl = document.getElementById('escala-funcao-status');
+
+  if (!data || !horario) {
+    listaEl.style.display = 'none';
+    listaEl.innerHTML = '';
+    statusEl.style.display = 'none';
+    document.getElementById('func-horario').value = '';
+    document.getElementById('func-data').value = '';
+    document.getElementById('campo-missa-especial').style.display = 'none';
+    funcListaCache = { lista: [], funcoesPorCoroinha: {} };
+    return;
+  }
+
+  // Preenche os campos ocultos usados por registrarFuncao(), seguindo a mesma
+  // convenção do modo "Escala Recente"
+  document.getElementById('func-data').value = data;
+  const horSel = document.getElementById('func-horario');
+  const campoEsp = document.getElementById('campo-missa-especial');
+  if (tipo === 'semanal') {
+    horSel.value = horario;
+    campoEsp.style.display = 'none';
+  } else {
+    horSel.value = 'Missa Especial';
+    campoEsp.style.display = 'block';
+    if (!campoEsp.querySelector('input')) {
+      campoEsp.innerHTML = '<input type="text" id="func-missa-especial-nome" value="' + horario.replace(/"/g,'&quot;') + '">';
+    } else {
+      campoEsp.querySelector('input').value = horario;
+    }
+  }
+
+  carregarListaCoroinhasCompleta(data, horario);
+}
+
+async function carregarListaCoroinhasCompleta(dataMissaISO, horario) {
+  const listaEl = document.getElementById('lista-check-coroinhas');
+  const statusEl = document.getElementById('escala-funcao-status');
+  const cntEl = document.getElementById('cnt-coroinhas');
+
+  listaEl.innerHTML = '';
+  cntEl.style.display = 'none';
+  cntEl.textContent = '';
+  statusEl.style.display = 'none';
+
+  if (!coroinhas.length) {
+    statusEl.textContent = 'Nenhum coroinha cadastrado.';
+    statusEl.style.display = 'block';
+    listaEl.style.display = 'none';
+    funcListaCache = { lista: [], funcoesPorCoroinha: {} };
+    return;
+  }
+
+  // Busca registros dessa missa específica (data + horário)
+  let registros = [];
+  try {
+    registros = await api(
+      '/historico_funcoes?data_missa=eq.' + dataMissaISO +
+      '&horario=eq.' + encodeURIComponent(horario)
+    );
+  } catch(e) {}
+
+  const funcoesPorCoroinha = {};
+  registros.forEach(r => {
+    if (!funcoesPorCoroinha[r.coroinha_id]) funcoesPorCoroinha[r.coroinha_id] = [];
+    r.funcao.split(',').map(f => f.trim()).filter(Boolean).forEach(f => {
+      if (!funcoesPorCoroinha[r.coroinha_id].includes(f))
+        funcoesPorCoroinha[r.coroinha_id].push(f);
+    });
+  });
+
+  const idsComRegistro = Object.keys(funcoesPorCoroinha);
+
+  // Busca também quem está INSCRITO nessa missa específica (semana + horário),
+  // pra não esconder ninguém que ainda não tem função definida.
+  const horariosFixos = ['Sábado 17h', 'Domingo 7h', 'Domingo 9h', 'Domingo 17h'];
+  let idsInscritos = [];
+  if (horariosFixos.includes(horario)) {
+    try {
+      const semanaKey = semanaKeyFromDataHorario(dataMissaISO, horario);
+      const inscricoes = await api(
+        '/escala_inscricoes?semana_key=eq.' + semanaKey +
+        '&horario=eq.' + encodeURIComponent(horario) +
+        '&select=coroinha_id'
+      );
+      idsInscritos = inscricoes.map(r => String(r.coroinha_id));
+    } catch(e) {}
+  }
+
+  // Mostra a união: inscritos + quem já tem função (mesmo que não conste como
+  // inscrito). Só cai pra lista completa se não achar absolutamente ninguém
+  // vinculado a essa missa (data realmente nova).
+  const idsRelevantes = [...new Set([...idsInscritos, ...idsComRegistro])];
+  const coroinhasParaExibir = idsRelevantes.length
+    ? coroinhas.filter(c => idsRelevantes.includes(String(c.id)))
+    : coroinhas;
+
+  if (!coroinhasParaExibir.length) {
+    statusEl.textContent = 'Nenhum coroinha encontrado para esta missa.';
+    statusEl.style.display = 'block';
+    listaEl.style.display = 'none';
+    funcListaCache = { lista: [], funcoesPorCoroinha: {} };
+    return;
+  }
+
+  funcListaCache = { lista: coroinhasParaExibir, funcoesPorCoroinha };
+  renderListaCoroinhasFuncao();
+}
+
+// ===================== FIM REGISTRAR FUNÇÃO — MISSA ANTIGA =====================
 
 // ===================== FIM REGISTRAR FUNÇÃO ESCALA =====================
-
-function toggleMissaEspecial() {
-  const val = document.getElementById('func-horario').value;
-  document.getElementById('campo-missa-especial').style.display = val === 'Missa Especial' ? 'block' : 'none';
-}
 
 let statMesOffset = 0; // 0=este mês, 1=anterior, -1=tudo
 
@@ -1692,39 +2020,6 @@ let escalaModalHorario = null;
 let escalaModalSemana = null;
 let escalaCache = {}; // semanaKey → { horario → [inscricoes] }
 
-function msgEscalaFechada() {
-  const { dow, h: hBr, min: minBr } = agoraBrasilia();
-  let msg = '', detalhe = '';
-  if (dow === 6 && hBr >= 15) {
-    msg = 'Inscrições encerradas';
-    detalhe = 'As inscrições para esta semana foram encerradas. Voltam na próxima sexta às 15h.';
-  } else if (dow === 5 && hBr < 15) {
-    const minRestantes = 15*60 - (hBr*60 + minBr);
-    const h = Math.floor(minRestantes/60), m = minRestantes % 60;
-    msg = 'Escala ainda não aberta';
-    detalhe = `As inscrições abrem hoje às 15h (faltam ${h > 0 ? h+'h' : ''}${m > 0 ? m+'min' : ''}).`;
-  } else {
-    msg = 'Escala fechada';
-    detalhe = 'As inscrições ficam abertas toda sexta-feira às 15h até sábado às 15h (horário de Brasília).';
-  }
-  return `<div style="text-align:center;padding:32px 20px;">
-    
-    <div style="font-family:'Playfair Display',serif;font-size:17px;color:var(--brown-dark);margin-bottom:8px;">${msg}</div>
-    <div style="font-size:13px;color:var(--text-muted);line-height:1.6;">${detalhe}</div>
-  </div>`;
-}
-
-// Verifica se ainda há missas desta semana que não aconteceram (para mostrar escala fechada com inscritos)
-function escalaSemanaAindaRelevante() {
-  const { dow, h: hBr } = agoraBrasilia();
-  // Domingo 17h é a última missa; após domingo 18h já não é relevante mostrar
-  if (dow === 0 && hBr >= 18) return false;
-  // Segunda a quinta também não há missas desta semana
-  if (dow >= 1 && dow <= 4) return false;
-  // Sexta (antes das 15h), sábado (após 15h) ou domingo (antes das 18h) → ainda relevante
-  return true;
-}
-
 // Retorna a semana mais útil para exibir inscritos quando a escala está fechada.
 // De segunda a quinta: mostra a semana PRÓXIMA (que vai abrir na sexta).
 // Nos demais dias: mostra a semana atual.
@@ -1963,49 +2258,6 @@ function renderEscalaSemana(semanaKey, isAtual, returnOnly) {
       statusHtml + blocos;
   }
   return blocos;
-}
-
-function renderEscalaAnteriores(semanas) {
-  const el = document.getElementById('escala-anteriores');
-  const comDados = semanas.filter(s => escalaCache[s] && Object.keys(escalaCache[s]).length > 0);
-  if (!comDados.length) {
-    el.innerHTML = '<div class="empty" style="padding:20px 0;"><p style="font-size:13px;">Nenhuma semana anterior registrada.</p></div>';
-    return;
-  }
-  el.innerHTML = comDados.map(semanaKey => {
-    const sexta = new Date(semanaKey + 'T12:00:00');
-    const sabado = new Date(sexta); sabado.setDate(sexta.getDate() + 1);
-    const domingo = new Date(sexta); domingo.setDate(sexta.getDate() + 2);
-    const pad = n => String(n).padStart(2,'0');
-    const fmtFull = d => `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
-    const datas = datasSemanaMissa(semanaKey);
-    const dados = escalaCache[semanaKey] || {};
-
-    const blocos = MISSAS.map(horario => {
-      const inscritos = dados[horario] || [];
-      if (!inscritos.length) return '';
-      const nomes = inscritos.map(r => {
-        const c = coroinhas.find(x => x.id === r.coroinha_id);
-        return `<div class="escala-inscrito">
-          <div class="avatar" style="width:32px;height:32px;font-size:13px;">${iniciais(c ? c.nome : '?')}</div>
-          <span class="escala-inscrito-nome">${c ? c.nome : 'Desconhecido'}</span>
-        </div>`;
-      }).join('');
-      return `<div class="escala-horario" style="opacity:0.85;">
-        <div class="escala-horario-header">
-          <span class="escala-horario-titulo">${horario}</span>
-          <span class="escala-horario-data">${datas[horario]}</span>
-        </div>
-        ${nomes}
-        <div class="escala-footer"><span style="font-size:12px;color:var(--text-muted);">${inscritos.length} inscrito(s)</span></div>
-      </div>`;
-    }).filter(Boolean).join('');
-
-    return `<div style="margin-bottom:20px;">
-      <div class="semana-badge" style="background:var(--brown-mid);">${fmtFull(sabado)} – ${fmtFull(domingo)}</div>
-      ${blocos || '<div class="empty" style="padding:10px 0;"><p style="font-size:13px;">Sem inscrições.</p></div>'}
-    </div>`;
-  }).join('');
 }
 
 async function abrirModalEscala(horario, semanaKey) {
@@ -2425,6 +2677,16 @@ async function removerFuncaoEscala(histId, funcaoNome) {
     } else {
       await api('/historico_funcoes?id=eq.' + histId, 'PATCH', { funcao: funcoes.join(', ') });
     }
+    // Mantém a lista da aba "Função" em sincronia — sem isso, a função removida
+    // aqui continuava aparecendo marcada ao voltar para a aba Função.
+    if (funcListaCache && funcListaCache.funcoesPorCoroinha && reg.coroinha_id in funcListaCache.funcoesPorCoroinha) {
+      if (funcoes.length === 0) {
+        delete funcListaCache.funcoesPorCoroinha[reg.coroinha_id];
+      } else {
+        funcListaCache.funcoesPorCoroinha[reg.coroinha_id] = funcoes;
+      }
+      renderListaCoroinhasFuncao();
+    }
     toast('✓ Função "' + funcaoNome + '" removida.');
     carregarEscalaAdmin();
   } catch(e) { toast('Erro ao remover função.', true); console.error(e); }
@@ -2668,6 +2930,14 @@ async function removerFuncaoEspecialEscala(histId, funcaoNome, escalaId) {
       await api('/historico_funcoes?id=eq.' + histId, 'DELETE');
     } else {
       await api('/historico_funcoes?id=eq.' + histId, 'PATCH', { funcao: funcoes.join(', ') });
+    }
+    if (funcListaCache && funcListaCache.funcoesPorCoroinha && reg.coroinha_id in funcListaCache.funcoesPorCoroinha) {
+      if (funcoes.length === 0) {
+        delete funcListaCache.funcoesPorCoroinha[reg.coroinha_id];
+      } else {
+        funcListaCache.funcoesPorCoroinha[reg.coroinha_id] = funcoes;
+      }
+      renderListaCoroinhasFuncao();
     }
     toast('✓ Função "' + funcaoNome + '" removida.');
     carregarEscalaAdminEspeciais();
