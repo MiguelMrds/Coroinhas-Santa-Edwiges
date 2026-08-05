@@ -74,6 +74,12 @@
   .back-btn { display: flex; align-items: center; gap: 8px; color: var(--gold); font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 16px; background: none; border: none; padding: 0; }
   .detail-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 16px; background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); }
   .detail-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--gold-pale); border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 24px; color: var(--brown-mid); flex-shrink: 0; }
+  .avatar, .detail-avatar { overflow: hidden; }
+  .avatar img, .detail-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+  .foto-upload-wrap { position: relative; display: inline-block; flex-shrink: 0; }
+  .foto-upload-btn { position: absolute; bottom: 0; right: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--gold); border: 2px solid var(--white); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; line-height: 1; box-shadow: 0 1px 4px rgba(0,0,0,0.18); transition: background 0.15s; }
+  .foto-upload-btn:hover { background: var(--brown-mid); }
+  .foto-upload-btn input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
   .detail-nome { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; }
   .detail-sub { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
   .loading { text-align: center; padding: 30px; color: var(--text-muted); font-size: 14px; }
@@ -620,6 +626,7 @@
 
 <script>
 const SUPA_URL = 'https://gehccrknzobcurclbnpt.supabase.co/rest/v1';
+const SUPA_STORAGE = 'https://gehccrknzobcurclbnpt.supabase.co/storage/v1/object/public/fotos-coroinhas';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlaGNjcmtuem9iY3VyY2xibnB0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTA1ODksImV4cCI6MjA5NDg2NjU4OX0.7cb1EbKn_XtOTM6PkxxoktQV7qGtYQ7kd_okJ9jhUVA';
 const HEADERS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
 const HEADERS_DELETE = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
@@ -647,6 +654,51 @@ function toast(msg, err=false) {
 
 function iniciais(nome) {
   return nome.trim().split(' ').slice(0,2).map(n=>n[0].toUpperCase()).join('');
+}
+
+// Retorna o HTML do avatar: foto circular se existir, iniciais caso contrário
+function avatarHtml(coroinha, classe = 'avatar') {
+  if (coroinha && coroinha.foto_url) {
+    return `<div class="${classe}"><img src="${coroinha.foto_url}" alt="${coroinha.nome}" loading="lazy"></div>`;
+  }
+  const nome = (coroinha && coroinha.nome) ? coroinha.nome : '?';
+  return `<div class="${classe}">${iniciais(nome)}</div>`;
+}
+
+// Comprime a imagem para ~200x200px via Canvas e faz upload pro Supabase Storage
+async function uploadFotoCoroinha(id, file) {
+  return new Promise((resolve, reject) => {
+    const MAX = 200;
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = e => { img.src = e.target.result; };
+    img.onload = async () => {
+      const scale = Math.min(MAX / img.width, MAX / img.height, 1);
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(async blob => {
+        try {
+          const path = id + '.jpg';
+          const storageUrl = 'https://gehccrknzobcurclbnpt.supabase.co/storage/v1/object/fotos-coroinhas/' + path;
+          // Upsert: substitui se já existir
+          const r = await fetch(storageUrl, {
+            method: 'PUT',
+            headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'image/jpeg', 'x-upsert': 'true' },
+            body: blob
+          });
+          if (!r.ok) { const t = await r.text(); reject(new Error(t)); return; }
+          const publicUrl = SUPA_STORAGE + '/' + path + '?t=' + Date.now();
+          await api('/coroinhas?id=eq.' + id, 'PATCH', { foto_url: publicUrl });
+          resolve(publicUrl);
+        } catch(e) { reject(e); }
+      }, 'image/jpeg', 0.85);
+    };
+    img.onerror = () => reject(new Error('Erro ao ler imagem'));
+    reader.readAsDataURL(file);
+  });
 }
 
 function formatarData(d) {
@@ -717,7 +769,7 @@ function renderLista(filtro='') {
     const cargoBadge = c.cargo ? `<span class="badge" style="margin-left:6px;font-size:10px;">${c.cargo}</span>` : '';
     return `
     <div class="coroinha-item" onclick="abrirDetalhePorId('${c.id}')">
-      <div class="avatar">${iniciais(c.nome)}</div>
+      ${avatarHtml(c)}
       <div class="coroinha-info">
         <div class="coroinha-nome" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">${c.nome}${cargoBadge}</div>
         <div class="coroinha-sub">${idade ? idade + ' anos' : ''}</div>
@@ -860,7 +912,7 @@ async function abrirDetalhe(id, nome, idade) {
     </div>` : '';
   document.getElementById('detalhe-header').innerHTML = `
     <div class="detail-header">
-      <div class="detail-avatar">${iniciais(nome)}</div>
+      ${avatarHtml(coroinhaObj, 'detail-avatar')}
       <div>
         <div class="detail-nome">${nome}</div>
         <div class="detail-sub">${idade ? idade + ' anos' : 'Idade não informada'}</div>
@@ -1830,7 +1882,7 @@ async function carregarStatEspeciais() {
               : `<span class="escala-admin-sem-funcao">sem função registrada</span>`;
 
             return `<div class="escala-admin-coroinha">
-              <div class="avatar" style="width:32px;height:32px;font-size:12px;flex-shrink:0;">${iniciais(nome)}</div>
+              ${avatarHtml(c, 'avatar')}
               <div style="flex:1;">
                 <div class="escala-admin-nome">${nome}${equipeBadge}</div>
                 <div class="escala-admin-funcoes" style="margin-top:4px;">${funcoesTags}</div>
@@ -2222,7 +2274,7 @@ function renderEscalaSemana(semanaKey, isAtual, returnOnly) {
         ? `<span style="font-size:10px;font-weight:600;background:var(--brown-dark);color:var(--gold-light);padding:2px 7px;border-radius:50px;margin-left:6px;">equipe</span>`
         : '';
       return `<div class="escala-inscrito">
-        <div class="avatar" style="width:32px;height:32px;font-size:13px;">${iniciais(c ? c.nome : '?')}</div>
+        ${avatarHtml(c, 'avatar')}
         <span class="escala-inscrito-nome">${c ? c.nome : 'Desconhecido'}${badge}</span>
       </div>`;
     };
@@ -2488,7 +2540,7 @@ function renderEscalaAdmin(semanaKey, datas, historico) {
       const btnRemover = `<button onclick="removerInscricaoAdmin('${r.id}','${semanaKey}','${horario}')" style="background:none;border:none;color:var(--danger);font-size:20px;cursor:pointer;padding:0 0 0 8px;line-height:1;flex-shrink:0;" title="Remover da escala">×</button>`;
 
       return `<div class="escala-admin-coroinha">
-        <div class="avatar" style="width:32px;height:32px;font-size:12px;flex-shrink:0;">${iniciais(nome)}</div>
+        ${avatarHtml(c, 'avatar')}
         <div style="flex:1;">
           <div style="display:flex;align-items:center;">
             <span class="escala-admin-nome">${nome}</span>${badge}
@@ -2876,7 +2928,7 @@ async function carregarEscalaAdminEspeciais() {
               : `<span class="escala-admin-sem-funcao">sem função</span>`;
 
             return `<div class="escala-admin-coroinha">
-              <div class="avatar" style="width:32px;height:32px;font-size:12px;flex-shrink:0;">${iniciais(nome)}</div>
+              ${avatarHtml(c, 'avatar')}
               <div style="flex:1;">
                 <div class="escala-admin-nome">${nome}${extraBadge}</div>
                 <div class="escala-admin-funcoes" style="margin-top:4px;">${funcoesTags}</div>
@@ -3293,7 +3345,7 @@ async function renderEscalasEspeciaisPublico(container, listaPreCarregada) {
             ? `<span style="font-size:10px;font-weight:600;background:var(--brown-dark);color:var(--gold-light);padding:2px 7px;border-radius:50px;margin-left:6px;">equipe</span>`
             : '';
           return `<div class="escala-inscrito">
-            <div class="avatar" style="width:32px;height:32px;font-size:13px;">${iniciais(c ? c.nome : '?')}</div>
+            ${avatarHtml(c, 'avatar')}
             <span class="escala-inscrito-nome">${c ? c.nome : 'Desconhecido'}${badgePub}</span>
           </div>`;
         }).join('')
@@ -3535,7 +3587,7 @@ function renderAdminLista(filtro = '') {
     return `
     <div class="admin-coroinha-item" id="admin-item-${c.id}">
       <div class="admin-coroinha-header">
-        <div class="avatar">${iniciais(c.nome)}</div>
+        ${avatarHtml(c)}
         <div class="coroinha-info" style="flex:1;">
           <div class="coroinha-nome">${c.nome}${cargoBadge}</div>
           <div class="coroinha-sub">${idade ? idade + ' anos' : 'Idade não informada'}</div>
@@ -3588,6 +3640,19 @@ async function abrirAdminDetalhe(id) {
   el.innerHTML = `
     <div class="card" style="margin-bottom:14px;">
       <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Editar dados</div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+        <div class="foto-upload-wrap">
+          <div class="detail-avatar" id="edit-avatar-preview">${c.foto_url ? `<img src="${c.foto_url}" alt="${c.nome}">` : iniciais(c.nome)}</div>
+          <label class="foto-upload-btn" title="Trocar foto">
+            📷
+            <input type="file" accept="image/*" onchange="handleFotoUpload('${c.id}', this)">
+          </label>
+        </div>
+        <div style="flex:1;">
+          <div class="coroinha-nome">${c.nome}</div>
+          ${c.foto_url ? `<button class="btn-danger btn-sm" style="margin-top:6px;font-size:11px;" onclick="removerFotoCoroinha('${c.id}')">Remover foto</button>` : ''}
+        </div>
+      </div>
       <label>Nome completo</label>
       <input type="text" id="edit-nome" value="${c.nome.replace(/"/g,'&quot;').replace(/'/g,'&#39;')}" style="margin-bottom:8px;">
       <label>Data de nascimento</label>
@@ -3663,9 +3728,52 @@ async function salvarEdicaoCoroinha(id) {
     await api('/coroinhas?id=eq.' + id, 'PATCH', { nome, data_nascimento: nasc || null, cargo: cargo || null, telefone: telefone || null, telefone_responsavel: telefone_responsavel || null });
     toast('✓ Dados atualizados!');
     const idx = coroinhas.findIndex(x => x.id === id);
-    if (idx !== -1) { coroinhas[idx].nome = nome; coroinhas[idx].data_nascimento = nasc || null; coroinhas[idx].cargo = cargo || null; coroinhas[idx].telefone = telefone || null; coroinhas[idx].telefone_responsavel = telefone_responsavel || null; }
+    if (idx !== -1) { coroinhas[idx].nome = nome; coroinhas[idx].data_nascimento = nasc || null; coroinhas[idx].cargo = cargo || null; coroinhas[idx].telefone = telefone || null; coroinhas[idx].telefone_responsavel = telefone_responsavel || null; /* foto_url preservada intencionalmente */ }
     renderAdminLista(document.getElementById('busca-admin').value);
   } catch(e) { toast('Erro ao salvar. Tente novamente.', true); }
+}
+
+async function handleFotoUpload(id, input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { toast('Imagem muito grande. Use uma menor que 10MB.', true); return; }
+  const preview = document.getElementById('edit-avatar-preview');
+  preview.innerHTML = '<div class="spinner" style="width:24px;height:24px;border-width:3px;margin:auto;"></div>';
+  try {
+    const url = await uploadFotoCoroinha(id, file);
+    preview.innerHTML = `<img src="${url}" alt="foto">`;
+    // Atualiza cache local
+    const idx = coroinhas.findIndex(x => x.id === id);
+    if (idx !== -1) coroinhas[idx].foto_url = url;
+    renderAdminLista(document.getElementById('busca-admin').value);
+    toast('✓ Foto atualizada!');
+  } catch(e) {
+    console.error(e);
+    toast('Erro ao fazer upload da foto.', true);
+    const c = coroinhas.find(x => x.id === id);
+    preview.innerHTML = c && c.foto_url ? `<img src="${c.foto_url}">` : iniciais(c ? c.nome : '?');
+  }
+}
+
+async function removerFotoCoroinha(id) {
+  try {
+    // Remove o arquivo do Storage
+    const storageUrl = 'https://gehccrknzobcurclbnpt.supabase.co/storage/v1/object/fotos-coroinhas/' + id + '.jpg';
+    await fetch(storageUrl, {
+      method: 'DELETE',
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
+    });
+    // Limpa a referência no banco
+    await api('/coroinhas?id=eq.' + id, 'PATCH', { foto_url: null });
+    const idx = coroinhas.findIndex(x => x.id === id);
+    if (idx !== -1) coroinhas[idx].foto_url = null;
+    const c = coroinhas[idx];
+    const preview = document.getElementById('edit-avatar-preview');
+    if (preview) preview.innerHTML = iniciais(c ? c.nome : '?');
+    renderAdminLista(document.getElementById('busca-admin').value);
+    abrirAdminDetalhe(id);
+    toast('✓ Foto removida.');
+  } catch(e) { toast('Erro ao remover foto.', true); }
 }
 
 function toggleEditCargoCustom() {
