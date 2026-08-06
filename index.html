@@ -224,6 +224,7 @@
     <div class="card" id="detalhe-historico"></div>
   </div>
   <div id="lista-coroinhas">
+    <div id="bloco-aniversariantes" style="display:none;margin-bottom:14px;"></div>
     <div class="section-title">Coroinhas</div>
     <input type="text" id="busca-historico" placeholder="Buscar coroinha..." oninput="filtrarLista()" style="margin-bottom:10px;">
     <div style="display:flex;gap:8px;margin-bottom:12px;">
@@ -715,6 +716,7 @@ async function carregarCoroinhas() {
   try {
     coroinhas = await api('/coroinhas?order=nome');
     renderLista();
+    renderAniversariantes();
   } catch(e) {
     document.getElementById('lista-container').innerHTML = '<div class="empty"><div class="empty-icon">⚠</div><p>Erro ao carregar. Verifique sua conexão.</p></div>';
   }
@@ -746,6 +748,44 @@ function calcularIdade(dataNasc) {
   const m = hoje.getMonth() - nasc.getMonth();
   if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
   return idade;
+}
+
+function renderAniversariantes() {
+  const bloco = document.getElementById('bloco-aniversariantes');
+  if (!bloco) return;
+  const hoje = new Date();
+  const diaHoje = hoje.getDate();
+  const mesHoje = hoje.getMonth() + 1;
+  const aniversariantes = coroinhas.filter(c => {
+    if (!c.data_nascimento) return false;
+    const [, m, d] = c.data_nascimento.split('-').map(Number);
+    return m === mesHoje && d === diaHoje;
+  });
+  if (!aniversariantes.length) { bloco.style.display = 'none'; bloco.innerHTML = ''; return; }
+  const ano = hoje.getFullYear();
+  const itens = aniversariantes.map((c, i) => {
+    const [y] = c.data_nascimento.split('-').map(Number);
+    const idade = ano - y;
+    const divider = i > 0 ? '<div style="height:1px;background:var(--border);margin:2px 0;"></div>' : '';
+    return `${divider}
+    <div style="display:flex;align-items:center;gap:12px;padding:6px 0;">
+      ${avatarHtml(c, 'avatar')}
+      <div>
+        <div style="font-size:14px;font-weight:600;color:var(--text);">${c.nome}</div>
+        <div style="font-size:12px;color:var(--text-muted);">${idade} anos hoje 🎂</div>
+      </div>
+    </div>`;
+  }).join('');
+  const total = aniversariantes.length;
+  bloco.innerHTML = `
+    <div class="card" style="padding:14px 16px;border-color:var(--gold);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-family:'Playfair Display',serif;font-size:15px;color:var(--brown-dark);">Aniversariantes de hoje</span>
+        <span class="badge" style="margin-left:auto;">${total}</span>
+      </div>
+      ${itens}
+    </div>`;
+  bloco.style.display = 'block';
 }
 
 function renderLista(filtro='') {
