@@ -112,6 +112,11 @@
   .funcao-chip-mini.selecionada { background: var(--gold-pale); border-color: var(--gold); color: var(--brown-mid); }
   .funcao-chip-mini input[type=checkbox] { width: 12px; height: 12px; accent-color: var(--gold); cursor: pointer; padding: 0; margin: 0; flex-shrink: 0; }
   .funcao-chip-mini span, .chip-outro-mini span { text-transform: none; letter-spacing: 0; font-size: 12px; }
+  .funcao-chip-mini.repete-ultima { border-color: #d97706; border-style: dashed; }
+  .funcao-chip-mini.repete-ultima:not(.selecionada) { background: #fff7ed; }
+  .funcao-chip-mini.repete-ultima span { color: #b45309; }
+  .funcao-ultima-info { font-size: 11px; color: #b45309; background: #fff7ed; border: 1px solid #fde3c4; border-radius: 8px; padding: 4px 9px; margin: 2px 0 6px; display: inline-block; }
+  .funcao-ultima-info strong { font-weight: 700; }
   .campo-outro-individual input { padding: 8px 10px; font-size: 13px; margin-top: 6px; }
 
   .stat-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
@@ -1097,6 +1102,7 @@ const FUNCOES_OPCOES = [
   { value: 'Carrilhão', label: 'Carrilhão' },
   { value: 'Cerimonário', label: 'Cerimonário' },
   { value: 'Cruz', label: 'Cruz' },
+  { value: 'Naveta', label: 'Naveta' },
   { value: 'Ofertório', label: 'Ofertório' },
   { value: 'Pasta', label: 'Pasta' },
   { value: 'Patena', label: 'Patena' },
@@ -1107,12 +1113,73 @@ const FUNCOES_OPCOES = [
   { value: 'Sem-função', label: 'Sem-função' }
 ];
 
-let funcListaCache = { lista: [], funcoesPorCoroinha: {} };
+let funcListaCache = { lista: [], funcoesPorCoroinha: {}, ultimaFuncaoPorCoroinha: {} };
+
+// Busca, para cada coroinha da lista, a função (ou funções) da ÚLTIMA missa em que
+// participou ANTES da missa atual sendo editada — inclusive se for mais cedo no
+// mesmo dia (ex: editando a missa das 9h, considera a das 7h de hoje). Usado
+// para alertar sobre repetição.
+async function buscarUltimasFuncoes(coroinhaIds, dataMissaAtual, horarioAtual) {
+  const resultado = {};
+  if (!coroinhaIds || !coroinhaIds.length || !dataMissaAtual) return resultado;
+  try {
+    const registros = await api(
+      '/historico_funcoes?coroinha_id=in.(' + coroinhaIds.join(',') + ')' +
+      '&data_missa=lte.' + dataMissaAtual +
+      '&order=data_missa.desc&select=coroinha_id,funcao,data_missa,horario'
+    );
+
+    // Extrai a hora de um horário tipo "Domingo 9h" -> 9. Missas especiais (nome
+    // livre, sem "Xh") ficam sem hora reconhecida.
+    const horaDe = (h) => {
+      const m = /(\d+)h\b/.exec(h || '');
+      return m ? parseInt(m[1], 10) : null;
+    };
+    const horaAtual = horaDe(horarioAtual);
+
+    // Remove o próprio registro da missa que está sendo editada agora e, quando
+    // for o mesmo dia, remove missas que ainda vão acontecer depois da atual.
+    const relevantes = registros.filter(r => {
+      if (r.data_missa === dataMissaAtual) {
+        if (r.horario === horarioAtual) return false; // é a própria missa atual
+        const h = horaDe(r.horario);
+        if (h !== null && horaAtual !== null && h > horaAtual) return false; // missa futura no mesmo dia
+      }
+      return true;
+    });
+
+    // Ordena: data mais recente primeiro; dentro do mesmo dia, hora mais recente
+    // primeiro (missas especiais sem hora reconhecida ficam por último no dia).
+    relevantes.sort((a, b) => {
+      if (a.data_missa !== b.data_missa) return a.data_missa < b.data_missa ? 1 : -1;
+      const ha = horaDe(a.horario), hb = horaDe(b.horario);
+      if (ha === null && hb === null) return 0;
+      if (ha === null) return 1;
+      if (hb === null) return -1;
+      return hb - ha;
+    });
+
+    const missaMaisRecentePorCoroinha = {};
+    relevantes.forEach(r => {
+      const cid = r.coroinha_id;
+      if (!(cid in missaMaisRecentePorCoroinha)) {
+        missaMaisRecentePorCoroinha[cid] = { data_missa: r.data_missa, horario: r.horario };
+      }
+      const ref = missaMaisRecentePorCoroinha[cid];
+      if (r.data_missa !== ref.data_missa || r.horario !== ref.horario) return;
+      if (!resultado[cid]) resultado[cid] = { funcoes: [], data_missa: r.data_missa, horario: r.horario };
+      r.funcao.split(',').map(f => f.trim()).filter(Boolean).forEach(f => {
+        if (!resultado[cid].funcoes.includes(f)) resultado[cid].funcoes.push(f);
+      });
+    });
+  } catch(e) {}
+  return resultado;
+}
 
 function renderListaCoroinhasFuncao() {
   const listaEl = document.getElementById('lista-check-coroinhas');
   const cntEl = document.getElementById('cnt-coroinhas');
-  const { lista, funcoesPorCoroinha } = funcListaCache;
+  const { lista, funcoesPorCoroinha, ultimaFuncaoPorCoroinha } = funcListaCache;
 
   if (!lista || !lista.length) {
     listaEl.innerHTML = '';
@@ -1123,27 +1190,34 @@ function renderListaCoroinhasFuncao() {
   const ordenada = lista.slice().sort((a, b) => a.nome.localeCompare(b.nome));
 
   listaEl.className = 'lista-individual';
-  listaEl.innerHTML = ordenada.map(c => renderCoroinhaIndividualRow(c, funcoesPorCoroinha[c.id] || [])).join('');
+  listaEl.innerHTML = ordenada.map(c => renderCoroinhaIndividualRow(c, funcoesPorCoroinha[c.id] || [], (ultimaFuncaoPorCoroinha || {})[c.id])).join('');
 
   cntEl.style.display = 'none';
   listaEl.style.display = 'block';
 }
 
-function renderCoroinhaIndividualRow(c, funcoesAtuais) {
+function renderCoroinhaIndividualRow(c, funcoesAtuais, ultima) {
   const valoresConhecidos = FUNCOES_OPCOES.map(o => o.value);
   const outroAtual = funcoesAtuais.find(f => !valoresConhecidos.includes(f)) || '';
   const temFuncao = funcoesAtuais.length > 0;
+  const ultimasFuncoes = (ultima && ultima.funcoes) || [];
 
   const chips = FUNCOES_OPCOES.map(o => {
     const checked = funcoesAtuais.includes(o.value);
-    return `<label class="funcao-chip-mini${checked ? ' selecionada' : ''}" onclick="atualizarChipIndividual(this)">
-      <input type="checkbox" value="${o.value}" ${checked ? 'checked' : ''}><span>${o.label}</span>
+    const repetida = ultimasFuncoes.includes(o.value);
+    return `<label class="funcao-chip-mini${checked ? ' selecionada' : ''}${repetida ? ' repete-ultima' : ''}" onclick="atualizarChipIndividual(this)"${repetida ? ' title="Mesma função da última missa dele(a) — considere variar"' : ''}>
+      <input type="checkbox" value="${o.value}" ${checked ? 'checked' : ''}><span>${o.label}${repetida ? ' ⟲' : ''}</span>
     </label>`;
   }).join('');
+
+  const ultimaInfoHtml = ultimasFuncoes.length
+    ? `<div class="funcao-ultima-info">⟲ Última função: <strong>${ultimasFuncoes.join(', ')}</strong>${ultima.data_missa ? ' · ' + formatarData(ultima.data_missa) : ''}</div>`
+    : '';
 
   return `
   <div class="individual-item${temFuncao ? ' tem-funcao' : ''}" data-cid="${c.id}">
     <div class="individual-nome">${c.nome}</div>
+    ${ultimaInfoHtml}
     <div class="funcoes-chips-mini">
       ${chips}
       <label class="funcao-chip-mini chip-outro-mini${outroAtual ? ' selecionada' : ''}" onclick="toggleChipOutroIndividual(this)">
@@ -1442,7 +1516,9 @@ async function carregarCoroinhasEscala() {
     } catch(e) {}
   }
 
-  funcListaCache = { lista: coroinhasDaMissa, funcoesPorCoroinha };
+  const ultimaFuncaoPorCoroinha = await buscarUltimasFuncoes(coroinhasDaMissa.map(c => c.id), dataMissaISO, horario);
+
+  funcListaCache = { lista: coroinhasDaMissa, funcoesPorCoroinha, ultimaFuncaoPorCoroinha };
   renderListaCoroinhasFuncao();
 }
 
@@ -1679,7 +1755,9 @@ async function carregarListaCoroinhasCompleta(dataMissaISO, horario) {
     return;
   }
 
-  funcListaCache = { lista: coroinhasParaExibir, funcoesPorCoroinha };
+  const ultimaFuncaoPorCoroinha = await buscarUltimasFuncoes(coroinhasParaExibir.map(c => c.id), dataMissaISO, horario);
+
+  funcListaCache = { lista: coroinhasParaExibir, funcoesPorCoroinha, ultimaFuncaoPorCoroinha };
   renderListaCoroinhasFuncao();
 }
 
@@ -3927,7 +4005,7 @@ function toggleEditRegMissaEspecial() {
   if (val !== 'Missa Especial') document.getElementById('edit-reg-nome-especial').value = '';
 }
 
-const FUNCOES_LISTA = ['Ambão','Carrilhão','Cerimonário','Cruz','Ofertório','Pasta','Patena','Purificação','Sino de trás','Turíbulo','Vela','Sem-função'];
+const FUNCOES_LISTA = ['Ambão','Carrilhão','Cerimonário','Cruz','Naveta','Ofertório','Pasta','Patena','Purificação','Sino de trás','Turíbulo','Vela','Sem-função'];
 let editRegistroId = null;
 
 function abrirEditRegistroPorId(id) {
