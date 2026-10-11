@@ -112,6 +112,10 @@
   .funcao-chip-mini.selecionada { background: var(--gold-pale); border-color: var(--gold); color: var(--brown-mid); }
   .funcao-chip-mini input[type=checkbox] { width: 12px; height: 12px; accent-color: var(--gold); cursor: pointer; padding: 0; margin: 0; flex-shrink: 0; }
   .funcao-chip-mini span, .chip-outro-mini span { text-transform: none; letter-spacing: 0; font-size: 12px; }
+  .funcao-chip input[type=checkbox]:checked,
+  .funcao-chip-mini input[type=checkbox]:checked,
+  .check-item input[type=checkbox]:checked { background: var(--brown-mid); border-color: var(--brown-mid); box-shadow: inset 0 0 0 2px var(--white); }
+  .funcao-chip.selecionada, .funcao-chip-mini.selecionada { font-weight: 600; box-shadow: 0 0 0 1px var(--gold); }
   .funcao-chip-mini.repete-ultima { border-color: #d97706; border-style: dashed; }
   .funcao-chip-mini.repete-ultima:not(.selecionada) { background: #fff7ed; }
   .funcao-chip-mini.repete-ultima span { color: #b45309; }
@@ -415,8 +419,17 @@
           </div>
 
           <div id="func-antiga-outra-wrap" style="display:none;">
-            <label>Nome da missa</label>
-            <input type="text" id="func-antiga-nome" placeholder="Ex: Batizado, Casamento..." oninput="carregarCoroinhasAntiga()">
+            <label>Missa</label>
+            <div class="select-wrapper" style="position:relative;">
+              <select id="func-antiga-especial-select" onchange="selecionarEspecialAntiga()" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;appearance:none;">
+                <option value="">Selecione uma missa...</option>
+              </select>
+              <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">▾</span>
+            </div>
+            <div id="func-antiga-nome-manual-wrap" style="display:none;">
+              <label>Nome da missa</label>
+              <input type="text" id="func-antiga-nome" placeholder="Ex: Batizado, Casamento..." oninput="carregarCoroinhasAntiga()">
+            </div>
           </div>
 
           <div id="func-antiga-data-manual-wrap" style="display:none;">
@@ -463,6 +476,8 @@
       <!-- painel especiais -->
       <div id="escala-admin-painel-especiais" style="display:none;">
         <div class="section-title">Outras Missas</div>
+        <input type="search" id="escala-admin-especiais-busca" placeholder="🔍 Buscar missa pelo nome..." oninput="buscarEscalaAdminEspeciais()" style="margin-bottom:10px;">
+        <div id="escala-admin-especiais-toggle" style="margin-bottom:10px;"></div>
         <div id="escala-admin-especiais-container">
           <div class="loading"><div class="spinner"></div>Carregando...</div>
         </div>
@@ -1534,6 +1549,52 @@ function semanaKeyFromDataHorario(dataISO, horario) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+let funcAntigaEspecialId = null; // id da escala_especial escolhida no seletor (null = missa não listada)
+
+// Preenche o seletor com as Outras Missas já criadas (mais recentes primeiro)
+async function popularEspeciaisAntiga() {
+  const sel = document.getElementById('func-antiga-especial-select');
+  sel.innerHTML = '<option value="">Selecione uma missa...</option>';
+  try {
+    const lista = await api('/escala_especial?order=data.desc,created_at.desc');
+    (lista || []).forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = JSON.stringify({ id: e.id, nome: e.nome, horario: e.horario, data: e.data });
+      opt.textContent = e.nome + ' — ' + (e.data ? formatarData(e.data) : 's/ data') + (e.horario ? ' · ' + e.horario : '');
+      sel.appendChild(opt);
+    });
+  } catch(err) {}
+  const optManual = document.createElement('option');
+  optManual.value = '__manual__';
+  optManual.textContent = '+ Outra missa (não listada)';
+  sel.appendChild(optManual);
+}
+
+function selecionarEspecialAntiga() {
+  const sel = document.getElementById('func-antiga-especial-select');
+  const nomeWrap = document.getElementById('func-antiga-nome-manual-wrap');
+  const dataWrap = document.getElementById('func-antiga-data-manual-wrap');
+  document.getElementById('func-antiga-nome').value = '';
+  document.getElementById('func-antiga-data').value = '';
+  funcAntigaEspecialId = null;
+  if (sel.value === '__manual__') {
+    nomeWrap.style.display = 'block';
+    dataWrap.style.display = 'block';
+    carregarCoroinhasAntiga();
+    return;
+  }
+  nomeWrap.style.display = 'none';
+  dataWrap.style.display = 'none';
+  if (sel.value) {
+    const e = JSON.parse(sel.value);
+    funcAntigaEspecialId = e.id;
+    // Mesma convenção da "Escala Recente": o histórico guarda "nome horário"
+    document.getElementById('func-antiga-nome').value = e.nome + ' ' + (e.horario || '');
+    document.getElementById('func-antiga-data').value = e.data || '';
+  }
+  carregarCoroinhasAntiga();
+}
+
 async function popularDatasMissaAntiga() {
   const sel = document.getElementById('func-antiga-data-select');
   const horario = document.getElementById('func-antiga-horario-fixo').value;
@@ -1619,6 +1680,9 @@ function setFuncModo(modo) {
   document.getElementById('func-antiga-semanal-wrap').style.display = 'block';
   document.getElementById('func-antiga-outra-wrap').style.display = 'none';
   document.getElementById('func-antiga-data-manual-wrap').style.display = 'none';
+  document.getElementById('func-antiga-nome-manual-wrap').style.display = 'none';
+  funcAntigaEspecialId = null;
+  document.getElementById('func-antiga-especial-select').innerHTML = '<option value="">Selecione uma missa...</option>';
   document.getElementById('func-antiga-horario-fixo').value = 'Sábado 17h';
   document.getElementById('func-antiga-data-select').innerHTML = '<option value="">Selecione uma data...</option>';
   if (modo === 'antiga') popularDatasMissaAntiga();
@@ -1637,8 +1701,11 @@ function toggleFuncAntigaTipo() {
     document.getElementById('func-antiga-data-manual-wrap').style.display = 'none';
     popularDatasMissaAntiga();
   } else {
-    // Outra Missa: não há lista pré-existente por nome, então a data manual fica sempre visível
-    document.getElementById('func-antiga-data-manual-wrap').style.display = 'block';
+    // Outra Missa: escolhe numa lista; nome/data manuais só aparecem em "Outra missa (não listada)"
+    funcAntigaEspecialId = null;
+    document.getElementById('func-antiga-nome-manual-wrap').style.display = 'none';
+    document.getElementById('func-antiga-data-manual-wrap').style.display = 'none';
+    popularEspeciaisAntiga();
   }
   carregarCoroinhasAntiga();
 }
@@ -1742,6 +1809,14 @@ async function carregarListaCoroinhasCompleta(dataMissaISO, horario) {
   // Mostra a união: inscritos + quem já tem função (mesmo que não conste como
   // inscrito). Só cai pra lista completa se não achar absolutamente ninguém
   // vinculado a essa missa (data realmente nova).
+  // Outra Missa escolhida no seletor: inscritos vêm da própria escala especial
+  if (funcAntigaEspecialId) {
+    try {
+      const insc = await api('/escala_especial_inscricoes?escala_especial_id=eq.' + funcAntigaEspecialId + '&select=coroinha_id');
+      idsInscritos = insc.map(r => String(r.coroinha_id));
+    } catch(e) {}
+  }
+
   const idsRelevantes = [...new Set([...idsInscritos, ...idsComRegistro])];
   const coroinhasParaExibir = idsRelevantes.length
     ? coroinhas.filter(c => idsRelevantes.includes(String(c.id)))
@@ -2966,6 +3041,103 @@ document.getElementById('modal-equipe-escala').addEventListener('click', functio
 
 // ---------- Painel admin: missas especiais ----------
 
+let escalaAdminVerAntigas = false;
+
+// Nome curto para o WhatsApp: primeiro nome + próximo sobrenome (ignora "de", "da"...)
+function nomeCurtoZap(nome) {
+  const w = (nome || '').trim().split(/\s+/).filter(x => !['de','da','do','dos','das','e'].includes(x.toLowerCase()));
+  return w.slice(0, 2).join(' ');
+}
+
+// Monta a escala de uma Outra Missa em texto (negrito do WhatsApp com *...*) e copia
+async function copiarEscalaEspecial(escalaId) {
+  try {
+    const esc = (await api('/escala_especial?id=eq.' + escalaId))[0];
+    if (!esc) { toast('Missa não encontrada.', true); return; }
+    const insc = await api('/escala_especial_inscricoes?escala_especial_id=eq.' + escalaId + '&order=created_at.asc');
+    let hist = [];
+    if (esc.data) {
+      const doDia = await api('/historico_funcoes?data_missa=eq.' + esc.data);
+      hist = doDia.filter(h => h.horario === esc.nome + ' ' + esc.horario || h.horario === esc.nome ||
+                               h.horario === esc.horario || h.horario === 'Missa Especial');
+    }
+    const nomeDe = id => { const c = coroinhas.find(x => String(x.id) === String(id)); return c ? nomeCurtoZap(c.nome) : '?'; };
+
+    // função -> nomes (as funções "Outro" gravadas juntas como "A / B" são separadas de volta)
+    const porFuncao = {};
+    hist.forEach(h => (h.funcao || '').split(',').forEach(parte => parte.split('/').forEach(f => {
+      f = f.trim(); if (!f || f === 'Sem-função') return;
+      (porFuncao[f] = porFuncao[f] || []).push(nomeDe(h.coroinha_id));
+    })));
+    const ordem = ['Cerimonário','Segundo cerimoniário','Turíbulo','Responsável','Relíquia','Mitrífero','Baculífero','Pasta','Naveta','Vela','Ambão','Cruz','Carrilhão','Sino de trás','Ofertório','Cofres','Patena','Purificação'];
+    const rotulo = { 'Turíbulo':'Turiferário', 'Cruz':'Cruciferário', 'Sino de trás':'Sino', 'Vela':'Velas' };
+    const chaves = [...ordem.filter(f => porFuncao[f]), ...Object.keys(porFuncao).filter(f => !ordem.includes(f))];
+
+    const linhas = ['*' + esc.nome + '*', (esc.data ? formatarData(esc.data) : '') + (esc.horario ? ' · ' + esc.horario : ''), ''];
+    chaves.forEach(f => linhas.push('*' + (rotulo[f] || f) + ':* ' + porFuncao[f].join(', ')));
+    const coro = insc.filter(r => !r.is_equipe).map(r => nomeDe(r.coroinha_id));
+    const equipe = insc.filter(r => r.is_equipe).map(r => nomeDe(r.coroinha_id));
+    if (chaves.length && (coro.length || equipe.length)) linhas.push('');
+    if (coro.length) linhas.push('*Coroinhas:* ' + coro.join(', '));
+    if (equipe.length) linhas.push('*Equipe:* ' + equipe.join(', '));
+    const texto = linhas.join('\n');
+
+    try { await navigator.clipboard.writeText(texto); }
+    catch (e2) {
+      const ta = document.createElement('textarea');
+      ta.value = texto; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    }
+    toast('Escala copiada! Cole no WhatsApp.');
+  } catch (err) {
+    console.error(err);
+    toast('Não consegui copiar a escala.', true);
+  }
+}
+let escalaAdminBuscaTimer = null;
+const normalizarBusca = t => (t || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+function buscarEscalaAdminEspeciais() {
+  clearTimeout(escalaAdminBuscaTimer);
+  escalaAdminBuscaTimer = setTimeout(carregarEscalaAdminEspeciais, 250);
+}
+const eeRecolhidas = new Set(); // ids das Outras Missas com a lista de nomes recolhida
+
+function alternarEscalaEspecialRecolhida(id) {
+  const lista = document.getElementById('ee-lista-' + id);
+  const seta = document.getElementById('ee-seta-' + id);
+  if (!lista) return;
+  const recolher = lista.style.display !== 'none';
+  lista.style.display = recolher ? 'none' : 'block';
+  if (seta) seta.textContent = recolher ? '▸' : '▾';
+  if (recolher) eeRecolhidas.add(String(id)); else eeRecolhidas.delete(String(id));
+  atualizarBotaoRecolherTodas();
+}
+
+function atualizarBotaoRecolherTodas() {
+  const b = document.getElementById('btn-recolher-todas');
+  if (!b) return;
+  const listas = [...document.querySelectorAll('[id^="ee-lista-"]')];
+  const todas = listas.length && listas.every(l => l.style.display === 'none');
+  b.textContent = todas ? '▾ Expandir todas' : '▴ Recolher todas';
+}
+
+function recolherTodasEscalasEspeciais() {
+  const listas = [...document.querySelectorAll('[id^="ee-lista-"]')];
+  const expandir = listas.length && listas.every(l => l.style.display === 'none');
+  listas.forEach(l => {
+    const id = l.id.replace('ee-lista-', '');
+    l.style.display = expandir ? 'block' : 'none';
+    const seta = document.getElementById('ee-seta-' + id);
+    if (seta) seta.textContent = expandir ? '▾' : '▸';
+    if (expandir) eeRecolhidas.delete(id); else eeRecolhidas.add(id);
+  });
+  atualizarBotaoRecolherTodas();
+}
+function alternarEscalaAdminAntigas() {
+  escalaAdminVerAntigas = !escalaAdminVerAntigas;
+  carregarEscalaAdminEspeciais();
+}
+
 async function carregarEscalaAdminEspeciais() {
   const el = document.getElementById('escala-admin-especiais-container');
   if (!el) return;
@@ -2980,7 +3152,7 @@ async function carregarEscalaAdminEspeciais() {
 
     // Filtra: só mostra missas cuja data+horário ainda não passou de 24h
     const agora24 = new Date();
-    const lista = listaAll.filter(e => {
+    const ehAtiva = e => {
       if (!e.data) return true;
       // Tenta extrair hora do campo horario (ex: "19h30", "9h", "17h30")
       let horaStr = e.horario || '23';
@@ -2990,7 +3162,35 @@ async function carregarEscalaAdminEspeciais() {
       const dataMissa = new Date(e.data + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00-03:00');
       const expira = new Date(dataMissa.getTime() + 24 * 60 * 60 * 1000);
       return agora24 < expira;
-    });
+    };
+    const ativas = listaAll.filter(ehAtiva);
+    const antigas = listaAll.filter(e => !ehAtiva(e));
+    if (!antigas.length) escalaAdminVerAntigas = false;
+    // Com texto na busca, procura em todas as missas (ativas e anteriores)
+    const termo = normalizarBusca((document.getElementById('escala-admin-especiais-busca') || {}).value);
+    const lista = termo
+      ? listaAll.filter(e => normalizarBusca(e.nome).includes(termo))
+      : (escalaAdminVerAntigas ? antigas : ativas);
+
+    const togEl = document.getElementById('escala-admin-especiais-toggle');
+    if (togEl) {
+      const todasRec = lista.length && lista.every(e => eeRecolhidas.has(String(e.id)));
+      togEl.innerHTML = '<div style="display:flex;gap:8px;">'
+        + (antigas.length && !termo
+            ? '<button class="btn-ordem" onclick="alternarEscalaAdminAntigas()" style="flex:1;">'
+              + (escalaAdminVerAntigas ? '← Voltar para missas ativas' : '📜 Ver missas anteriores (' + antigas.length + ')') + '</button>'
+            : '')
+        + (lista.length
+            ? '<button id="btn-recolher-todas" class="btn-ordem" onclick="recolherTodasEscalasEspeciais()" style="flex:1;">'
+              + (todasRec ? '▾ Expandir todas' : '▴ Recolher todas') + '</button>'
+            : '')
+        + '</div>';
+    }
+
+    if (!lista.length && termo) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon"></div><p>Nenhuma missa encontrada com esse nome.</p></div>';
+      return;
+    }
 
     if (!lista.length) {
       el.innerHTML = '<div class="empty"><div class="empty-icon"></div><p>Nenhuma outra missa ativa no momento.<br><small style="color:var(--text-muted);">Missas passadas ficam no histórico em Estatísticas.</small></p></div>';
@@ -3016,6 +3216,7 @@ async function carregarEscalaAdminEspeciais() {
       const inscritos = todos.filter(r => !r.is_equipe);   // coroinhas normais (contam no limite)
       const equipe    = todos.filter(r => r.is_equipe);    // equipe/forçados (não contam)
       const dataFmt = e.data ? formatarData(e.data) : '—';
+      const rec = eeRecolhidas.has(String(e.id));
       const agora = new Date();
       const autoAberta = e.abre_em && e.fecha_em && agora >= new Date(e.abre_em) && agora < new Date(e.fecha_em);
       const estaAberta = e.aberta || autoAberta;
@@ -3057,17 +3258,21 @@ async function carregarEscalaAdminEspeciais() {
         : `<div class="escala-vazio">Nenhum inscrito ainda.</div>`;
 
       return `<div class="escala-horario" style="margin-bottom:14px;">
-        <div class="escala-horario-header" style="background:var(--gold-pale);">
-          <div>
-            <span class="escala-horario-titulo">${e.nome}</span>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${dataFmt} · ${e.horario} · Limite: ${e.limite}</div>
+        <div class="escala-horario-header" style="background:var(--gold-pale);cursor:pointer;" onclick="alternarEscalaEspecialRecolhida('${e.id}')" title="Recolher/expandir nomes">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span id="ee-seta-${e.id}" style="color:var(--text-muted);font-size:14px;width:12px;">${rec ? '▸' : '▾'}</span>
+            <div>
+              <span class="escala-horario-titulo">${e.nome}</span>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${dataFmt} · ${e.horario} · Limite: ${e.limite}</div>
+            </div>
           </div>
           ${statusBadge}
         </div>
-        ${linhasInscritos}
+        <div id="ee-lista-${e.id}" style="display:${rec ? 'none' : 'block'};">${linhasInscritos}</div>
         <div class="escala-footer" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
           <span style="font-size:12px;color:var(--text-muted);">${inscritos.length}/${e.limite} inscritos${equipe.length ? ` + ${equipe.length} equipe` : ''}</span>
-          <div style="display:flex;gap:6px;">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button onclick="copiarEscalaEspecial('${e.id}')" style="background:var(--white);color:var(--brown-mid);border:1.5px solid var(--gold);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;" title="Copiar a escala em texto para o WhatsApp">📋 Copiar</button>
             <button onclick="abrirModalForcarEscalaEspecialAdmin('${e.id}')" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;">+ Coroinha</button>
             <button onclick="abrirModalEquipeEscalaEspecialAdmin('${e.id}')" style="background:var(--brown-dark);color:var(--gold-light);border:none;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;">+ Equipe</button>
           </div>
@@ -4709,8 +4914,10 @@ async function exportarMissaEspecialPDF() {
     if (escala.data) {
       try {
         const todasFuncoesDia = await api('/historico_funcoes?select=coroinha_id,funcao,horario,data_missa&data_missa=eq.' + escala.data);
-        // O horário salvo no histórico de especiais é o nome da missa (escala.nome)
-        funcoes = todasFuncoesDia.filter(f => f.horario === escala.nome || f.horario === 'Missa Especial');
+        // O histórico guarda "nome horário" (ex.: "QUARTO DIA NOVENA: SÁBADO 17h"); aceita também o formato antigo (só o nome)
+        funcoes = todasFuncoesDia.filter(f =>
+          f.horario === escala.nome + ' ' + escala.horario || f.horario === escala.nome ||
+          f.horario === escala.horario || f.horario === 'Missa Especial');
         console.log('[PDF Especial] data:', escala.data, 'nome:', escala.nome, 'funcoes:', funcoes.length, todasFuncoesDia);
       } catch(e) { console.error('[PDF Especial] erro funcoes:', e); }
     }
