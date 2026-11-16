@@ -343,6 +343,8 @@
       <div class="card">
         <label>Nome completo</label>
         <input type="text" id="cad-nome" placeholder="Nome">
+        <label>Sexo</label>
+        <select id="cad-sexo" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;margin-bottom:12px;"><option value="">Selecione</option><option value="M">Masculino</option><option value="F">Feminino</option></select>
         <label>Data de nascimento</label>
         <input type="date" id="cad-nasc">
         <label>Telefone do coroinha</label>
@@ -449,6 +451,9 @@
         <input type="hidden" id="func-data">
         <label>Observação (opcional)</label>
         <textarea id="func-obs" placeholder=""></textarea>
+        <div id="sorteio-resumo"></div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;"><button class="btn" id="btn-apagar-funcoes" onclick="apagarFuncoesMissa()" style="flex:1;min-width:150px;border:1.5px solid #b3402e;color:#b3402e;background:transparent;">🗑 Apagar funções da missa</button><button class="btn" id="btn-voltar-funcoes" onclick="voltarFuncoesMissa()" style="flex:1;min-width:150px;border:1.5px solid var(--brown-mid);color:var(--brown-mid);background:transparent;">↩ Voltar funções</button></div>
+        <button class="btn btn-primary" id="btn-sortear-funcoes" onclick="sortearFuncoes()" style="margin-bottom:8px;background:var(--brown-mid);">🎲 Sortear funções</button>
         <button class="btn btn-primary" id="btn-salvar-individual" onclick="salvarFuncoesIndividual()">Salvar tudo</button>
       </div>
     </div>
@@ -1093,10 +1098,11 @@ async function cadastrarCoroinha() {
   const telefone_responsavel = document.getElementById('cad-telefone-resp').value.trim();
   if (!nome) { toast('Informe o nome do coroinha', true); return; }
   try {
-    await api('/coroinhas', 'POST', { nome, data_nascimento: nasc || null, cargo: cargo || null, telefone: telefone || null, telefone_responsavel: telefone_responsavel || null });
+    await api('/coroinhas', 'POST', { nome, sexo: document.getElementById('cad-sexo').value || null, data_nascimento: nasc || null, cargo: cargo || null, telefone: telefone || null, telefone_responsavel: telefone_responsavel || null });
     toast('Coroinha cadastrado!');
     document.getElementById('cad-nome').value = '';
     document.getElementById('cad-nasc').value = '';
+    document.getElementById('cad-sexo').value = '';
     document.getElementById('cad-cargo').value = '';
     document.getElementById('cad-cargo-custom').value = '';
     document.getElementById('cad-cargo-custom-wrap').style.display = 'none';
@@ -1116,6 +1122,7 @@ const FUNCOES_OPCOES = [
   { value: 'Ambão', label: 'Ambão' },
   { value: 'Carrilhão', label: 'Carrilhão' },
   { value: 'Cerimonário', label: 'Cerimonário' },
+  { value: 'Cofres', label: 'Cofres' },
   { value: 'Cruz', label: 'Cruz' },
   { value: 'Naveta', label: 'Naveta' },
   { value: 'Ofertório', label: 'Ofertório' },
@@ -1519,6 +1526,7 @@ async function carregarCoroinhasEscala() {
     try {
       const registros = await api(
         '/historico_funcoes?data_missa=eq.' + dataMissaISO +
+        '&horario=eq.' + encodeURIComponent(resolverHorarioFuncao()) +
         '&coroinha_id=in.(' + coroinhasDaMissa.map(c => c.id).join(',') + ')'
       );
       registros.forEach(r => {
@@ -2701,7 +2709,7 @@ function renderEscalaAdmin(semanaKey, datas, historico) {
   const pad = n => String(n).padStart(2,'0');
   const fmtFull = d => `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
 
-  let html = `<div class="semana-badge" style="${escalaAdminSemanaOffset > 0 ? 'background:var(--brown-mid);' : ''}">${fmtFull(sabado)} – ${fmtFull(domingo)}</div>`;
+  let html = `<div class="semana-badge" style="${escalaAdminSemanaOffset > 0 ? 'background:var(--brown-mid);' : ''}">${fmtFull(sabado)} – ${fmtFull(domingo)}</div><button id="btn-recolher-semanal" onclick="alternarTodasEscalaSemanal()" style="margin-left:8px;background:var(--white);color:var(--brown-mid);border:1.5px solid var(--gold);border-radius:var(--radius-sm);padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;">${MISSAS.every(h => esRecolhidas.has(h)) ? '▾ Expandir todas' : '▸ Recolher todas'}</button>`;
 
   MISSAS.forEach(horario => {
     const todos = dados[horario] || [];
@@ -2750,14 +2758,16 @@ function renderEscalaAdmin(semanaKey, datas, historico) {
     ].join('') || `<div class="escala-vazio">Nenhum inscrito ainda.</div>`;
 
     html += `<div class="escala-horario" style="margin-bottom:14px;">
-      <div class="escala-horario-header">
-        <span class="escala-horario-titulo">${horario}</span>
+      <div class="escala-horario-header" style="cursor:pointer;" onclick="alternarEscalaSemanalRecolhida('${horario}')" title="Recolher/expandir">
+        <span class="escala-horario-titulo"><span id="es-seta-${MISSAS.indexOf(horario)}" style="color:var(--text-muted);font-size:14px;display:inline-block;width:16px;">${esRecolhidas.has(horario) ? '▸' : '▾'}</span>${horario}</span>
         <span class="escala-horario-data">${dataHorario}</span>
       </div>
-      ${linhas}
+      <div id="es-lista-${MISSAS.indexOf(horario)}" style="display:${esRecolhidas.has(horario) ? 'none' : 'block'};">${linhas}</div>
       <div class="escala-footer" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
         <span style="font-size:12px;color:var(--text-muted);">${normais.length}/${LIMITE_MISSA} coroinhas · ${equipe.length} equipe</span>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button onclick="apagarFuncoesSemanal('${horario}','${dataISO}')" style="background:var(--white);color:#b3402e;border:1.5px solid #b3402e;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;" title="Apagar todas as funções desta missa">🗑 Apagar funções</button>
+          <button onclick="voltarFuncoesSemanal('${horario}','${dataISO}')" style="${bkEstilo(`S|${horario}|${dataISO}`)}background:var(--white);color:var(--brown-mid);border:1.5px solid var(--brown-mid);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;" title="Restaurar as funções apagadas desta missa">↩ Voltar funções</button>
           <button onclick="copiarEscalaSemanal('${horario}','${semanaKey}')" style="background:var(--white);color:var(--brown-mid);border:1.5px solid var(--gold);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;" title="Copiar a escala em texto para o WhatsApp">📋 Copiar</button>
           <button onclick="abrirModalForcarEscala('${horario}','${semanaKey}')" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;">+ Coroinha</button>
           <button onclick="abrirModalEquipeEscala('${horario}','${semanaKey}')" style="background:var(--brown-dark);color:var(--gold-light);border:none;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;">+ Equipe</button>
@@ -3292,7 +3302,9 @@ async function carregarEscalaAdminEspeciais() {
         <div class="escala-footer" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
           <span style="font-size:12px;color:var(--text-muted);">${inscritos.length}/${e.limite} inscritos${equipe.length ? ` + ${equipe.length} equipe` : ''}</span>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button onclick="copiarEscalaEspecial('${e.id}')" style="background:var(--white);color:var(--brown-mid);border:1.5px solid var(--gold);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;" title="Copiar a escala em texto para o WhatsApp">📋 Copiar</button>
+            <button onclick="apagarFuncoesEspecial('${e.id}')" style="background:var(--white);color:#b3402e;border:1.5px solid #b3402e;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;" title="Apagar todas as funções desta missa">🗑 Apagar funções</button>
+          <button onclick="voltarFuncoesEspecial('${e.id}')" style="${bkEstilo(`E|${e.id}`)}background:var(--white);color:var(--brown-mid);border:1.5px solid var(--brown-mid);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;" title="Restaurar as funções apagadas desta missa">↩ Voltar funções</button>
+          <button onclick="copiarEscalaEspecial('${e.id}')" style="background:var(--white);color:var(--brown-mid);border:1.5px solid var(--gold);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;" title="Copiar a escala em texto para o WhatsApp">📋 Copiar</button>
             <button onclick="abrirModalForcarEscalaEspecialAdmin('${e.id}')" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;">+ Coroinha</button>
             <button onclick="abrirModalEquipeEscalaEspecialAdmin('${e.id}')" style="background:var(--brown-dark);color:var(--gold-light);border:none;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;">+ Equipe</button>
           </div>
@@ -5053,6 +5065,267 @@ function mascaraTelefone(input) {
   }
   input.value = v;
 }
+
+// ===================== SORTEIO DE FUNÇÕES =====================
+// Preenche os chips da tela Registrar Função. Nada é gravado até o "Salvar tudo".
+const SORT_EQUIPE = ['equipe', 'coordenador', 'vice-coordenador', 'vice coordenador', 'cerimonário', 'cerimonario'];
+const SORT_EXCLUSIVAS = ['Cerimonário', 'Turíbulo', 'Naveta'];
+const SORT_CONFLITOS = [['Sino de trás', 'Carrilhão'], ['Pasta', 'Purificação'], ['Cofres', 'Ofertório']];
+
+function sortPessoa(c) {
+  const cargo = (c.cargo || '').toLowerCase();
+  return { id: String(c.id), nome: c.nome, sexo: c.sexo || null,
+           equipe: SORT_EQUIPE.some(k => cargo.includes(k)), idade: calcularIdade(c.data_nascimento) };
+}
+
+// Funções em ordem de preenchimento (mais restritas primeiro)
+function sortVagas(horario, totalPessoas) {
+  const v = [
+    { f: 'Cerimonário', n: 1, ok: p => p.sexo === 'M' && p.equipe },
+    { f: 'Cruz',        n: 1, ok: p => p.sexo === 'M' },
+    { f: 'Ambão',       n: 1, ok: () => true },
+    { f: 'Vela',        n: 2, ok: p => p.sexo === 'F', dupla: true },
+    { f: 'Carrilhão',   n: 2, ok: () => true, dupla: true, mesmoSexo: true },
+    { f: 'Pasta',       n: 1, ok: () => true },
+    { f: 'Sino de trás', n: 1, ok: () => true },
+    { f: 'Purificação', n: 2, ok: () => true },
+    { f: 'Cofres',      n: 2, ok: () => true },
+    { f: 'Patena',      n: 3, ok: p => p.idade == null || p.idade >= 10 },
+    { f: 'Ofertório',   n: 3, ok: () => true }
+  ].filter(x => !(x.f === 'Cofres' && horario === 'Domingo 9h'));
+  if (totalPessoas > v.reduce((a, x) => a + x.n, 0)) v[v.length - 1].n = 4;
+  return v;
+}
+
+function sortEscolher(pool, peso) {
+  const ws = pool.map(peso);
+  let r = Math.random() * ws.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < pool.length; i++) { r -= ws[i]; if (r <= 0) return pool[i]; }
+  return pool[pool.length - 1];
+}
+
+async function sortearFuncoes() {
+  const lista = funcListaCache.lista || [];
+  if (!lista.length) { toast('Selecione uma missa primeiro', true); return; }
+  const horario = resolverHorarioFuncao();
+  const data = document.getElementById('func-data').value;
+  if (!horario || !data) { toast('Selecione a missa primeiro', true); return; }
+
+  // Histórico: quantas vezes cada um fez cada função e quais duplas já serviram juntas
+  let hist = [];
+  try { hist = await api('/historico_funcoes?select=coroinha_id,funcao,horario,data_missa&order=data_missa.desc'); } catch (e) {}
+  const cont = {}, duplas = {}, grupos = {};
+  hist.forEach(h => {
+    if (h.data_missa === data && h.horario === horario) return;
+    (h.funcao || '').split(',').forEach(x => {
+      const f = x.trim(); if (!f) return;
+      const cid = String(h.coroinha_id);
+      (cont[cid] = cont[cid] || {})[f] = ((cont[cid] || {})[f] || 0) + 1;
+      (grupos[h.data_missa + '|' + h.horario + '|' + f] = grupos[h.data_missa + '|' + h.horario + '|' + f] || []).push(cid);
+    });
+  });
+  Object.entries(grupos).forEach(([k, ids]) => {
+    const f = k.split('|')[2];
+    ids.forEach(a => ids.forEach(b => { if (a < b) duplas[f + '|' + a + '|' + b] = (duplas[f + '|' + a + '|' + b] || 0) + 1; }));
+  });
+  const parCont = (f, a, b) => duplas[f + '|' + (a < b ? a + '|' + b : b + '|' + a)] || 0;
+  const feito = (p, f) => ((cont[p.id] || {})[f] || 0);
+
+  const vagas = sortVagas(horario, lista.length);
+  const conhecidas = vagas.map(v => v.f);
+  const est = {};
+  lista.forEach(c => {
+    const p = sortPessoa(c);
+    const salvas = (funcListaCache.funcoesPorCoroinha[c.id] || []).filter(f => conhecidas.includes(f) || SORT_EXCLUSIVAS.includes(f));
+    // Turíbulo e Naveta são manuais: o que já está marcado na tela é mantido e essas pessoas não recebem outra função
+    const item = document.querySelector('#lista-check-coroinhas .individual-item[data-cid="' + c.id + '"]');
+    const manuais = item ? [...item.querySelectorAll('.funcao-chip-mini input:checked')].map(cb => cb.value).filter(f => f === 'Turíbulo' || f === 'Naveta') : [];
+    est[p.id] = { p, atuais: new Set([...salvas, ...manuais]), novas: new Set() };
+  });
+  const pessoas = Object.values(est);
+  const preenchidas = f => pessoas.filter(e => e.atuais.has(f)).length;
+
+  const pode = (e, v) => {
+    if (!v.ok(e.p) || e.atuais.has(v.f)) return false;
+    const tem = [...e.atuais];
+    if (SORT_EXCLUSIVAS.includes(v.f) && tem.length) return false;
+    if (tem.some(f => SORT_EXCLUSIVAS.includes(f))) return false;
+    return !SORT_CONFLITOS.some(([a, b]) => (v.f === a && e.atuais.has(b)) || (v.f === b && e.atuais.has(a)));
+  };
+  const dar = (e, f) => { e.atuais.add(f); e.novas.add(f); };
+
+  // Passada 1: uma função por pessoa, vagas mais restritas primeiro
+  const faltam = [];
+  vagas.forEach(v => {
+    let falta = v.n - preenchidas(v.f);
+    const primeira = [];
+    while (falta > 0) {
+      let e = null;
+      if (v.f === 'Ambão') {
+        const cruz = pessoas.find(x => x.atuais.has('Cruz'));
+        if (cruz && pode(cruz, v) && Math.random() < 0.85) e = cruz;
+      }
+      if (!e) {
+        let pool = pessoas.filter(x => x.atuais.size === 0 && pode(x, v));
+        if (v.dupla && primeira.length === 1 && v.mesmoSexo) {
+          const mesmo = pool.filter(x => x.p.sexo === primeira[0].p.sexo);
+          if (mesmo.length) pool = mesmo;
+        }
+        if (!pool.length) break;
+        e = sortEscolher(pool, x => {
+          let w = 1 / Math.pow(1 + feito(x.p, v.f), 2);
+          if (v.dupla && primeira.length === 1) w *= 1 + 4 * parCont(v.f, primeira[0].p.id, x.p.id);
+          return w;
+        });
+      }
+      dar(e, v.f); primeira.push(e); falta--;
+    }
+    if (falta > 0) faltam.push({ v, falta });
+  });
+
+  // Passada 2: vagas que sobraram vão para quem acumula (Ofertório/Patena, depois 2 pessoas, depois 1)
+  const tier = v => (v.f === 'Ofertório' || v.f === 'Patena') ? 1 : (v.n >= 2 ? 2 : 3);
+  const vazias = [];
+  faltam.sort((a, b) => tier(a.v) - tier(b.v)).forEach(({ v, falta }) => {
+    while (falta > 0) {
+      const pool = pessoas.filter(x => x.atuais.size > 0 && pode(x, v));
+      if (!pool.length) break;
+      dar(sortEscolher(pool, x => Math.pow(0.15, x.atuais.size - 1) / Math.pow(1 + feito(x.p, v.f), 2)), v.f);
+      falta--;
+    }
+    if (falta > 0) vazias.push(v.f + ' (faltam ' + falta + ')');
+  });
+
+  // Aplica nos chips da tela
+  document.querySelectorAll('#lista-check-coroinhas .individual-item').forEach(item => {
+    const e = est[item.getAttribute('data-cid')]; if (!e) return;
+    item.querySelectorAll('.funcao-chip-mini input').forEach(cb => {
+      if (cb.value === '__outro__') return;
+      cb.checked = e.atuais.has(cb.value);
+      cb.closest('label').classList.toggle('selecionada', cb.checked);
+    });
+    item.classList.toggle('tem-funcao', !!item.querySelector('.funcao-chip-mini input:checked'));
+  });
+
+  // Resumo
+  const acumulam = pessoas.filter(e => e.atuais.size > 1).map(e => e.p.nome.split(' ')[0] + ' (' + [...e.atuais].join(' + ') + ')');
+  const semSexo = pessoas.filter(e => !e.p.sexo).map(e => e.p.nome.split(' ')[0]);
+  const linhas = [];
+  if (vazias.length) linhas.push('<strong>Sem ninguém que caiba:</strong> ' + vazias.join(', '));
+  if (acumulam.length) linhas.push('<strong>Acumulam funções:</strong> ' + acumulam.join(', '));
+  if (semSexo.length) linhas.push('<strong>Sem sexo no cadastro:</strong> ' + semSexo.join(', '));
+  const box = document.getElementById('sorteio-resumo');
+  if (box) box.innerHTML = '<div style="background:var(--gold-pale);border:1px solid var(--gold);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13px;color:var(--brown-mid);line-height:1.5;">' +
+    '<div>Sorteio feito. Revise, ajuste os chips se quiser e clique em Salvar tudo.</div>' + linhas.map(l => '<div>' + l + '</div>').join('') + '</div>';
+  toast('Sorteio pronto! Revise e salve.');
+}
+// ===================== FIM SORTEIO =====================
+
+// ===================== APAGAR / VOLTAR FUNÇÕES + RECOLHER MISSAS =====================
+const BK_FUNCOES_KEY = 'coroinhas_backups_funcoes';
+const esRecolhidas = new Set();
+
+function bkLer() { try { return JSON.parse(localStorage.getItem(BK_FUNCOES_KEY) || '{}'); } catch (e) { return {}; } }
+function bkTem(chave) { return !!bkLer()[chave]; }
+function bkEstilo(chave) { return bkTem(chave) ? '' : 'opacity:.45;'; }
+
+async function apagarComBackup(chave, rows, rotulo) {
+  if (!rows.length) { toast('Essa missa não tem funções registradas', true); return false; }
+  const n = new Set(rows.map(r => r.coroinha_id)).size;
+  if (!confirm('Apagar as funções de ' + n + ' coroinha(s) em ' + rotulo + '?\n\nVocê pode restaurar depois com "Voltar funções".')) return false;
+  const bk = bkLer();
+  bk[chave] = { ts: Date.now(), rows: rows.map(r => ({ coroinha_id: r.coroinha_id, funcao: r.funcao, horario: r.horario, data_missa: r.data_missa, observacao: r.observacao || null })) };
+  try { localStorage.setItem(BK_FUNCOES_KEY, JSON.stringify(bk)); } catch (e) {}
+  await api('/historico_funcoes?id=in.(' + rows.map(r => r.id).join(',') + ')', 'DELETE');
+  toast('✓ Funções apagadas. Use "Voltar funções" para restaurar.');
+  return true;
+}
+
+async function restaurarComBackup(chave) {
+  const bk = bkLer(), b = bk[chave];
+  if (!b) { toast('Não há funções apagadas desta missa para voltar', true); return false; }
+  for (const r of b.rows) {
+    await salvarFuncaoCoroinhaReplace(r.coroinha_id, (r.funcao || '').split(',').map(x => x.trim()).filter(Boolean), r.horario, r.data_missa, r.observacao);
+  }
+  delete bk[chave];
+  try { localStorage.setItem(BK_FUNCOES_KEY, JSON.stringify(bk)); } catch (e) {}
+  toast('✓ Funções restauradas para ' + new Set(b.rows.map(r => r.coroinha_id)).size + ' coroinha(s)!');
+  return true;
+}
+
+async function sincronizarAbaFuncao() {
+  try { if ((funcListaCache.lista || []).length) await recarregarListaAtualFuncao(); } catch (e) {}
+}
+
+// --- Aba Escala > Semanal
+async function apagarFuncoesSemanal(horario, dataISO) {
+  try {
+    const rows = await api('/historico_funcoes?horario=eq.' + encodeURIComponent(horario) + '&data_missa=eq.' + dataISO);
+    if (await apagarComBackup('S|' + horario + '|' + dataISO, rows || [], horario)) { await sincronizarAbaFuncao(); carregarEscalaAdmin(); }
+  } catch (e) { toast('Erro ao apagar. Tente novamente.', true); console.error(e); }
+}
+async function voltarFuncoesSemanal(horario, dataISO) {
+  try { if (await restaurarComBackup('S|' + horario + '|' + dataISO)) { await sincronizarAbaFuncao(); carregarEscalaAdmin(); } }
+  catch (e) { toast('Erro ao restaurar. Tente novamente.', true); console.error(e); }
+}
+
+// --- Aba Escala > Outras Missas
+async function apagarFuncoesEspecial(id) {
+  try {
+    const [esc] = await api('/escala_especial?id=eq.' + id);
+    const insc = await api('/escala_especial_inscricoes?escala_especial_id=eq.' + id + '&select=coroinha_id');
+    const ids = new Set((insc || []).map(r => String(r.coroinha_id)));
+    const nomes = [esc.nome + ' ' + esc.horario, 'Missa Especial', esc.horario];
+    const todas = await api('/historico_funcoes?data_missa=eq.' + esc.data);
+    const rows = (todas || []).filter(h => nomes.includes(h.horario) && ids.has(String(h.coroinha_id)));
+    if (await apagarComBackup('E|' + id, rows, esc.nome)) { await sincronizarAbaFuncao(); carregarEscalaAdminEspeciais(); }
+  } catch (e) { toast('Erro ao apagar. Tente novamente.', true); console.error(e); }
+}
+async function voltarFuncoesEspecial(id) {
+  try { if (await restaurarComBackup('E|' + id)) { await sincronizarAbaFuncao(); carregarEscalaAdminEspeciais(); } }
+  catch (e) { toast('Erro ao restaurar. Tente novamente.', true); console.error(e); }
+}
+
+// --- Aba Função (mesma missa selecionada lá)
+async function apagarFuncoesMissa() {
+  const horario = resolverHorarioFuncao(), data = document.getElementById('func-data').value;
+  if (!horario || !data) { toast('Selecione a missa primeiro', true); return; }
+  try {
+    const rows = await api('/historico_funcoes?horario=eq.' + encodeURIComponent(horario) + '&data_missa=eq.' + data);
+    if (await apagarComBackup('S|' + horario + '|' + data, rows || [], horario)) {
+      const box = document.getElementById('sorteio-resumo'); if (box) box.innerHTML = '';
+      await recarregarListaAtualFuncao();
+    }
+  } catch (e) { toast('Erro ao apagar. Tente novamente.', true); }
+}
+async function voltarFuncoesMissa() {
+  const horario = resolverHorarioFuncao(), data = document.getElementById('func-data').value;
+  if (!horario || !data) { toast('Selecione a missa primeiro', true); return; }
+  try { if (await restaurarComBackup('S|' + horario + '|' + data)) await recarregarListaAtualFuncao(); }
+  catch (e) { toast('Erro ao restaurar. Tente novamente.', true); }
+}
+
+// --- Recolher missas da escala semanal
+function aplicarRecolhidaSemanal(h) {
+  const i = MISSAS.indexOf(h), l = document.getElementById('es-lista-' + i), s = document.getElementById('es-seta-' + i);
+  const rec = esRecolhidas.has(h);
+  if (l) l.style.display = rec ? 'none' : 'block';
+  if (s) s.textContent = rec ? '▸' : '▾';
+}
+function alternarEscalaSemanalRecolhida(h) {
+  if (esRecolhidas.has(h)) esRecolhidas.delete(h); else esRecolhidas.add(h);
+  aplicarRecolhidaSemanal(h); atualizarBotaoRecolherSemanal();
+}
+function alternarTodasEscalaSemanal() {
+  const recolher = MISSAS.some(h => !esRecolhidas.has(h));
+  MISSAS.forEach(h => { if (recolher) esRecolhidas.add(h); else esRecolhidas.delete(h); aplicarRecolhidaSemanal(h); });
+  atualizarBotaoRecolherSemanal();
+}
+function atualizarBotaoRecolherSemanal() {
+  const b = document.getElementById('btn-recolher-semanal');
+  if (b) b.textContent = MISSAS.every(h => esRecolhidas.has(h)) ? '▾ Expandir todas' : '▸ Recolher todas';
+}
+// ===================== FIM APAGAR / VOLTAR / RECOLHER =====================
 
 </script>
 <!-- MODAL EXPORTAR PDF -->
