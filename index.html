@@ -282,33 +282,18 @@
   <div id="admin-pin-screen">
     <div class="admin-locked">
       <div class="section-title" style="justify-content:center;">Equipe</div>
-      <p style="font-size:14px;color:var(--text-muted);margin-bottom:4px;">Digite o PIN para continuar</p>
-      <div class="pin-dots">
-        <div class="pin-dot" id="pd0"></div>
-        <div class="pin-dot" id="pd1"></div>
-        <div class="pin-dot" id="pd2"></div>
-        <div class="pin-dot" id="pd3"></div>
-      </div>
+      <p style="font-size:14px;color:var(--text-muted);margin-bottom:14px;">Entre com seu usuário e senha</p>
+      <input type="text" id="login-email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Usuário" style="width:100%;max-width:320px;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;margin-bottom:10px;">
+      <input type="password" id="login-senha" autocomplete="current-password" placeholder="Senha" style="width:100%;max-width:320px;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;margin-bottom:10px;" onkeydown="if(event.key==='Enter')fazerLogin()">
       <p id="pin-erro" style="color:var(--danger);font-size:13px;min-height:18px;margin-bottom:8px;"></p>
-      <div class="pin-pad">
-        <button class="pin-btn" onclick="pinDigit('1')">1</button>
-        <button class="pin-btn" onclick="pinDigit('2')">2</button>
-        <button class="pin-btn" onclick="pinDigit('3')">3</button>
-        <button class="pin-btn" onclick="pinDigit('4')">4</button>
-        <button class="pin-btn" onclick="pinDigit('5')">5</button>
-        <button class="pin-btn" onclick="pinDigit('6')">6</button>
-        <button class="pin-btn" onclick="pinDigit('7')">7</button>
-        <button class="pin-btn" onclick="pinDigit('8')">8</button>
-        <button class="pin-btn" onclick="pinDigit('9')">9</button>
-        <button class="pin-btn" onclick="pinClear()" style="font-size:14px;">✕</button>
-        <button class="pin-btn" onclick="pinDigit('0')">0</button>
-        <button class="pin-btn" onclick="pinBack()" style="font-size:14px;">⌫</button>
-      </div>
+      <button class="btn btn-primary" id="btn-login" onclick="fazerLogin()" style="width:100%;max-width:320px;">Entrar</button>
     </div>
   </div>
 
-  <!-- Painel Admin (após PIN correto) -->
+  <!-- Painel Admin (após login) -->
   <div id="admin-painel" style="display:none;">
+
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="sairAdmin()" style="background:transparent;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:5px 12px;font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;">Sair 🔒</button></div>
 
     <!-- Sub-abas do painel admin -->
     <div class="admin-subtabs" id="admin-subtabs-bar">
@@ -452,7 +437,9 @@
         <label>Observação (opcional)</label>
         <textarea id="func-obs" placeholder=""></textarea>
         <div id="sorteio-resumo"></div>
-        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;"><button class="btn" id="btn-apagar-funcoes" onclick="apagarFuncoesMissa()" style="flex:1;min-width:150px;border:1.5px solid #b3402e;color:#b3402e;background:transparent;">🗑 Apagar funções da missa</button><button class="btn" id="btn-voltar-funcoes" onclick="voltarFuncoesMissa()" style="flex:1;min-width:150px;border:1.5px solid var(--brown-mid);color:var(--brown-mid);background:transparent;">↩ Voltar funções</button></div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;"><button class="btn" id="btn-apagar-funcoes" onclick="apagarFuncoesMissa()" style="flex:1;min-width:150px;border:1.5px solid #b3402e;color:#b3402e;background:transparent;">🗑 Apagar funções da missa</button><button class="btn" id="btn-voltar-funcoes" onclick="voltarFuncoesMissa()" style="flex:1;min-width:150px;border:1.5px solid var(--brown-mid);color:var(--brown-mid);background:transparent;">↩ Voltar funções</button>
+          <button class="btn" id="btn-equilibrio" onclick="abrirModalEquilibrio()" style="flex:1;min-width:150px;border:1.5px solid var(--gold);color:var(--brown-mid);background:transparent;">📊 Equilíbrio de funções</button></div>
+        <div style="font-size:12px;color:var(--text-muted);margin:0 0 8px;">🔓 Use o cadeado de cada coroinha para travar o que você já definiu à mão: o sorteio mantém essas marcações e preenche o resto.</div>
         <button class="btn btn-primary" id="btn-sortear-funcoes" onclick="sortearFuncoes()" style="margin-bottom:8px;background:var(--brown-mid);">🎲 Sortear funções</button>
         <button class="btn btn-primary" id="btn-salvar-individual" onclick="salvarFuncoesIndividual()">Salvar tudo</button>
       </div>
@@ -500,6 +487,17 @@
           <button class="btn-outline btn-sm" onclick="fecharModalEquipeEscala()">Cancelar</button>
           <button class="btn-primary btn-sm" id="modal-equipe-confirmar" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;" onclick="confirmarEquipeEscala()">✓ Confirmar</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Modal equilíbrio de funções -->
+    <div class="modal-overlay" id="modal-equilibrio" style="display:none;align-items:flex-end;padding:0;" onclick="if(event.target===this)fecharModalEquilibrio()">
+      <div class="modal-box" style="max-width:520px;width:100%;max-height:88vh;display:flex;flex-direction:column;border-radius:16px 16px 0 0;padding:16px 14px;margin:0 auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div class="modal-title" style="margin:0;">📊 Equilíbrio de funções</div>
+          <button onclick="fecharModalEquilibrio()" style="border:none;background:transparent;font-size:20px;color:var(--text-muted);cursor:pointer;padding:4px 8px;" aria-label="Fechar">✕</button>
+        </div>
+        <div id="modal-equilibrio-corpo" style="overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;"></div>
       </div>
     </div>
 
@@ -553,6 +551,7 @@
       <div style="display:flex;gap:6px;margin-bottom:16px;">
         <button class="btn-ordem active" id="stat-mini-geral" onclick="setStatMini('geral')">Geral</button>
         <button class="btn-ordem" id="stat-mini-especiais" onclick="setStatMini('especiais')">Outras Missas</button>
+        <button class="btn-ordem" id="stat-mini-equilibrio" onclick="setStatMini('equilibrio')">Equilíbrio</button>
       </div>
       <!-- Painel geral -->
       <div id="stat-painel-geral">
@@ -573,6 +572,7 @@
         </div>
       </div>
       <!-- Painel historico missas especiais -->
+      <div id="stat-painel-equilibrio" style="display:none;"></div>
       <div id="stat-painel-especiais" style="display:none;">
         <div id="stat-especiais-container">
           <div class="loading"><div class="spinner"></div>Carregando...</div>
@@ -712,7 +712,7 @@ async function uploadFotoCoroinha(id, file) {
           // Upsert: substitui se já existir
           const r = await fetch(storageUrl, {
             method: 'PUT',
-            headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'image/jpeg', 'x-upsert': 'true' },
+            headers: { 'apikey': KEY, 'Authorization': HEADERS.Authorization, 'Content-Type': 'image/jpeg', 'x-upsert': 'true' },
             body: blob
           });
           if (!r.ok) { const t = await r.text(); reject(new Error(t)); return; }
@@ -1442,7 +1442,7 @@ async function popularSelectEscala() {
         const dataFmt = e.data ? formatarData(e.data) : e.data;
         const label = e.nome + ' (' + e.horario + ', ' + dataFmt + ') — ' + ids.length + ' inscrito' + (ids.length !== 1 ? 's' : '');
         const opt = document.createElement('option');
-        opt.value = JSON.stringify({ especial_id: e.id, horario: e.nome + ' ' + e.horario, data: e.data, ids });
+        opt.value = JSON.stringify({ especial_id: e.id, horario: e.nome + ' ' + e.horario, horario_puro: e.horario, data: e.data, ids });
         opt.textContent = '★ ' + label;
         sel.appendChild(opt);
       }
@@ -1524,11 +1524,12 @@ async function carregarCoroinhasEscala() {
   let funcoesPorCoroinha = {};
   if (dataMissaISO) {
     try {
-      const registros = await api(
+      const todosReg = await api(
         '/historico_funcoes?data_missa=eq.' + dataMissaISO +
-        '&horario=eq.' + encodeURIComponent(resolverHorarioFuncao()) +
         '&coroinha_id=in.(' + coroinhasDaMissa.map(c => c.id).join(',') + ')'
       );
+      const aceitos = especial_id ? [horario, 'Missa Especial', opcao.horario_puro] : [horario];
+      const registros = todosReg.filter(r => aceitos.includes(r.horario));
       registros.forEach(r => {
         if (!funcoesPorCoroinha[r.coroinha_id]) funcoesPorCoroinha[r.coroinha_id] = [];
         r.funcao.split(',').map(f => f.trim()).filter(Boolean).forEach(f => {
@@ -2013,7 +2014,10 @@ function setStatMini(painel) {
   document.getElementById('stat-mini-especiais').classList.toggle('active', painel === 'especiais');
   document.getElementById('stat-painel-geral').style.display = painel === 'geral' ? 'block' : 'none';
   document.getElementById('stat-painel-especiais').style.display = painel === 'especiais' ? 'block' : 'none';
+  const _be = document.getElementById('stat-mini-equilibrio'); if (_be) _be.classList.toggle('active', painel === 'equilibrio');
+  const _pe = document.getElementById('stat-painel-equilibrio'); if (_pe) _pe.style.display = painel === 'equilibrio' ? 'block' : 'none';
   if (painel === 'especiais') carregarStatEspeciais();
+  if (painel === 'equilibrio') abrirEquilibrioStats();
 }
 
 async function carregarStatEspeciais() {
@@ -2768,6 +2772,7 @@ function renderEscalaAdmin(semanaKey, datas, historico) {
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button onclick="apagarFuncoesSemanal('${horario}','${dataISO}')" style="background:var(--white);color:#b3402e;border:1.5px solid #b3402e;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;" title="Apagar todas as funções desta missa">🗑 Apagar funções</button>
           <button onclick="voltarFuncoesSemanal('${horario}','${dataISO}')" style="${bkEstilo(`S|${horario}|${dataISO}`)}background:var(--white);color:var(--brown-mid);border:1.5px solid var(--brown-mid);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;" title="Restaurar as funções apagadas desta missa">↩ Voltar funções</button>
+          <button onclick="copiarPorPessoaSemanal('${horario}','${semanaKey}')" style="background:var(--white);color:var(--brown-mid);border:1.5px solid var(--brown-mid);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;" title="Copiar a escala listando cada pessoa com suas funções">👤 Por pessoa</button>
           <button onclick="copiarEscalaSemanal('${horario}','${semanaKey}')" style="background:var(--white);color:var(--brown-mid);border:1.5px solid var(--gold);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;" title="Copiar a escala em texto para o WhatsApp">📋 Copiar</button>
           <button onclick="abrirModalForcarEscala('${horario}','${semanaKey}')" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;">+ Coroinha</button>
           <button onclick="abrirModalEquipeEscala('${horario}','${semanaKey}')" style="background:var(--brown-dark);color:var(--gold-light);border:none;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;">+ Equipe</button>
@@ -3304,6 +3309,7 @@ async function carregarEscalaAdminEspeciais() {
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <button onclick="apagarFuncoesEspecial('${e.id}')" style="background:var(--white);color:#b3402e;border:1.5px solid #b3402e;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;" title="Apagar todas as funções desta missa">🗑 Apagar funções</button>
           <button onclick="voltarFuncoesEspecial('${e.id}')" style="${bkEstilo(`E|${e.id}`)}background:var(--white);color:var(--brown-mid);border:1.5px solid var(--brown-mid);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;" title="Restaurar as funções apagadas desta missa">↩ Voltar funções</button>
+          <button onclick="copiarPorPessoaEspecial('${e.id}')" style="background:var(--white);color:var(--brown-mid);border:1.5px solid var(--brown-mid);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;" title="Copiar a escala listando cada pessoa com suas funções">👤 Por pessoa</button>
           <button onclick="copiarEscalaEspecial('${e.id}')" style="background:var(--white);color:var(--brown-mid);border:1.5px solid var(--gold);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;" title="Copiar a escala em texto para o WhatsApp">📋 Copiar</button>
             <button onclick="abrirModalForcarEscalaEspecialAdmin('${e.id}')" style="background:var(--gold);color:var(--brown-dark);border:none;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;">+ Coroinha</button>
             <button onclick="abrirModalEquipeEscalaEspecialAdmin('${e.id}')" style="background:var(--brown-dark);color:var(--gold-light);border:none;border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;">+ Equipe</button>
@@ -3880,53 +3886,81 @@ setInterval(checkEscalasEspeciaisAutomatico, 30000);
 
 
 
-// PIN armazenado como hash SHA-256 — não é possível recuperar o valor original inspecionando o código
-const ADMIN_PIN_HASH = '25f9b3ab7e7d3634a79eab88d59a0b4592d42384900dfc10ecc481af5b8dfd3d';
+// ===================== LOGIN DO ADMIN (Supabase Auth) =====================
+const SUPA_AUTH = 'https://gehccrknzobcurclbnpt.supabase.co/auth/v1';
+const LOGIN_DOMINIO = '@coroinhas.app'; // o Supabase exige e-mail: o usuário "equipe" vira equipe@coroinhas.app
+let authToken = null, authTimer = null;
 
-async function hashPin(pin) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+function aplicarSessao(s) {
+  authToken = s.access_token;
+  HEADERS.Authorization = 'Bearer ' + authToken;
+  HEADERS_DELETE.Authorization = 'Bearer ' + authToken;
+  try { localStorage.setItem('coroinhas_refresh', s.refresh_token); } catch (e) {}
+  clearTimeout(authTimer);
+  authTimer = setTimeout(renovarSessao, Math.max(60, (s.expires_in || 3600) - 120) * 1000);
 }
 
-function pinDigit(d) {
-  if (pinAtual.length >= 4) return;
-  pinAtual += d;
-  atualizarDots();
-  if (pinAtual.length === 4) {
-    setTimeout(() => verificarPin(), 120);
+async function pedirToken(grant, body) {
+  const r = await fetch(SUPA_AUTH + '/token?grant_type=' + grant, {
+    method: 'POST', headers: { 'apikey': KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(j.error_description || j.msg || 'erro'); e.status = r.status; throw e; }
+  return j;
+}
+
+function desbloquearAdmin() {
+  adminDesbloqueado = true;
+  document.getElementById('admin-pin-screen').style.display = 'none';
+  document.getElementById('admin-painel').style.display = 'block';
+  showAdminTab('gerenciar', document.querySelector('.admin-subtab'));
+}
+
+async function fazerLogin() {
+  const usuario = document.getElementById('login-email').value.trim();
+  const email = usuario.includes('@') ? usuario : usuario.toLowerCase().replace(/\s+/g, '') + LOGIN_DOMINIO;
+  const senha = document.getElementById('login-senha').value;
+  const erro = document.getElementById('pin-erro');
+  if (!usuario || !senha) { erro.textContent = 'Informe usuário e senha.'; return; }
+  const btn = document.getElementById('btn-login'); btn.disabled = true; erro.textContent = '';
+  try {
+    aplicarSessao(await pedirToken('password', { email, password: senha }));
+    document.getElementById('login-senha').value = '';
+    desbloquearAdmin();
+  } catch (e) {
+    erro.textContent = (e.status === 400 || e.status === 401 || e.status === 422) ? 'Usuário ou senha incorretos.'
+      : (e.status === 429 ? 'Muitas tentativas. Aguarde alguns minutos.' : 'Não foi possível entrar. Tente novamente.');
+  } finally { btn.disabled = false; }
+}
+
+async function renovarSessao() {
+  let rt = null;
+  try { rt = localStorage.getItem('coroinhas_refresh'); } catch (e) {}
+  if (!rt) return sairAdmin();
+  try { aplicarSessao(await pedirToken('refresh_token', { refresh_token: rt })); adminDesbloqueado = true; }
+  catch (e) {
+    if (e.status === 400 || e.status === 401 || e.status === 403 || e.status === 422) sairAdmin(); // sessão inválida: pede login
+    else { clearTimeout(authTimer); authTimer = setTimeout(renovarSessao, 30000); } // sem internet/instabilidade: mantém e tenta de novo
   }
 }
 
-function pinBack() {
-  pinAtual = pinAtual.slice(0, -1);
-  atualizarDots();
+function sairAdmin() {
+  authToken = null; adminDesbloqueado = false;
+  HEADERS.Authorization = 'Bearer ' + KEY; HEADERS_DELETE.Authorization = 'Bearer ' + KEY;
+  try { localStorage.removeItem('coroinhas_refresh'); } catch (e) {}
+  clearTimeout(authTimer);
+  document.getElementById('admin-painel').style.display = 'none';
+  document.getElementById('admin-pin-screen').style.display = 'block';
 }
 
-function pinClear() {
-  pinAtual = '';
-  atualizarDots();
-  document.getElementById('pin-erro').textContent = '';
-}
+function atualizarDots() {} // resto do antigo teclado de PIN (não usado)
 
-function atualizarDots() {
-  for (let i = 0; i < 4; i++) {
-    document.getElementById('pd' + i).classList.toggle('filled', i < pinAtual.length);
-  }
-}
-
-async function verificarPin() {
-  const hash = await hashPin(pinAtual);
-  if (hash === ADMIN_PIN_HASH) {
-    adminDesbloqueado = true;
-    document.getElementById('admin-pin-screen').style.display = 'none';
-    document.getElementById('admin-painel').style.display = 'block';
-    showAdminTab('gerenciar', document.querySelector('.admin-subtab'));
-  } else {
-    document.getElementById('pin-erro').textContent = 'PIN incorreto. Tente novamente.';
-    pinAtual = '';
-    atualizarDots();
-  }
-}
+// Mantém o login neste navegador até clicar em Sair
+(async () => {
+  let rt = null; try { rt = localStorage.getItem('coroinhas_refresh'); } catch (e) {}
+  if (rt) { await renovarSessao(); if (authToken) adminDesbloqueado = true; }
+})();
+// ===================== FIM LOGIN DO ADMIN =====================
 
 function renderAdminLista(filtro = '') {
   const el = document.getElementById('admin-lista-container');
@@ -4116,7 +4150,7 @@ async function removerFotoCoroinha(id) {
     const storageUrl = 'https://gehccrknzobcurclbnpt.supabase.co/storage/v1/object/fotos-coroinhas/' + id + '.jpg';
     await fetch(storageUrl, {
       method: 'DELETE',
-      headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY }
+      headers: { 'apikey': KEY, 'Authorization': HEADERS.Authorization }
     });
     // Limpa a referência no banco
     await api('/coroinhas?id=eq.' + id, 'PATCH', { foto_url: null });
@@ -5113,7 +5147,7 @@ async function sortearFuncoes() {
 
   // Histórico: quantas vezes cada um fez cada função e quais duplas já serviram juntas
   let hist = [];
-  try { hist = await api('/historico_funcoes?select=coroinha_id,funcao,horario,data_missa&order=data_missa.desc'); } catch (e) {}
+  try { hist = await buscarHistoricoCompleto(true); } catch (e) {}
   const cont = {}, duplas = {}, grupos = {};
   hist.forEach(h => {
     if (h.data_missa === data && h.horario === horario) return;
@@ -5140,7 +5174,9 @@ async function sortearFuncoes() {
     // Turíbulo e Naveta são manuais: o que já está marcado na tela é mantido e essas pessoas não recebem outra função
     const item = document.querySelector('#lista-check-coroinhas .individual-item[data-cid="' + c.id + '"]');
     const manuais = item ? [...item.querySelectorAll('.funcao-chip-mini input:checked')].map(cb => cb.value).filter(f => f === 'Turíbulo' || f === 'Naveta') : [];
-    est[p.id] = { p, atuais: new Set([...salvas, ...manuais]), novas: new Set() };
+    const travado = sorteioTravados.has(String(c.id));
+    const marcadas = item ? [...item.querySelectorAll('.funcao-chip-mini input:checked')].map(cb => cb.value).filter(f => f !== '__outro__') : [];
+    est[p.id] = { p, atuais: new Set(travado ? marcadas : [...salvas, ...manuais]), novas: new Set(), travado };
   });
   const pessoas = Object.values(est);
   const preenchidas = f => pessoas.filter(e => e.atuais.has(f)).length;
@@ -5198,7 +5234,7 @@ async function sortearFuncoes() {
 
   // Aplica nos chips da tela
   document.querySelectorAll('#lista-check-coroinhas .individual-item').forEach(item => {
-    const e = est[item.getAttribute('data-cid')]; if (!e) return;
+    const e = est[item.getAttribute('data-cid')]; if (!e || e.travado) return;
     item.querySelectorAll('.funcao-chip-mini input').forEach(cb => {
       if (cb.value === '__outro__') return;
       cb.checked = e.atuais.has(cb.value);
@@ -5226,32 +5262,7 @@ const BK_FUNCOES_KEY = 'coroinhas_backups_funcoes';
 const esRecolhidas = new Set();
 
 function bkLer() { try { return JSON.parse(localStorage.getItem(BK_FUNCOES_KEY) || '{}'); } catch (e) { return {}; } }
-function bkTem(chave) { return !!bkLer()[chave]; }
 function bkEstilo(chave) { return bkTem(chave) ? '' : 'opacity:.45;'; }
-
-async function apagarComBackup(chave, rows, rotulo) {
-  if (!rows.length) { toast('Essa missa não tem funções registradas', true); return false; }
-  const n = new Set(rows.map(r => r.coroinha_id)).size;
-  if (!confirm('Apagar as funções de ' + n + ' coroinha(s) em ' + rotulo + '?\n\nVocê pode restaurar depois com "Voltar funções".')) return false;
-  const bk = bkLer();
-  bk[chave] = { ts: Date.now(), rows: rows.map(r => ({ coroinha_id: r.coroinha_id, funcao: r.funcao, horario: r.horario, data_missa: r.data_missa, observacao: r.observacao || null })) };
-  try { localStorage.setItem(BK_FUNCOES_KEY, JSON.stringify(bk)); } catch (e) {}
-  await api('/historico_funcoes?id=in.(' + rows.map(r => r.id).join(',') + ')', 'DELETE');
-  toast('✓ Funções apagadas. Use "Voltar funções" para restaurar.');
-  return true;
-}
-
-async function restaurarComBackup(chave) {
-  const bk = bkLer(), b = bk[chave];
-  if (!b) { toast('Não há funções apagadas desta missa para voltar', true); return false; }
-  for (const r of b.rows) {
-    await salvarFuncaoCoroinhaReplace(r.coroinha_id, (r.funcao || '').split(',').map(x => x.trim()).filter(Boolean), r.horario, r.data_missa, r.observacao);
-  }
-  delete bk[chave];
-  try { localStorage.setItem(BK_FUNCOES_KEY, JSON.stringify(bk)); } catch (e) {}
-  toast('✓ Funções restauradas para ' + new Set(b.rows.map(r => r.coroinha_id)).size + ' coroinha(s)!');
-  return true;
-}
 
 async function sincronizarAbaFuncao() {
   try { if ((funcListaCache.lista || []).length) await recarregarListaAtualFuncao(); } catch (e) {}
@@ -5291,8 +5302,12 @@ async function apagarFuncoesMissa() {
   const horario = resolverHorarioFuncao(), data = document.getElementById('func-data').value;
   if (!horario || !data) { toast('Selecione a missa primeiro', true); return; }
   try {
-    const rows = await api('/historico_funcoes?horario=eq.' + encodeURIComponent(horario) + '&data_missa=eq.' + data);
-    if (await apagarComBackup('S|' + horario + '|' + data, rows || [], horario)) {
+    const fixos = ['Sábado 17h', 'Domingo 7h', 'Domingo 9h', 'Domingo 17h'];
+    const idsLista = new Set((funcListaCache.lista || []).map(c => String(c.id)));
+    const todas = await api('/historico_funcoes?data_missa=eq.' + data);
+    const rows = (todas || []).filter(h => fixos.includes(horario) ? h.horario === horario
+      : ((h.horario === horario || h.horario === 'Missa Especial') && idsLista.has(String(h.coroinha_id))));
+    if (await apagarComBackup('S|' + horario + '|' + data, rows, horario)) {
       const box = document.getElementById('sorteio-resumo'); if (box) box.innerHTML = '';
       await recarregarListaAtualFuncao();
     }
@@ -5326,6 +5341,215 @@ function atualizarBotaoRecolherSemanal() {
   if (b) b.textContent = MISSAS.every(h => esRecolhidas.has(h)) ? '▾ Expandir todas' : '▸ Recolher todas';
 }
 // ===================== FIM APAGAR / VOLTAR / RECOLHER =====================
+
+// ===================== EXTRAS: backup no banco, CSV, equilíbrio, travar, copiar por pessoa =====================
+
+// ---- Histórico completo (paginado; o Supabase devolve no máx. 1000 linhas por consulta)
+async function buscarHistoricoCompleto(forcar) {
+  const c = window._histCache;
+  if (!forcar && c && Date.now() - c.t < 15000) return c.rows;
+  let rows = [], off = 0;
+  for (let i = 0; i < 100; i++) {
+    const pag = await api('/historico_funcoes?select=id,coroinha_id,funcao,horario,data_missa,observacao&order=data_missa.desc,id.asc&limit=1000&offset=' + off);
+    if (!pag || !pag.length) break;
+    rows = rows.concat(pag); off += pag.length;
+  }
+  window._histCache = { t: Date.now(), rows };
+  return rows;
+}
+
+// ---- 3) Backup das funções apagadas no banco (tabela historico_funcoes_backup) + cache local
+function bkTem(chave) { return !!bkLer()[chave] || !!(window._bkChavesDB && window._bkChavesDB.has(chave)); }
+
+async function bkSincronizarDoBanco() {
+  try {
+    const r = await api('/historico_funcoes_backup?select=chave');
+    window._bkChavesDB = new Set((r || []).map(x => x.chave));
+  } catch (e) { window._bkChavesDB = new Set(); }
+}
+
+async function apagarComBackup(chave, rows, rotulo) {
+  if (!rows.length) { toast('Essa missa não tem funções registradas', true); return false; }
+  const n = new Set(rows.map(r => r.coroinha_id)).size;
+  if (!confirm('Apagar as funções de ' + n + ' coroinha(s) em ' + rotulo + '?\n\nVocê pode restaurar depois com "Voltar funções".')) return false;
+  const copia = rows.map(r => ({ coroinha_id: r.coroinha_id, funcao: r.funcao, horario: r.horario, data_missa: r.data_missa, observacao: r.observacao || null }));
+  const bk = bkLer(); bk[chave] = { ts: Date.now(), rows: copia };
+  try { localStorage.setItem(BK_FUNCOES_KEY, JSON.stringify(bk)); } catch (e) {}
+  let noBanco = true;
+  try {
+    await api('/historico_funcoes_backup?chave=eq.' + encodeURIComponent(chave), 'DELETE');
+    await api('/historico_funcoes_backup', 'POST', copia.map(r => ({ chave, coroinha_id: String(r.coroinha_id), funcao: r.funcao, horario: r.horario, data_missa: r.data_missa, observacao: r.observacao })));
+    (window._bkChavesDB = window._bkChavesDB || new Set()).add(chave);
+  } catch (e) { noBanco = false; console.error(e); }
+  await api('/historico_funcoes?id=in.(' + rows.map(r => r.id).join(',') + ')', 'DELETE');
+  window._histCache = null;
+  toast(noBanco ? '✓ Funções apagadas. Backup salvo no banco.' : '⚠ Apagadas, mas o backup ficou só neste aparelho (falta criar a tabela de backup no Supabase).', !noBanco);
+  return true;
+}
+
+async function restaurarComBackup(chave) {
+  const bk = bkLer();
+  let rows = bk[chave] ? bk[chave].rows : null;
+  if (!rows) {
+    try { rows = await api('/historico_funcoes_backup?chave=eq.' + encodeURIComponent(chave) + '&order=id.asc'); } catch (e) {}
+  }
+  if (!rows || !rows.length) { toast('Não há funções apagadas desta missa para voltar', true); return false; }
+  for (const r of rows) {
+    await salvarFuncaoCoroinhaReplace(r.coroinha_id, (r.funcao || '').split(',').map(x => x.trim()).filter(Boolean), r.horario, r.data_missa, r.observacao);
+  }
+  delete bk[chave];
+  try { localStorage.setItem(BK_FUNCOES_KEY, JSON.stringify(bk)); } catch (e) {}
+  try { await api('/historico_funcoes_backup?chave=eq.' + encodeURIComponent(chave), 'DELETE'); } catch (e) {}
+  if (window._bkChavesDB) window._bkChavesDB.delete(chave);
+  window._histCache = null;
+  toast('✓ Funções restauradas para ' + new Set(rows.map(r => String(r.coroinha_id))).size + ' coroinha(s)!');
+  return true;
+}
+
+// ---- 4) Equilíbrio de funções (Estatísticas > Equilíbrio, e atalho em um modal na aba Função)
+const EQ_FUNCOES = ['Cruz', 'Ambão', 'Vela', 'Carrilhão', 'Pasta', 'Sino de trás', 'Purificação', 'Cofres', 'Patena', 'Ofertório', 'Cerimonário', 'Turíbulo', 'Naveta'];
+const EQ_REGRAS_EXTRA = { 'Turíbulo': p => p.sexo === 'M' && p.equipe, 'Naveta': p => p.sexo === 'M' };
+const eqEstado = {};
+
+function eqRegra(f) {
+  if (EQ_REGRAS_EXTRA[f]) return EQ_REGRAS_EXTRA[f];
+  const v = sortVagas('', 0).find(x => x.f === f);
+  return v ? v.ok : () => true;
+}
+function eqSet(alvo, chave, valor) { (eqEstado[alvo] = eqEstado[alvo] || {})[chave] = valor; renderEquilibrio(alvo); }
+
+async function renderEquilibrio(alvo) {
+  const box = document.getElementById(alvo); if (!box) return;
+  const noModal = alvo === 'modal-equilibrio-corpo';
+  const temMissa = (funcListaCache.lista || []).length > 0;
+  const st = eqEstado[alvo] = Object.assign({ f: 'Cruz', escopo: noModal ? 'inscritos' : 'todos', soPodem: true }, eqEstado[alvo] || {});
+  if (!temMissa) st.escopo = 'todos';
+  box.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>';
+  try {
+    const hist = await buscarHistoricoCompleto(false);
+    const horAtual = resolverHorarioFuncao(), dataAtual = document.getElementById('func-data').value;
+    const cont = {}, ult = {};
+    hist.forEach(h => {
+      if (st.escopo === 'inscritos' && h.data_missa === dataAtual && h.horario === horAtual) return; // não conta a missa que está sendo montada
+      (h.funcao || '').split(',').forEach(x => {
+        if (x.trim() !== st.f) return;
+        const id = String(h.coroinha_id);
+        cont[id] = (cont[id] || 0) + 1;
+        if (!ult[id] || h.data_missa > ult[id]) ult[id] = h.data_missa;
+      });
+    });
+    const base = st.escopo === 'inscritos' ? funcListaCache.lista : coroinhas;
+    const ok = eqRegra(st.f);
+    const linhas = base.filter(c => !st.soPodem || ok(sortPessoa(c)))
+      .map(c => ({ c, n: cont[String(c.id)] || 0, u: ult[String(c.id)] || '' }))
+      .sort((a, b) => (a.u ? 1 : 0) - (b.u ? 1 : 0) || a.u.localeCompare(b.u) || a.c.nome.localeCompare(b.c.nome, 'pt-BR'));
+
+    const chip = (ativo, rot, fn) => '<button class="btn-ordem' + (ativo ? ' active' : '') + '" style="flex:0 0 auto;white-space:nowrap;" onclick="' + fn + '">' + rot + '</button>';
+    let h = '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch;">' +
+      EQ_FUNCOES.map(f => chip(f === st.f, f, "eqSet('" + alvo + "','f','" + f + "')")).join('') + '</div>';
+    h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">' +
+      (temMissa ? chip(st.escopo === 'todos', 'Todos', "eqSet('" + alvo + "','escopo','todos')") +
+                  chip(st.escopo === 'inscritos', 'Inscritos da missa (' + funcListaCache.lista.length + ')', "eqSet('" + alvo + "','escopo','inscritos')") : '') +
+      chip(st.soPodem, st.soPodem ? '✓ Só quem pode' : 'Só quem pode', "eqSet('" + alvo + "','soPodem'," + (!st.soPodem) + ")") + '</div>';
+    h += '<div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;line-height:1.4;">Quem está há mais tempo sem fazer <strong style="color:var(--brown-mid);">' + st.f + '</strong>' +
+      (st.soPodem ? ' (pelas regras do sorteio)' : '') + '. Quem nunca fez aparece primeiro.</div>';
+    h += '<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--white);">' +
+      (linhas.length ? linhas.map(({ c, n, u }) => {
+        const dias = u ? Math.floor((Date.now() - new Date(u + 'T12:00:00').getTime()) / 86400000) : null;
+        return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;min-height:48px;border-bottom:1px solid var(--border);' + (u ? '' : 'background:var(--gold-pale);') + '">' +
+          '<div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + nomeCurtoZap(c.nome) + '</div>' +
+          '<div style="font-size:12px;color:var(--text-muted);">' + (!u ? 'Nunca fez' : dias < 0 ? 'Já escalado em ' + formatarData(u) : 'Última vez ' + formatarData(u) + ' · ' + (dias === 0 ? 'hoje' : 'há ' + dias + (dias === 1 ? ' dia' : ' dias'))) + '</div></div>' +
+          '<div style="font-size:13px;font-weight:700;color:var(--brown-mid);white-space:nowrap;">' + n + '×</div></div>';
+      }).join('') : '<div style="padding:14px;font-size:13px;color:var(--text-muted);text-align:center;">Ninguém elegível para esta função' + (st.soPodem ? ' (confira o sexo no cadastro).' : '.') + '</div>') + '</div>';
+    box.innerHTML = alvo === 'stat-painel-equilibrio' ? '<div class="card">' + h + '</div>' : h;
+  } catch (e) { box.innerHTML = '<div style="color:#b3402e;font-size:13px;">Não consegui carregar o histórico.</div>'; console.error(e); }
+}
+function abrirEquilibrioStats() { renderEquilibrio('stat-painel-equilibrio'); }
+function abrirModalEquilibrio() {
+  document.getElementById('modal-equilibrio').style.display = 'flex';
+  renderEquilibrio('modal-equilibrio-corpo');
+}
+function fecharModalEquilibrio() { document.getElementById('modal-equilibrio').style.display = 'none'; }
+
+// ---- 5) Travar pessoa antes de sortear
+const sorteioTravados = new Set();
+let sorteioTravadosChave = '';
+
+function estiloCadeado(b, cid) {
+  const t = sorteioTravados.has(cid);
+  b.textContent = t ? '🔒' : '🔓';
+  b.title = t ? 'Travado: o sorteio mantém as marcações desta pessoa (clique para destravar)' : 'Clique para travar as marcações desta pessoa antes de sortear';
+  b.style.opacity = t ? '1' : '.45';
+}
+function injetarCadeados() {
+  const chave = resolverHorarioFuncao() + '|' + document.getElementById('func-data').value;
+  if (chave !== sorteioTravadosChave) { sorteioTravados.clear(); sorteioTravadosChave = chave; }
+  document.querySelectorAll('#lista-check-coroinhas .individual-item').forEach(item => {
+    if (item.querySelector('.btn-cadeado')) return;
+    const cid = item.getAttribute('data-cid');
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn-cadeado';
+    b.style.cssText = 'position:absolute;right:10px;top:8px;border:none;background:transparent;font-size:16px;cursor:pointer;padding:4px;line-height:1;';
+    estiloCadeado(b, cid);
+    b.onclick = ev => {
+      ev.stopPropagation();
+      if (sorteioTravados.has(cid)) sorteioTravados.delete(cid); else sorteioTravados.add(cid);
+      estiloCadeado(b, cid);
+    };
+    item.style.position = 'relative';
+    item.appendChild(b);
+  });
+}
+const _renderListaFuncaoOriginal = renderListaCoroinhasFuncao;
+renderListaCoroinhasFuncao = function () {
+  const r = _renderListaFuncaoOriginal.apply(this, arguments);
+  try { injetarCadeados(); } catch (e) { console.error(e); }
+  return r;
+};
+
+// ---- 6) Copiar por pessoa (o "Copiar" que já existe agrupa por função)
+function montarTextoPorPessoa(titulo, subtitulo, hist, insc) {
+  const rot = { 'Turíbulo': 'Turiferário', 'Cruz': 'Cruciferário', 'Sino de trás': 'Sino' };
+  const nomeDe = id => { const c = coroinhas.find(x => String(x.id) === String(id)); return c ? nomeCurtoZap(c.nome) : '?'; };
+  const porPessoa = {};
+  hist.forEach(h => (h.funcao || '').split(',').forEach(parte => parte.split('/').forEach(f => {
+    f = f.trim(); if (!f || f === 'Sem-função') return;
+    const id = String(h.coroinha_id);
+    (porPessoa[id] = porPessoa[id] || []).push(rot[f] || f);
+  })));
+  const ids = [...new Set([...insc.map(r => String(r.coroinha_id)), ...Object.keys(porPessoa)])];
+  const com = ids.filter(id => porPessoa[id]).sort((a, b) => nomeDe(a).localeCompare(nomeDe(b), 'pt-BR'));
+  const sem = ids.filter(id => !porPessoa[id]).map(nomeDe).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const linhas = ['*' + titulo + '*', subtitulo, ''];
+  com.forEach(id => linhas.push('*' + nomeDe(id) + ':* ' + porPessoa[id].join(', ')));
+  if (sem.length) { linhas.push(''); linhas.push('*Sem função:* ' + sem.join(', ')); }
+  return linhas.join('\n');
+}
+async function copiarPorPessoaSemanal(horario, semanaKey) {
+  try {
+    const dataTxt = datasSemanaMissa(semanaKey)[horario];
+    const [d, m, a] = dataTxt.split('/');
+    const insc = await api('/escala_inscricoes?semana_key=eq.' + semanaKey + '&horario=eq.' + encodeURIComponent(horario) + '&order=created_at.asc');
+    const hist = (await api('/historico_funcoes?data_missa=eq.' + a + '-' + m + '-' + d)).filter(h => h.horario === horario);
+    await copiarTextoEscala(montarTextoPorPessoa(horario, dataTxt, hist, insc));
+  } catch (err) { console.error(err); toast('Não consegui copiar a escala.', true); }
+}
+async function copiarPorPessoaEspecial(escalaId) {
+  try {
+    const esc = (await api('/escala_especial?id=eq.' + escalaId))[0];
+    if (!esc) { toast('Missa não encontrada.', true); return; }
+    const insc = await api('/escala_especial_inscricoes?escala_especial_id=eq.' + escalaId + '&order=created_at.asc');
+    let hist = [];
+    if (esc.data) {
+      const doDia = await api('/historico_funcoes?data_missa=eq.' + esc.data);
+      hist = doDia.filter(h => h.horario === esc.nome + ' ' + esc.horario || h.horario === esc.nome || h.horario === esc.horario || h.horario === 'Missa Especial');
+    }
+    await copiarTextoEscala(montarTextoPorPessoa(esc.nome, (esc.data ? formatarData(esc.data) : '') + (esc.horario ? ' · ' + esc.horario : ''), hist, insc));
+  } catch (err) { console.error(err); toast('Não consegui copiar a escala.', true); }
+}
+
+setTimeout(() => { try { bkSincronizarDoBanco(); } catch (e) {} }, 1500);
+// ===================== FIM EXTRAS =====================
 
 </script>
 <!-- MODAL EXPORTAR PDF -->
